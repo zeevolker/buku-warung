@@ -76,7 +76,7 @@ ul { list-style: none; margin: 0; padding: 0; }
 
 .item {
   display: grid;
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: 1fr auto;
   gap: 10px;
   align-items: center;
   background: var(--putih);
@@ -170,4 +170,25 @@ nav a[aria-current="page"] { background: var(--ink); color: var(--putih); border
   border-radius: 10px;
   cursor: pointer;
 }
-.barang .kontrol .hapus { margin-left: auto; }
+.barang .kontrol .hapus-wadah { margin-left: auto; }
+.barang .kontrol { flex-wrap: wrap; }
+
+.tanggal { margin: -8px 0 16px; opacity: 0.75; }
+
+.item .waktu, .barang .diubah { font-size: 0.85rem; opacity: 0.7; }
+.barang .diubah { display: block; margin-top: 8px; }
+.item .waktu { grid-column: 1; }
+.item .hapus-wadah { grid-column: 2; justify-self: end; }
+
+.hapus-wadah { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.hapus-wadah .tanya { font-size: 0.9rem; font-weight: 600; }
+.hapus, .hapus-ya {
+  border: 1px solid var(--garis);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  background: var(--putih);
+  color: var(--ink);
+  cursor: pointer;
+}
+.hapus-ya { background: var(--keluar); border-color: var(--keluar); color: var(--putih); font-weight: 700; }

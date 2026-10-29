@@ -8,6 +8,15 @@ const totalMasukEl = document.getElementById("total-masuk");
 const totalKeluarEl = document.getElementById("total-keluar");
 const untungEl = document.getElementById("untung");
 
+// Tanggal hari ini di bagian atas halaman
+document.getElementById("tanggal-hari-ini").textContent =
+  new Date().toLocaleDateString("id-ID", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
 function simpan(tipe) {
   const nominal = Number(nominalEl.value);
 
@@ -45,7 +54,8 @@ function tampilkan() {
   if (hariIniData.length === 0) {
     const kosong = document.createElement("li");
     kosong.className = "kosong";
-    kosong.textContent = "Belum ada catatan hari ini. Isi nominal di atas lalu pilih Uang Masuk atau Uang Keluar.";
+    kosong.textContent =
+      "Belum ada catatan hari ini. Isi nominal di atas lalu pilih Uang Masuk atau Uang Keluar.";
     daftarEl.appendChild(kosong);
     return;
   }
@@ -55,28 +65,32 @@ function tampilkan() {
     li.className = "item " + t.tipe;
 
     const info = document.createElement("span");
-    info.textContent = t.catatan || (t.tipe === "masuk" ? "Uang masuk" : "Uang keluar");
+    info.textContent =
+      t.catatan || (t.tipe === "masuk" ? "Uang masuk" : "Uang keluar");
 
     const nominal = document.createElement("strong");
-    nominal.textContent = (t.tipe === "masuk" ? "+ " : "- ") + formatRupiah(t.nominal);
+    nominal.textContent =
+      (t.tipe === "masuk" ? "+ " : "- ") + formatRupiah(t.nominal);
 
-    const hapus = document.createElement("button");
-    hapus.type = "button";
-    hapus.className = "hapus";
-    hapus.textContent = "Hapus";
-    hapus.addEventListener("click", () => {
-      if (confirm("Hapus catatan ini?")) {
-        hapusTransaksi(t.id);
-        tampilkan();
-      }
+    const waktu = document.createElement("small");
+    waktu.className = "waktu";
+    waktu.textContent = labelWaktuTransaksi(t);
+
+    const hapus = buatTombolHapus(() => {
+      hapusTransaksi(t.id);
+      tampilkan();
     });
 
-    li.append(info, nominal, hapus);
+    li.append(info, nominal, waktu, hapus);
     daftarEl.appendChild(li);
   });
 }
 
-document.getElementById("btn-masuk").addEventListener("click", () => simpan("masuk"));
-document.getElementById("btn-keluar").addEventListener("click", () => simpan("keluar"));
+document
+  .getElementById("btn-masuk")
+  .addEventListener("click", () => simpan("masuk"));
+document
+  .getElementById("btn-keluar")
+  .addEventListener("click", () => simpan("keluar"));
 
 tampilkan();

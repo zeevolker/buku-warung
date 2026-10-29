@@ -33,6 +33,7 @@ function tambahTransaksi(tipe, nominal, catatan) {
     nominal: Number(nominal),
     catatan: catatan.trim(),
     tanggal: hariIni(),
+    dibuat: Date.now(), // waktu persis pencatatan
   });
   simpanData(KEY_TRANSAKSI, data);
 }
@@ -57,6 +58,7 @@ function tambahBarang(nama, stok, harga) {
     nama: nama.trim(),
     stok: Number(stok),
     harga: Number(harga) || 0,
+    diubah: Date.now(),
   });
   simpanData(KEY_BARANG, data);
 }
@@ -64,7 +66,9 @@ function tambahBarang(nama, stok, harga) {
 // selisih bisa +1 atau -1. Stok tidak boleh di bawah 0.
 function ubahStok(id, selisih) {
   const data = ambilData(KEY_BARANG).map((b) =>
-    b.id === id ? { ...b, stok: Math.max(0, b.stok + selisih) } : b,
+    b.id === id
+      ? { ...b, stok: Math.max(0, b.stok + selisih), diubah: Date.now() }
+      : b,
   );
   simpanData(KEY_BARANG, data);
 }
@@ -72,4 +76,32 @@ function ubahStok(id, selisih) {
 function hapusBarang(id) {
   const data = ambilData(KEY_BARANG).filter((b) => b.id !== id);
   simpanData(KEY_BARANG, data);
+}
+
+// ---- Format tanggal dan waktu (bahasa Indonesia) ----
+function formatWaktuLengkap(ms) {
+  return new Date(ms).toLocaleString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+// "2026-10-29" -> "29 Okt 2026"
+function formatTanggalPanjang(teks) {
+  const [tahun, bulan, tgl] = teks.split("-").map(Number);
+  return new Date(tahun, bulan - 1, tgl).toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+// Catatan lama (sebelum ada jam) hanya punya tanggal, jadi tampilkan tanggalnya saja.
+function labelWaktuTransaksi(t) {
+  return t.dibuat
+    ? formatWaktuLengkap(t.dibuat)
+    : formatTanggalPanjang(t.tanggal);
 }

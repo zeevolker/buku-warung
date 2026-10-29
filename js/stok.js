@@ -44,7 +44,8 @@ function tampilkan() {
   if (barang.length === 0) {
     const kosong = document.createElement("li");
     kosong.className = "kosong";
-    kosong.textContent = "Belum ada barang. Tambahkan barang pertamamu di atas.";
+    kosong.textContent =
+      "Belum ada barang. Tambahkan barang pertamamu di atas.";
     daftarEl.appendChild(kosong);
     return;
   }
@@ -87,25 +88,30 @@ function tampilkan() {
     jumlah.className = "jumlah";
     jumlah.textContent = b.stok;
 
-    const hapus = document.createElement("button");
-    hapus.type = "button";
-    hapus.className = "hapus";
-    hapus.textContent = "Hapus";
-    hapus.addEventListener("click", () => {
-      if (confirm(`Hapus "${b.nama}" dari daftar?`)) {
-        hapusBarang(b.id);
-        tampilkan();
-      }
+    const hapus = buatTombolHapus(() => {
+      hapusBarang(b.id);
+      tampilkan();
     });
 
     kontrol.append(
-      buatTombolUbah("−", `Kurangi stok ${b.nama}`, () => { ubahStok(b.id, -1); tampilkan(); }),
+      buatTombolUbah("−", `Kurangi stok ${b.nama}`, () => {
+        ubahStok(b.id, -1);
+        tampilkan();
+      }),
       jumlah,
-      buatTombolUbah("+", `Tambah stok ${b.nama}`, () => { ubahStok(b.id, +1); tampilkan(); }),
-      hapus
+      buatTombolUbah("+", `Tambah stok ${b.nama}`, () => {
+        ubahStok(b.id, +1);
+        tampilkan();
+      }),
+      hapus,
     );
 
-    li.append(atas, kontrol);
+    const diubah = document.createElement("small");
+    diubah.className = "diubah";
+    diubah.textContent =
+      "Terakhir diubah: " + formatWaktuLengkap(b.diubah || b.id);
+
+    li.append(atas, kontrol, diubah);
     daftarEl.appendChild(li);
   });
 }
