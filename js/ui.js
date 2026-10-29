@@ -27,10 +27,23 @@ function buatTombolHapus(onYa) {
     wadah.replaceChildren(
       tanya,
       buatTombol("Ya, hapus", "hapus-ya", onYa),
-      buatTombol("Batal", "hapus", tampilAwal)
+      buatTombol("Batal", "hapus", tampilAwal),
     );
   }
 
   tampilAwal();
   return wadah;
+}
+
+// Ambil angka murni dari kolom yang tampil "15.000" -> 15000
+function ambilAngka(el) {
+  return Number(el.value.replace(/\D/g, "")) || 0;
+}
+
+// Saat mengetik, otomatis tampil dengan titik ribuan: 15000 -> 15.000
+function pasangFormatRupiah(el) {
+  el.addEventListener("input", () => {
+    const angka = ambilAngka(el);
+    el.value = angka ? angka.toLocaleString("id-ID") : "";
+  });
 }

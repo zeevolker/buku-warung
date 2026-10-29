@@ -20,7 +20,7 @@ function tambah() {
     return;
   }
 
-  tambahBarang(nama, jumlah, hargaEl.value);
+  tambahBarang(nama, jumlah, ambilAngka(hargaEl));
   pesanEl.textContent = "";
   document.getElementById("form-barang").reset();
   namaEl.focus();
@@ -116,5 +116,6 @@ function tampilkan() {
   });
 }
 
+pasangFormatRupiah(hargaEl);
 document.getElementById("btn-tambah").addEventListener("click", tambah);
 tampilkan();

@@ -22,14 +22,26 @@
       <div class="untung"><span>Untung hari ini</span><strong id="untung">Rp 0</strong></div>
     </section>
 
+    <p id="banner-ubah" class="banner" hidden>
+      Sedang mengubah catatan. Pilih Uang Masuk atau Uang Keluar untuk menyimpan.
+      <button type="button" id="batal-ubah">Batal</button>
+    </p>
+
     <form id="form-catat" onsubmit="return false">
       <label for="nominal">Nominal (Rp)</label>
-      <input id="nominal" type="number" inputmode="numeric" min="0" placeholder="contoh: 15000">
+      <input id="nominal" type="text" inputmode="numeric" autocomplete="off" placeholder="contoh: 15.000">
+      <div class="cepat" aria-label="Tambah nominal cepat">
+        <button type="button" data-tambah="1000">+1.000</button>
+        <button type="button" data-tambah="5000">+5.000</button>
+        <button type="button" data-tambah="10000">+10.000</button>
+        <button type="button" data-tambah="50000">+50.000</button>
+      </div>
 
       <label for="catatan">Catatan (boleh kosong)</label>
       <input id="catatan" type="text" maxlength="60" placeholder="contoh: jual gorengan">
 
       <p id="pesan" role="alert"></p>
+      <p id="info" role="status"></p>
 
       <div class="tombol">
         <button type="button" id="btn-masuk" class="masuk">Uang Masuk</button>

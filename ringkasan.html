@@ -41,9 +41,30 @@
         <div class="baris total"><dt>Untung</dt><dd data-isi="untung"></dd></div>
       </dl>
     </section>
+  
+    <section class="cadangan">
+      <h2>Cadangan data</h2>
+      <p>Data hanya tersimpan di HP ini. Simpan cadangan secara berkala supaya tidak hilang kalau data browser terhapus atau kamu ganti HP.</p>
+      <p id="cadangan-terakhir" class="kecil"></p>
+      <div class="aksi-cadangan">
+        <button type="button" id="btn-cadangan" class="sekunder">Simpan cadangan</button>
+        <label class="sekunder">Pulihkan dari cadangan
+          <input id="file-cadangan" type="file" accept="application/json,.json" hidden>
+        </label>
+      </div>
+      <p id="cadangan-pesan" role="status"></p>
+      <div id="cadangan-konfirmasi" class="banner" hidden>
+        <span id="cadangan-ringkas"></span>
+        <div class="aksi-cadangan">
+          <button type="button" id="btn-pulihkan-ya" class="hapus-ya">Ya, pulihkan</button>
+          <button type="button" id="btn-pulihkan-batal" class="hapus">Batal</button>
+        </div>
+      </div>
+    </section>
   </main>
 
   <script src="js/storage.js"></script>
   <script src="js/ringkasan.js"></script>
+  <script src="js/cadangan.js"></script>
 </body>
 </html>

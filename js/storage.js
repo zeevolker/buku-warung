@@ -43,6 +43,15 @@ function hapusTransaksi(id) {
   simpanData(KEY_TRANSAKSI, data);
 }
 
+function ubahTransaksi(id, tipe, nominal, catatan) {
+  const data = ambilData(KEY_TRANSAKSI).map((t) =>
+    t.id === id
+      ? { ...t, tipe, nominal: Number(nominal), catatan: catatan.trim() }
+      : t,
+  );
+  simpanData(KEY_TRANSAKSI, data);
+}
+
 function formatRupiah(angka) {
   return "Rp " + angka.toLocaleString("id-ID");
 }
