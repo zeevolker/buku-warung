@@ -4,8 +4,13 @@ Aplikasi web pembukuan sederhana untuk warung dan pedagang kaki lima: catat uang
 
 **Demo:** [zeevolker.github.io/buku-warung](https://zeevolker.github.io/buku-warung/)
 
-![Tampilan Catat Cepat](screenshots/catat-cepat.png)
-<!-- Tambahkan screenshot dari HP. Buat folder screenshots/ lalu simpan gambarnya di sana. -->
+<p>
+  <img src="screenshots/catat-cepat.png" alt="Halaman Catat Cepat" width="30%">
+  <img src="screenshots/ringkasan.png" alt="Halaman Ringkasan" width="30%">
+  <img src="screenshots/stok.png" alt="Halaman Stok Barang" width="30%">
+</p>
+
+*Tangkapan layar memakai data contoh.*
 
 ## Masalah yang ingin diselesaikan
 
