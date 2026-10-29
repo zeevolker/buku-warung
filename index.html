@@ -3,58 +3,72 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Buku Warung: Catat Cepat</title>
+  <title>Buku Warung: Ringkasan</title>
   <link rel="stylesheet" href="css/style.css">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#1f7a4d">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 </head>
 <body>
   <main>
     <nav>
-      <a href="index.html" aria-current="page">Catat Cepat</a>
-      <a href="ringkasan.html">Ringkasan</a>
+      <a href="index.html">Catat Cepat</a>
+      <a href="ringkasan.html" aria-current="page">Ringkasan</a>
       <a href="stok.html">Stok</a>
     </nav>
-    <h1>Catat Cepat</h1>
-    <p id="tanggal-hari-ini" class="tanggal"></p>
+    <h1>Ringkasan</h1>
 
-    <section class="ringkas" aria-label="Ringkasan hari ini">
-      <div><span>Uang masuk</span><strong id="total-masuk">Rp 0</strong></div>
-      <div><span>Uang keluar</span><strong id="total-keluar">Rp 0</strong></div>
-      <div class="untung"><span>Untung hari ini</span><strong id="untung">Rp 0</strong></div>
+    <section class="periode" data-periode="hari">
+      <h2>Hari ini</h2>
+      <dl>
+        <div class="baris"><dt>Uang masuk</dt><dd data-isi="masuk"></dd></div>
+        <div class="baris"><dt>Uang keluar</dt><dd data-isi="keluar"></dd></div>
+        <div class="baris total"><dt>Untung</dt><dd data-isi="untung"></dd></div>
+      </dl>
     </section>
 
-    <p id="banner-ubah" class="banner" hidden>
-      Sedang mengubah catatan. Pilih Uang Masuk atau Uang Keluar untuk menyimpan.
-      <button type="button" id="batal-ubah">Batal</button>
-    </p>
+    <section class="periode" data-periode="minggu">
+      <h2>Minggu ini (mulai Senin)</h2>
+      <dl>
+        <div class="baris"><dt>Uang masuk</dt><dd data-isi="masuk"></dd></div>
+        <div class="baris"><dt>Uang keluar</dt><dd data-isi="keluar"></dd></div>
+        <div class="baris total"><dt>Untung</dt><dd data-isi="untung"></dd></div>
+      </dl>
+    </section>
 
-    <form id="form-catat" onsubmit="return false">
-      <label for="nominal">Nominal (Rp)</label>
-      <input id="nominal" type="text" inputmode="numeric" autocomplete="off" placeholder="contoh: 15.000">
-      <div class="cepat" aria-label="Tambah nominal cepat">
-        <button type="button" data-tambah="1000">+1.000</button>
-        <button type="button" data-tambah="5000">+5.000</button>
-        <button type="button" data-tambah="10000">+10.000</button>
-        <button type="button" data-tambah="50000">+50.000</button>
+    <section class="periode" data-periode="bulan">
+      <h2>Bulan ini</h2>
+      <dl>
+        <div class="baris"><dt>Uang masuk</dt><dd data-isi="masuk"></dd></div>
+        <div class="baris"><dt>Uang keluar</dt><dd data-isi="keluar"></dd></div>
+        <div class="baris total"><dt>Untung</dt><dd data-isi="untung"></dd></div>
+      </dl>
+    </section>
+  
+    <section class="cadangan">
+      <h2>Cadangan data</h2>
+      <p>Data hanya tersimpan di HP ini. Simpan cadangan secara berkala supaya tidak hilang kalau data browser terhapus atau kamu ganti HP.</p>
+      <p id="cadangan-terakhir" class="kecil"></p>
+      <div class="aksi-cadangan">
+        <button type="button" id="btn-cadangan" class="sekunder">Simpan cadangan</button>
+        <label class="sekunder">Pulihkan dari cadangan
+          <input id="file-cadangan" type="file" accept="application/json,.json" hidden>
+        </label>
       </div>
-
-      <label for="catatan">Catatan (boleh kosong)</label>
-      <input id="catatan" type="text" maxlength="60" placeholder="contoh: jual gorengan">
-
-      <p id="pesan" role="alert"></p>
-      <p id="info" role="status"></p>
-
-      <div class="tombol">
-        <button type="button" id="btn-masuk" class="masuk">Uang Masuk</button>
-        <button type="button" id="btn-keluar" class="keluar">Uang Keluar</button>
+      <p id="cadangan-pesan" role="status"></p>
+      <div id="cadangan-konfirmasi" class="banner" hidden>
+        <span id="cadangan-ringkas"></span>
+        <div class="aksi-cadangan">
+          <button type="button" id="btn-pulihkan-ya" class="hapus-ya">Ya, pulihkan</button>
+          <button type="button" id="btn-pulihkan-batal" class="hapus">Batal</button>
+        </div>
       </div>
-    </form>
-
-    <h2>Catatan hari ini</h2>
-    <ul id="daftar"></ul>
+    </section>
   </main>
 
   <script src="js/storage.js"></script>
-  <script src="js/ui.js"></script>
-  <script src="js/catat.js"></script>
+  <script src="js/ringkasan.js"></script>
+  <script src="js/cadangan.js"></script>
+  <script src="js/pwa.js"></script>
 </body>
 </html>
