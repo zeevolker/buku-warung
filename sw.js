@@ -1,7 +1,7 @@
 // sw.js: service worker supaya aplikasi bisa dibuka tanpa internet.
 // Strategi: coba ambil versi terbaru dari internet dulu; kalau gagal (offline),
 // pakai salinan yang tersimpan. Jadi pembaruan kode tetap sampai ke pengguna.
-const NAMA_CACHE = "buku-warung-v4";
+const NAMA_CACHE = "buku-warung-v5";
 
 const FILE_AWAL = [
   "./",
@@ -24,6 +24,7 @@ const FILE_AWAL = [
   "manifest.webmanifest",
   "icons/icon-192.png",
   "icons/icon-512.png",
+  "icons/icon.svg",
 ];
 
 self.addEventListener("install", (event) => {
