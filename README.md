@@ -2,7 +2,7 @@
 
 Aplikasi web pembukuan sederhana untuk warung dan pedagang kaki lima: catat uang masuk dan keluar, lihat untung harian sampai bulanan, dan pantau stok barang. Dibuat dengan HTML, CSS, dan JavaScript murni, tanpa framework.
 
-**Demo:** [isi tautan setelah deploy]
+**Demo:** [https://zeevolker.github.io/buku-warung/]
 
 ![Tampilan Catat Cepat](screenshots/catat-cepat.png)
 <!-- Tambahkan screenshot dari HP. Buat folder screenshots/ lalu simpan gambarnya di sana. -->
