@@ -238,5 +238,6 @@ function tampilkan(urutUlang = true) {
 }
 
 pasangFormatRupiah(hargaEl);
+pasangFormatRupiah(hargaBeliEl);
 document.getElementById("btn-tambah").addEventListener("click", tambah);
 tampilkan();
