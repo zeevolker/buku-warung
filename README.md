@@ -71,6 +71,8 @@ buku-warung/
 - **Semua akses data lewat `storage.js`.** Kalau nanti pindah ke database atau backend, hanya file itu yang perlu diubah.
 - **Tanggal memakai waktu lokal, bukan UTC.** `toISOString()` memakai UTC, sehingga dini hari di Indonesia tanggalnya bisa mundur sehari.
 - **Bahasa sehari-hari.** "Uang Masuk" dan "Uang Keluar", bukan istilah akuntansi.
+- **Menu di bawah layar, bukan di atas.** Mudah dijangkau jempol, tidak bisa terlipat di layar sempit, dan disembunyikan saat keyboard terbuka.
+- **Satu sistem desain.** Warna, jarak, ukuran huruf, dan bentuk didefinisikan sekali di `:root` lalu dipakai ulang. Elemen yang dibuat menonjol hanya satu: untung hari ini.
 - **Cadangan dibuat sebelum fitur lain.** Data hanya ada di satu perangkat, dan kehilangan catatan adalah risiko terbesar bagi pengguna.
 - **Service worker mengutamakan internet, salinan sebagai cadangan.** Pembaruan kode langsung sampai ke pengguna, tapi aplikasi tetap terbuka saat sinyal buruk.
 - **Gagal menyimpan tidak boleh diam-diam.** Kalau penyimpanan penuh atau browser dalam mode penyamaran, muncul peringatan dan isian form dipertahankan.
