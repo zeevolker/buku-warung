@@ -1,7 +1,7 @@
 // sw.js: service worker supaya aplikasi bisa dibuka tanpa internet.
 // Strategi: coba ambil versi terbaru dari internet dulu; kalau gagal (offline),
 // pakai salinan yang tersimpan. Jadi pembaruan kode tetap sampai ke pengguna.
-const NAMA_CACHE = "buku-warung-v3";
+const NAMA_CACHE = "buku-warung-v4";
 
 const FILE_AWAL = [
   "./",

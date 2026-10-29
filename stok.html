@@ -28,11 +28,15 @@
         </div>
       </div>
 
+      <label for="harga-beli">Harga beli / modal per barang (Rp, opsional)</label>
+      <input id="harga-beli" type="text" inputmode="numeric" autocomplete="off" placeholder="15.000">
+
       <p id="pesan" role="alert"></p>
       <button type="button" id="btn-tambah" class="tambah">Tambah Barang</button>
     </form>
 
     <h2>Daftar barang</h2>
+    <p class="petunjuk">Tekan <strong>Jual</strong> saat barang laku: stok berkurang dan uang masuk tercatat otomatis.</p>
     <ul id="daftar-barang"></ul>
   </main>
 

@@ -437,3 +437,25 @@ a.btn-kecil { display: inline-flex; align-items: center; text-decoration: none; 
 .pelanggan .bawah { display: flex; flex-wrap: wrap; gap: var(--s2); margin-top: var(--s3); align-items: center; }
 .pelanggan .bawah .hapus-wadah { margin-left: auto; }
 .pelanggan input[type="text"] { margin-top: var(--s2); }
+
+/* ---------- jual barang ---------- */
+.petunjuk { margin: calc(-1 * var(--s2)) 0 var(--s3); color: var(--muted); font-size: var(--t-sm); }
+.barang .baris-jual { display: grid; grid-template-columns: 64px 1fr auto; gap: var(--s2); margin-top: var(--s3); }
+.barang .baris-jual input { min-height: 44px; padding: 0 var(--s2); text-align: center; }
+.barang .baris-jual .jual {
+  min-height: 44px; font: inherit; font-weight: 700; color: #fff;
+  background: var(--masuk); border: 0; border-radius: var(--r-ctl); cursor: pointer;
+}
+.barang .baris-jual .jual:disabled { background: var(--line-strong); color: var(--muted); cursor: not-allowed; }
+.barang .baris-jual .btn-kecil { min-height: 44px; }
+.barang .pesan-barang { margin: var(--s2) 0 0; color: var(--masuk); font-size: var(--t-sm); font-weight: 600; }
+.barang .pesan-barang.galat { color: var(--keluar); }
+.barang .pesan-barang:empty { display: none; }
+.barang .panel-harga { margin-top: var(--s3); padding-top: var(--s3); border-top: 1px solid var(--line); }
+.barang .panel-harga[hidden] { display: none; }
+.barang .panel-harga .baris-input { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s3); }
+.barang .label-kecil { display: block; margin-bottom: var(--s1); font-size: var(--t-sm); font-weight: 600; }
+.barang .panel-harga .simpan { margin-top: var(--s3); width: 100%; }
+.periode .baris.untung[hidden] { display: none; }
+.periode .catatan-untung { margin: var(--s2) 0 0; color: var(--muted); font-size: var(--t-xs); }
+.periode .catatan-untung:empty { display: none; }

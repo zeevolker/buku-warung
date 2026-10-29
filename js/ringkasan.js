@@ -43,4 +43,16 @@ document.querySelectorAll(".periode").forEach((kartu) => {
   const totalEl = kartu.querySelector('[data-isi="total"]');
   totalEl.textContent = formatRupiah(hasil.total);
   totalEl.className = hasil.total < 0 ? "negatif" : "positif";
+
+  // Untung barang = harga jual - harga beli, hanya dari barang yang dijual lewat tombol Jual
+  // dan yang harga belinya diisi. Baris ini disembunyikan kalau belum ada penjualan seperti itu.
+  const u = hitungUntungBarang(semua.filter(aturan[kartu.dataset.periode]));
+  const barisUntung = kartu.querySelector(".baris.untung");
+  barisUntung.hidden = u.jumlah === 0;
+  const untungEl = kartu.querySelector('[data-isi="untung"]');
+  untungEl.textContent = formatRupiah(u.untung);
+  untungEl.className = u.untung < 0 ? "negatif" : "positif";
+  kartu.querySelector('[data-isi="catatan-untung"]').textContent = u.jumlah
+    ? `Dari ${u.jumlah} penjualan lewat tombol Jual yang harga belinya diisi.`
+    : "";
 });

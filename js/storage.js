@@ -58,8 +58,12 @@ function tambahTransaksi(tipe, nominal, catatan) {
 }
 
 function hapusTransaksi(id) {
-  const data = ambilData(KEY_TRANSAKSI).filter((t) => t.id !== id);
-  return simpanData(KEY_TRANSAKSI, data);
+  const semua = ambilData(KEY_TRANSAKSI);
+  const t = semua.find((x) => x.id === id);
+  if (!simpanData(KEY_TRANSAKSI, semua.filter((x) => x.id !== id))) return false;
+  // Penjualan barang yang dihapus: kembalikan stoknya (kalau barangnya masih ada)
+  if (t && t.barangId) ubahStok(t.barangId, t.jumlah);
+  return true;
 }
 
 function ubahTransaksi(id, tipe, nominal, catatan) {
@@ -79,16 +83,65 @@ function formatRupiah(angka) {
 const KEY_BARANG = "bw_barang";
 const BATAS_MENIPIS = 5; // stok di bawah atau sama dengan angka ini ditandai merah
 
-function tambahBarang(nama, stok, harga) {
+// harga = harga jual, hargaBeli = modal per barang (0 kalau belum diisi)
+function tambahBarang(nama, stok, harga, hargaBeli) {
   const data = ambilData(KEY_BARANG);
   data.push({
     id: Date.now(),
     nama: nama.trim(),
     stok: Number(stok),
     harga: Number(harga) || 0,
+    hargaBeli: Number(hargaBeli) || 0,
     diubah: Date.now(),
   });
   return simpanData(KEY_BARANG, data);
+}
+
+function ubahHargaBarang(id, harga, hargaBeli) {
+  const data = ambilData(KEY_BARANG).map((b) =>
+    b.id === id ? { ...b, harga: Number(harga) || 0, hargaBeli: Number(hargaBeli) || 0 } : b
+  );
+  return simpanData(KEY_BARANG, data);
+}
+
+// Jual barang: stok berkurang dan uang masuk tercatat sekaligus.
+// Mengembalikan "" kalau berhasil, atau pesan kesalahan.
+function jualBarang(id, jumlah) {
+  const barang = ambilData(KEY_BARANG);
+  const b = barang.find((x) => x.id === id);
+  if (!b) return "Barang tidak ditemukan.";
+  if (!b.harga) return "Isi harga jual dulu lewat Ubah harga.";
+  if (jumlah > b.stok) return `Stok tinggal ${b.stok}.`;
+
+  const sekarang = Date.now();
+  const transaksi = ambilData(KEY_TRANSAKSI);
+  transaksi.push({
+    id: sekarang,
+    tipe: "masuk",
+    nominal: b.harga * jumlah,
+    catatan: `Jual ${jumlah} ${b.nama}`,
+    tanggal: hariIni(),
+    dibuat: sekarang,
+    barangId: b.id,
+    jumlah,
+    // modal hanya dicatat kalau harga beli diisi, supaya untung tidak terlihat lebih besar
+    modal: b.hargaBeli ? b.hargaBeli * jumlah : null,
+  });
+  b.stok -= jumlah;
+  b.diubah = sekarang;
+
+  if (!simpanData(KEY_TRANSAKSI, transaksi)) return "Gagal menyimpan.";
+  if (!simpanData(KEY_BARANG, barang)) return "Gagal menyimpan.";
+  return "";
+}
+
+// Untung dari penjualan barang yang harga belinya diketahui
+function hitungUntungBarang(daftar) {
+  const jual = daftar.filter((t) => t.tipe === "masuk" && Number.isFinite(t.modal));
+  return {
+    untung: jual.reduce((jml, t) => jml + t.nominal - t.modal, 0),
+    jumlah: jual.length,
+  };
 }
 
 // selisih bisa +1 atau -1. Stok tidak boleh di bawah 0.
