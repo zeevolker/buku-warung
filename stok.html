@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Buku Warung: Stok Barang</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main>
+    <nav>
+      <a href="index.html">Catat Cepat</a>
+      <a href="ringkasan.html">Ringkasan</a>
+      <a href="stok.html" aria-current="page">Stok</a>
+    </nav>
+    <h1>Stok Barang</h1>
+
+    <form id="form-barang" class="form-barang" onsubmit="return false">
+      <label for="nama">Nama barang</label>
+      <input id="nama" type="text" maxlength="40" placeholder="contoh: minyak goreng">
+
+      <div class="baris-input">
+        <div>
+          <label for="jumlah-awal">Jumlah</label>
+          <input id="jumlah-awal" type="number" inputmode="numeric" min="0" placeholder="10">
+        </div>
+        <div>
+          <label for="harga">Harga jual (Rp)</label>
+          <input id="harga" type="number" inputmode="numeric" min="0" placeholder="18000">
+        </div>
+      </div>
+
+      <p id="pesan" role="alert"></p>
+      <button type="button" id="btn-tambah" class="tambah">Tambah Barang</button>
+    </form>
+
+    <h2>Daftar barang</h2>
+    <ul id="daftar-barang"></ul>
+  </main>
+
+  <script src="js/storage.js"></script>
+  <script src="js/stok.js"></script>
+</body>
+</html>

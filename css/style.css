@@ -1,0 +1,173 @@
+:root {
+  --bg: #f5f6f3;
+  --ink: #1d2a24;
+  --garis: #d3d9d0;
+  --masuk: #1f7a4d;
+  --keluar: #b3382c;
+  --putih: #ffffff;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 18px;
+  line-height: 1.4;
+}
+
+main {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 20px 16px 48px;
+}
+
+h1 { font-size: 1.6rem; margin: 0 0 16px; }
+h2 { font-size: 1.1rem; margin: 28px 0 8px; }
+
+.ringkas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.ringkas div {
+  background: var(--putih);
+  border: 1px solid var(--garis);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.ringkas span { display: block; font-size: 0.85rem; opacity: 0.75; }
+.ringkas strong { font-size: 1.1rem; }
+.ringkas .untung { grid-column: 1 / -1; border-width: 2px; border-color: var(--ink); }
+.ringkas .untung strong { font-size: 1.6rem; }
+
+label { display: block; margin: 12px 0 4px; font-weight: 600; }
+
+input {
+  width: 100%;
+  padding: 14px;
+  font-size: 1.1rem;
+  border: 1px solid var(--garis);
+  border-radius: 8px;
+  background: var(--putih);
+  color: var(--ink);
+}
+input:focus-visible, button:focus-visible { outline: 3px solid #2b6cb0; outline-offset: 2px; }
+
+#pesan { min-height: 1.4em; margin: 8px 0 0; color: var(--keluar); font-size: 0.95rem; }
+
+.tombol { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+.tombol button {
+  padding: 18px 8px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--putih);
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.tombol .masuk { background: var(--masuk); }
+.tombol .keluar { background: var(--keluar); }
+
+ul { list-style: none; margin: 0; padding: 0; }
+
+.item {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 10px;
+  align-items: center;
+  background: var(--putih);
+  border: 1px solid var(--garis);
+  border-left: 5px solid var(--garis);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+.item.masuk { border-left-color: var(--masuk); }
+.item.keluar { border-left-color: var(--keluar); }
+.item.masuk strong { color: var(--masuk); }
+.item.keluar strong { color: var(--keluar); }
+
+.hapus {
+  background: none;
+  border: 1px solid var(--garis);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.kosong { padding: 12px 0; opacity: 0.7; }
+
+nav { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+nav a {
+  text-align: center;
+  padding: 10px;
+  border: 1px solid var(--garis);
+  border-radius: 8px;
+  background: var(--putih);
+  color: var(--ink);
+  text-decoration: none;
+  font-weight: 600;
+}
+nav a[aria-current="page"] { background: var(--ink); color: var(--putih); border-color: var(--ink); }
+
+.periode {
+  background: var(--putih);
+  border: 1px solid var(--garis);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+.periode h2 { margin: 0 0 8px; }
+.periode dl { margin: 0; }
+.periode .baris { display: flex; justify-content: space-between; padding: 4px 0; }
+.periode dt, .periode dd { margin: 0; }
+.periode .total { border-top: 1px solid var(--garis); margin-top: 6px; padding-top: 8px; font-weight: 700; font-size: 1.15rem; }
+.positif { color: var(--masuk); }
+.negatif { color: var(--keluar); }
+
+.form-barang .baris-input { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.form-barang .tambah {
+  width: 100%;
+  margin-top: 12px;
+  padding: 16px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--putih);
+  background: var(--ink);
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.barang {
+  background: var(--putih);
+  border: 1px solid var(--garis);
+  border-left: 5px solid var(--masuk);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+.barang.menipis { border-left-color: var(--keluar); background: #fdf3f1; }
+.barang .atas { display: flex; justify-content: space-between; gap: 8px; }
+.barang .nama { font-weight: 700; }
+.barang .harga { font-size: 0.9rem; opacity: 0.75; }
+.barang .status { font-size: 0.9rem; font-weight: 700; color: var(--keluar); }
+.barang .kontrol { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+.barang .jumlah { min-width: 3ch; text-align: center; font-size: 1.4rem; font-weight: 700; }
+.barang .kontrol button.ubah {
+  width: 52px;
+  height: 52px;
+  font-size: 1.6rem;
+  font-weight: 700;
+  background: var(--bg);
+  color: var(--ink);
+  border: 1px solid var(--garis);
+  border-radius: 10px;
+  cursor: pointer;
+}
+.barang .kontrol .hapus { margin-left: auto; }

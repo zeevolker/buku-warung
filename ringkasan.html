@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Buku Warung: Ringkasan</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main>
+    <nav>
+      <a href="index.html">Catat Cepat</a>
+      <a href="ringkasan.html" aria-current="page">Ringkasan</a>
+      <a href="stok.html">Stok</a>
+    </nav>
+    <h1>Ringkasan</h1>
+
+    <section class="periode" data-periode="hari">
+      <h2>Hari ini</h2>
+      <dl>
+        <div class="baris"><dt>Uang masuk</dt><dd data-isi="masuk"></dd></div>
+        <div class="baris"><dt>Uang keluar</dt><dd data-isi="keluar"></dd></div>
+        <div class="baris total"><dt>Untung</dt><dd data-isi="untung"></dd></div>
+      </dl>
+    </section>
+
+    <section class="periode" data-periode="minggu">
+      <h2>Minggu ini (mulai Senin)</h2>
+      <dl>
+        <div class="baris"><dt>Uang masuk</dt><dd data-isi="masuk"></dd></div>
+        <div class="baris"><dt>Uang keluar</dt><dd data-isi="keluar"></dd></div>
+        <div class="baris total"><dt>Untung</dt><dd data-isi="untung"></dd></div>
+      </dl>
+    </section>
+
+    <section class="periode" data-periode="bulan">
+      <h2>Bulan ini</h2>
+      <dl>
+        <div class="baris"><dt>Uang masuk</dt><dd data-isi="masuk"></dd></div>
+        <div class="baris"><dt>Uang keluar</dt><dd data-isi="keluar"></dd></div>
+        <div class="baris total"><dt>Untung</dt><dd data-isi="untung"></dd></div>
+      </dl>
+    </section>
+  </main>
+
+  <script src="js/storage.js"></script>
+  <script src="js/ringkasan.js"></script>
+</body>
+</html>

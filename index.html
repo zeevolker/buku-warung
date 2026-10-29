@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Buku Warung: Catat Cepat</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main>
+    <nav>
+      <a href="index.html" aria-current="page">Catat Cepat</a>
+      <a href="ringkasan.html">Ringkasan</a>
+      <a href="stok.html">Stok</a>
+    </nav>
+    <h1>Catat Cepat</h1>
+
+    <section class="ringkas" aria-label="Ringkasan hari ini">
+      <div><span>Uang masuk</span><strong id="total-masuk">Rp 0</strong></div>
+      <div><span>Uang keluar</span><strong id="total-keluar">Rp 0</strong></div>
+      <div class="untung"><span>Untung hari ini</span><strong id="untung">Rp 0</strong></div>
+    </section>
+
+    <form id="form-catat" onsubmit="return false">
+      <label for="nominal">Nominal (Rp)</label>
+      <input id="nominal" type="number" inputmode="numeric" min="0" placeholder="contoh: 15000">
+
+      <label for="catatan">Catatan (boleh kosong)</label>
+      <input id="catatan" type="text" maxlength="60" placeholder="contoh: jual gorengan">
+
+      <p id="pesan" role="alert"></p>
+
+      <div class="tombol">
+        <button type="button" id="btn-masuk" class="masuk">Uang Masuk</button>
+        <button type="button" id="btn-keluar" class="keluar">Uang Keluar</button>
+      </div>
+    </form>
+
+    <h2>Catatan hari ini</h2>
+    <ul id="daftar"></ul>
+  </main>
+
+  <script src="js/storage.js"></script>
+  <script src="js/catat.js"></script>
+</body>
+</html>
