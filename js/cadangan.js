@@ -23,7 +23,16 @@ function dataValid(o) {
     Array.isArray(o.transaksi) &&
     Array.isArray(o.barang) &&
     o.transaksi.every((t) => ["masuk", "keluar"].includes(t.tipe) && Number.isFinite(t.nominal) && typeof t.tanggal === "string") &&
-    o.barang.every((b) => typeof b.nama === "string" && Number.isFinite(b.stok))
+    o.barang.every((b) => typeof b.nama === "string" && Number.isFinite(b.stok)) &&
+    // kasbon tidak ada di cadangan versi lama, jadi boleh kosong
+    (o.kasbon === undefined ||
+      (Array.isArray(o.kasbon) &&
+        o.kasbon.every(
+          (p) =>
+            typeof p.nama === "string" &&
+            Array.isArray(p.mutasi) &&
+            p.mutasi.every((m) => ["utang", "bayar"].includes(m.tipe) && Number.isFinite(m.nominal))
+        )))
   );
 }
 
@@ -35,6 +44,7 @@ function simpanCadangan() {
       dibuat: Date.now(),
       transaksi: ambilData(KEY_TRANSAKSI),
       barang: ambilData(KEY_BARANG),
+      kasbon: ambilData(KEY_KASBON),
     },
     null,
     2
@@ -63,6 +73,7 @@ function bacaFile(file) {
       dataMenunggu = o;
       ringkasEl.textContent =
         `Ditemukan ${o.transaksi.length} catatan dan ${o.barang.length} barang` +
+        (o.kasbon ? `, ${o.kasbon.length} pelanggan kasbon` : "") +
         (o.dibuat ? ` (dicadangkan ${formatWaktuLengkap(o.dibuat)})` : "") +
         ". Memulihkan akan MENGGANTI semua data di HP ini.";
       konfirmasiEl.hidden = false;
@@ -83,7 +94,8 @@ document.getElementById("btn-pulihkan-ya").addEventListener("click", () => {
   if (!dataMenunggu) return;
   const berhasil =
     simpanData(KEY_TRANSAKSI, dataMenunggu.transaksi) &&
-    simpanData(KEY_BARANG, dataMenunggu.barang);
+    simpanData(KEY_BARANG, dataMenunggu.barang) &&
+    simpanData(KEY_KASBON, dataMenunggu.kasbon || []);
   if (!berhasil) {
     konfirmasiEl.hidden = true;
     pesanCadanganEl.textContent =

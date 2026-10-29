@@ -9,6 +9,7 @@ Aplikasi web pembukuan sederhana untuk warung dan pedagang kaki lima: catat uang
   <img src="screenshots/riwayat.png" alt="Halaman Riwayat" width="23%">
   <img src="screenshots/ringkasan.png" alt="Halaman Ringkasan" width="23%">
   <img src="screenshots/stok.png" alt="Halaman Stok Barang" width="23%">
+  <img src="screenshots/kasbon.png" alt="Halaman Kasbon" width="23%">
 </p>
 
 *Tangkapan layar memakai data contoh.*
@@ -27,6 +28,7 @@ Banyak pemilik warung dan pedagang kaki lima tidak mencatat keuangan, atau hanya
 - **Riwayat:** lihat, ubah, dan hapus catatan dari tanggal mana pun (tombol ‹ ›, atau pilih tanggal), dan bagikan total hari itu ke WhatsApp
 - **Ringkasan:** uang masuk, uang keluar, dan total untuk hari ini, minggu ini, dan bulan ini
 - **Stok Barang:** daftar barang dengan tombol + dan −, penanda merah untuk barang yang hampir habis, dan waktu terakhir diubah
+- **Kasbon:** catat utang pelanggan, terima cicilan, lihat sisa tiap orang dan total yang belum dibayar. Pembayaran bisa otomatis tercatat sebagai uang masuk, dan ada tombol pengingat lewat WhatsApp
 - **Cadangan data:** simpan semua data ke file JSON dan pulihkan kembali, dengan validasi file sebelum data diganti. Pengingat muncul kalau sudah 7 hari belum dicadangkan
 - **Bisa dipasang di layar utama HP dan jalan offline** (PWA)
 - Tampilan mobile-first dengan tombol dan tulisan besar
@@ -54,6 +56,7 @@ buku-warung/
 ├── ringkasan.html    Ringkasan harian/mingguan/bulanan
 ├── riwayat.html      Riwayat per tanggal
 ├── stok.html         Stok Barang
+├── kasbon.html       Kasbon (utang pelanggan)
 ├── manifest.webmanifest
 ├── sw.js             Service worker (mode offline)
 ├── icons/            Ikon aplikasi
@@ -65,6 +68,7 @@ buku-warung/
     ├── riwayat.js
     ├── ringkasan.js
     ├── stok.js
+    ├── kasbon.js
     ├── cadangan.js   Simpan dan pulihkan data lewat file JSON
     ├── pengingat.js  Pengingat untuk mencadangkan data
     └── pwa.js        Daftar service worker, muat ulang saat ganti hari
@@ -79,6 +83,8 @@ buku-warung/
 - **Menu di bawah layar, bukan di atas.** Mudah dijangkau jempol, tidak bisa terlipat di layar sempit, dan disembunyikan saat keyboard terbuka.
 - **Satu sistem desain.** Warna, jarak, ukuran huruf, dan bentuk didefinisikan sekali di `:root` lalu dipakai ulang. Elemen yang dibuat menonjol hanya satu: total hari ini.
 - **Label "Total", bukan "Untung".** Angkanya uang masuk dikurangi uang keluar (arus kas). Belanja stok ikut mengurangi total hari itu, jadi ini bukan laba sebenarnya, dan labelnya sengaja tidak menjanjikan itu.
+- **Kasbon dihitung dari daftar utang dan bayar, bukan satu angka sisa.** Sisa selalu dihitung ulang, jadi salah catat bisa dibetulkan dengan menghapus satu baris, dan pembayaran yang melebihi sisa ditolak.
+- **Menu bawah baru muncul lagi sesaat setelah kolom kehilangan fokus.** Kalau tidak, menu menutupi tombol yang baru ditekan.
 - **Cadangan dibuat sebelum fitur lain.** Data hanya ada di satu perangkat, dan kehilangan catatan adalah risiko terbesar bagi pengguna.
 - **Service worker mengutamakan internet, salinan sebagai cadangan.** Pembaruan kode langsung sampai ke pengguna, tapi aplikasi tetap terbuka saat sinyal buruk.
 - **Gagal menyimpan tidak boleh diam-diam.** Kalau penyimpanan penuh atau browser dalam mode penyamaran, muncul peringatan dan isian form dipertahankan.
@@ -109,6 +115,6 @@ buku-warung/
 - [x] Pengingat cadangan
 - [ ] Hubungkan penjualan dengan pengurangan stok
 - [ ] Ekspor laporan ke CSV
-- [ ] Pencatatan kasbon (utang pelanggan)
+- [x] Pencatatan kasbon (utang pelanggan)
 - [ ] Sinkronisasi data otomatis (backend dan database)
 - [ ] Versi dengan framework, setelah kebutuhan dari pengguna jelas

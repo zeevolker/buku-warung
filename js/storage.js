@@ -177,3 +177,56 @@ function hitungTotal(daftar) {
 
 // Kapan terakhir kali data dicadangkan (dipakai cadangan.js dan pengingat.js).
 const KEY_CADANGAN_TERAKHIR = "bw_cadangan_terakhir";
+
+
+// ---- Kasbon (utang pelanggan) ----
+// Satu pelanggan = {id, nama, telepon, mutasi:[{id, tipe:"utang"|"bayar", nominal, catatan, dibuat}]}
+const KEY_KASBON = "bw_kasbon";
+
+function sisaKasbon(p) {
+  return p.mutasi.reduce((sisa, m) => sisa + (m.tipe === "utang" ? m.nominal : -m.nominal), 0);
+}
+
+function cariPelanggan(data, nama) {
+  const kunci = nama.trim().toLowerCase();
+  return data.find((p) => p.nama.toLowerCase() === kunci);
+}
+
+// Catat utang/bayar. Kalau nama belum ada, pelanggan baru dibuat.
+// Mengembalikan true kalau tersimpan.
+function catatKasbon(nama, tipe, nominal, catatan, telepon) {
+  const data = ambilData(KEY_KASBON);
+  let p = cariPelanggan(data, nama);
+  if (!p) {
+    p = { id: Date.now(), nama: nama.trim(), telepon: "", mutasi: [] };
+    data.push(p);
+  }
+  if (telepon && !p.telepon) p.telepon = telepon.trim();
+  p.mutasi.push({
+    id: Date.now() + p.mutasi.length,
+    tipe,
+    nominal: Number(nominal),
+    catatan: (catatan || "").trim(),
+    dibuat: Date.now(),
+  });
+  return simpanData(KEY_KASBON, data);
+}
+
+function hapusMutasiKasbon(idPelanggan, idMutasi) {
+  const data = ambilData(KEY_KASBON).map((p) =>
+    p.id === idPelanggan ? { ...p, mutasi: p.mutasi.filter((m) => m.id !== idMutasi) } : p
+  );
+  return simpanData(KEY_KASBON, data);
+}
+
+function hapusPelanggan(id) {
+  return simpanData(KEY_KASBON, ambilData(KEY_KASBON).filter((p) => p.id !== id));
+}
+
+// Nomor HP Indonesia untuk wa.me: "0812-3456" -> "628123456"
+function nomorWhatsApp(telepon) {
+  let n = (telepon || "").replace(/\D/g, "");
+  if (n.startsWith("0")) n = "62" + n.slice(1);
+  else if (n.startsWith("8")) n = "62" + n;
+  return n;
+}

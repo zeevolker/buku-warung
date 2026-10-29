@@ -83,12 +83,13 @@ strong, dd, .jumlah, input { font-variant-numeric: tabular-nums; }
   margin: 0 auto;
   z-index: 20;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   background: var(--surface);
   border-top: 1px solid var(--line);
   padding-bottom: env(safe-area-inset-bottom);
 }
 .tabbar a {
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -97,13 +98,16 @@ strong, dd, .jumlah, input { font-variant-numeric: tabular-nums; }
   min-height: var(--tabbar-h);
   color: var(--muted);
   text-decoration: none;
-  font-size: var(--t-xs);
+  font-size: 0.75rem;
   font-weight: 600;
 }
 .tabbar a[aria-current="page"] { color: var(--masuk); box-shadow: inset 0 3px 0 var(--masuk); }
 .tabbar svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 /* saat mengetik, sembunyikan menu supaya tidak memakan ruang di atas keyboard */
-body:has(input:focus) .tabbar { display: none; }
+/* Munculnya kembali ditunda sebentar: kalau tidak, menu muncul tepat saat jari menekan
+   tombol yang letaknya di belakangnya (karena kolom tadi kehilangan fokus) dan tekanan hilang. */
+.tabbar { transition: visibility 0s linear 0.35s; }
+body:has(input:focus) .tabbar { visibility: hidden; transition-delay: 0s; }
 
 /* ---------- kartu ringkas di Catat Cepat ---------- */
 .ringkas { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s2); margin-bottom: var(--s4); }
@@ -147,7 +151,7 @@ body:has(input:focus) .tabbar { display: none; }
 label { display: block; margin: var(--s4) 0 var(--s2); font-size: var(--t-sm); font-weight: 600; }
 label:first-child { margin-top: 0; }
 
-input[type="text"], input[type="number"], input[type="date"] {
+input[type="text"], input[type="number"], input[type="date"], input[type="tel"] {
   width: 100%;
   height: 52px;
   padding: 0 var(--s4);
@@ -163,7 +167,7 @@ input:focus-visible { outline: none; border-color: var(--fokus); box-shadow: 0 0
 .form-barang .baris-input { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s3); }
 .form-barang .baris-input label { margin-top: var(--s4); }
 
-.cepat { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--s2); margin-top: var(--s3); }
+.cepat { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--s2); margin-top: var(--s3); }
 @media (max-width: 359px) { .cepat { grid-template-columns: repeat(2, 1fr); } }
 .cepat button {
   min-height: 44px;
@@ -391,3 +395,45 @@ a.btn-kecil { display: inline-flex; align-items: center; text-decoration: none; 
 /* ---------- pengingat cadangan ---------- */
 .pengingat { display: grid; gap: var(--s3); }
 .aksi-pengingat { display: flex; gap: var(--s2); }
+
+/* ---------- kasbon ---------- */
+.ringkas .utama .sub { display: block; margin-top: var(--s1); color: rgba(255, 255, 255, 0.78); font-size: var(--t-sm); }
+.pelanggan {
+  position: relative;
+  margin-bottom: var(--s3);
+  padding: var(--s4) var(--s4) var(--s4) calc(var(--s4) + 4px);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+}
+.pelanggan::before {
+  content: ""; position: absolute; left: 0; top: 12px; bottom: 12px; width: 4px;
+  border-radius: 0 4px 4px 0; background: var(--keluar);
+}
+.pelanggan.lunas::before { background: var(--masuk); }
+.pelanggan .atas { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s3); }
+.pelanggan .nama { font-weight: 700; overflow-wrap: anywhere; }
+.pelanggan .info { color: var(--muted); font-size: var(--t-sm); }
+.pelanggan .sisa { font-size: var(--t-lg); font-weight: 800; color: var(--keluar); white-space: nowrap; }
+.pelanggan.lunas .sisa { color: var(--masuk); font-size: var(--t-sm); font-weight: 700; }
+.pelanggan .buka { margin-top: var(--s3); width: 100%; min-height: 40px; }
+.pelanggan .detail { margin-top: var(--s3); padding-top: var(--s3); border-top: 1px solid var(--line); }
+.pelanggan .detail[hidden] { display: none; }
+.pelanggan .mutasi { display: grid; grid-template-columns: 1fr auto; gap: 2px var(--s3); padding: var(--s2) 0; border-bottom: 1px solid var(--line); }
+.pelanggan .mutasi .jenis { font-weight: 600; overflow-wrap: anywhere; }
+.pelanggan .mutasi.utang strong { color: var(--keluar); }
+.pelanggan .mutasi.bayar strong { color: var(--masuk); }
+.pelanggan .mutasi strong { text-align: right; white-space: nowrap; }
+.pelanggan .mutasi small { color: var(--muted); font-size: var(--t-xs); }
+.pelanggan .mutasi .hapus-wadah { grid-column: 1 / -1; justify-content: flex-start; }
+.pelanggan .aksi-kasbon { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s2); margin-top: var(--s3); }
+.pelanggan .aksi-kasbon button { min-height: 48px; font: inherit; font-weight: 700; color: #fff; border: 0; border-radius: var(--r-ctl); cursor: pointer; }
+.pelanggan .aksi-kasbon .utang { background: var(--keluar); }
+.pelanggan .aksi-kasbon .bayar { background: var(--masuk); }
+.pelanggan .centang { display: flex; align-items: center; gap: var(--s2); margin: var(--s3) 0 0; font-weight: 500; }
+.pelanggan .centang input { width: 22px; height: 22px; flex: none; }
+.pelanggan .pesan-kartu { margin: var(--s2) 0 0; color: var(--keluar); font-size: var(--t-sm); font-weight: 600; }
+.pelanggan .pesan-kartu:empty { display: none; }
+.pelanggan .bawah { display: flex; flex-wrap: wrap; gap: var(--s2); margin-top: var(--s3); align-items: center; }
+.pelanggan .bawah .hapus-wadah { margin-left: auto; }
+.pelanggan input[type="text"] { margin-top: var(--s2); }
