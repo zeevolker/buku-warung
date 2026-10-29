@@ -47,3 +47,55 @@ function pasangFormatRupiah(el) {
     el.value = angka ? angka.toLocaleString("id-ID") : "";
   });
 }
+
+// Satu baris catatan transaksi, dipakai di Catat Cepat dan Riwayat.
+// aksi.onUbah(t) dan aksi.onHapus(t) dijalankan saat tombolnya ditekan.
+function buatItemTransaksi(t, aksi) {
+  const li = document.createElement("li");
+  li.className = "item " + t.tipe;
+
+  const info = document.createElement("span");
+  info.textContent =
+    t.catatan || (t.tipe === "masuk" ? "Uang masuk" : "Uang keluar");
+
+  const nominal = document.createElement("strong");
+  nominal.textContent =
+    (t.tipe === "masuk" ? "+ " : "- ") + formatRupiah(t.nominal);
+
+  const waktu = document.createElement("small");
+  waktu.className = "waktu";
+  waktu.textContent = labelWaktuTransaksi(t);
+
+  const ubah = document.createElement("button");
+  ubah.type = "button";
+  ubah.className = "ubah-catat";
+  ubah.textContent = "Ubah";
+  ubah.addEventListener("click", () => aksi.onUbah(t));
+
+  const hapus = buatTombolHapus(() => aksi.onHapus(t));
+
+  const wadahAksi = document.createElement("span");
+  wadahAksi.className = "aksi";
+  wadahAksi.append(ubah, hapus);
+
+  li.append(info, nominal, waktu, wadahAksi);
+  return li;
+}
+
+// Bagikan teks lewat menu bagikan HP (ada WhatsApp di dalamnya).
+// Kalau browser tidak mendukung, buka WhatsApp langsung dengan teks terisi.
+async function bagikanTeks(teks) {
+  if (navigator.share) {
+    try {
+      await navigator.share({ text: teks });
+    } catch (e) {
+      // Pengguna membatalkan: tidak apa-apa.
+    }
+    return;
+  }
+  window.open(
+    "https://wa.me/?text=" + encodeURIComponent(teks),
+    "_blank",
+    "noopener",
+  );
+}

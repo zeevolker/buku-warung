@@ -1,5 +1,4 @@
 // cadangan.js: simpan dan pulihkan data lewat file JSON.
-const KEY_CADANGAN_TERAKHIR = "bw_cadangan_terakhir";
 
 const terakhirEl = document.getElementById("cadangan-terakhir");
 const pesanCadanganEl = document.getElementById("cadangan-pesan");

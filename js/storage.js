@@ -133,3 +133,47 @@ function labelWaktuTransaksi(t) {
     ? formatWaktuLengkap(t.dibuat)
     : formatTanggalPanjang(t.tanggal);
 }
+
+// ---- Riwayat: bantuan untuk tanggal "YYYY-MM-DD" ----
+function bagiTanggal(teks) {
+  const [tahun, bulan, tgl] = teks.split("-").map(Number);
+  return { tahun, bulan, tgl };
+}
+
+// Geser tanggal sebanyak `selisih` hari (boleh negatif).
+function geserTanggal(teks, selisih) {
+  const { tahun, bulan, tgl } = bagiTanggal(teks);
+  return formatTanggal(new Date(tahun, bulan - 1, tgl + selisih));
+}
+
+// "2026-10-28" -> "Rabu, 28 Oktober 2026"
+function formatTanggalLengkap(teks) {
+  const { tahun, bulan, tgl } = bagiTanggal(teks);
+  return new Date(tahun, bulan - 1, tgl).toLocaleDateString("id-ID", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+// Transaksi pada satu tanggal, yang terbaru di atas.
+function transaksiPadaTanggal(teks) {
+  return ambilData(KEY_TRANSAKSI)
+    .filter((t) => t.tanggal === teks)
+    .sort((a, b) => (b.dibuat || b.id) - (a.dibuat || a.id));
+}
+
+// Total = uang masuk dikurangi uang keluar (selisih kas, bukan laba).
+function hitungTotal(daftar) {
+  const masuk = daftar
+    .filter((t) => t.tipe === "masuk")
+    .reduce((jumlah, t) => jumlah + t.nominal, 0);
+  const keluar = daftar
+    .filter((t) => t.tipe === "keluar")
+    .reduce((jumlah, t) => jumlah + t.nominal, 0);
+  return { masuk, keluar, total: masuk - keluar };
+}
+
+// Kapan terakhir kali data dicadangkan (dipakai cadangan.js dan pengingat.js).
+const KEY_CADANGAN_TERAKHIR = "bw_cadangan_terakhir";

@@ -22,7 +22,7 @@ function hitung(daftar) {
   const keluar = daftar
     .filter((t) => t.tipe === "keluar")
     .reduce((jumlah, t) => jumlah + t.nominal, 0);
-  return { masuk, keluar, untung: masuk - keluar };
+  return { masuk, keluar, total: masuk - keluar };
 }
 
 const semua = ambilData(KEY_TRANSAKSI);
@@ -40,7 +40,7 @@ document.querySelectorAll(".periode").forEach((kartu) => {
   kartu.querySelector('[data-isi="masuk"]').textContent = formatRupiah(hasil.masuk);
   kartu.querySelector('[data-isi="keluar"]').textContent = formatRupiah(hasil.keluar);
 
-  const untungEl = kartu.querySelector('[data-isi="untung"]');
-  untungEl.textContent = formatRupiah(hasil.untung);
-  untungEl.className = hasil.untung < 0 ? "negatif" : "positif";
+  const totalEl = kartu.querySelector('[data-isi="total"]');
+  totalEl.textContent = formatRupiah(hasil.total);
+  totalEl.className = hasil.total < 0 ? "negatif" : "positif";
 });

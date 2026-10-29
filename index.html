@@ -17,11 +17,11 @@
     <section class="ringkas" aria-label="Ringkasan hari ini">
       <div><span>Uang masuk</span><strong id="total-masuk">Rp 0</strong></div>
       <div><span>Uang keluar</span><strong id="total-keluar">Rp 0</strong></div>
-      <div class="untung"><span>Untung hari ini</span><strong id="untung">Rp 0</strong></div>
+      <div class="utama"><span>Total hari ini</span><strong id="total">Rp 0</strong></div>
     </section>
 
     <p id="banner-ubah" class="banner" hidden>
-      Sedang mengubah catatan. Pilih Uang Masuk atau Uang Keluar untuk menyimpan.
+      <span id="banner-teks">Sedang mengubah catatan. Pilih Uang Masuk atau Uang Keluar untuk menyimpan.</span>
       <button type="button" id="batal-ubah">Batal</button>
     </p>
 
@@ -56,6 +56,10 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
       <span>Catat</span>
     </a>
+    <a href="riwayat.html">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
+      <span>Riwayat</span>
+    </a>
     <a href="ringkasan.html">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V10"/><path d="M12 20V4"/><path d="M19 20v-7"/></svg>
       <span>Ringkasan</span>
@@ -68,6 +72,7 @@
 
   <script src="js/storage.js"></script>
   <script src="js/ui.js"></script>
+  <script src="js/pengingat.js"></script>
   <script src="js/catat.js"></script>
   <script src="js/pwa.js"></script>
 </body>

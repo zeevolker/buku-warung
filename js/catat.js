@@ -5,22 +5,25 @@ const catatanEl = document.getElementById("catatan");
 const pesanEl = document.getElementById("pesan");
 const infoEl = document.getElementById("info");
 const bannerEl = document.getElementById("banner-ubah");
+const bannerTeksEl = document.getElementById("banner-teks");
 const daftarEl = document.getElementById("daftar");
 const totalMasukEl = document.getElementById("total-masuk");
 const totalKeluarEl = document.getElementById("total-keluar");
-const untungEl = document.getElementById("untung");
+const totalEl = document.getElementById("total");
 
 let idDiubah = null; // null = mode catat baru, angka = sedang mengubah catatan itu
+let tujuanKembali = null; // diisi kalau mengubah catatan dari halaman Riwayat
 let timerInfo;
 
-document.getElementById("tanggal-hari-ini").textContent = new Date().toLocaleDateString("id-ID", {
-  weekday: "long", day: "numeric", month: "long", year: "numeric",
-});
+document.getElementById("tanggal-hari-ini").textContent =
+  formatTanggalLengkap(hariIni());
 
 function tampilInfo(teks) {
   infoEl.textContent = teks;
   clearTimeout(timerInfo);
-  timerInfo = setTimeout(() => { infoEl.textContent = ""; }, 3000);
+  timerInfo = setTimeout(() => {
+    infoEl.textContent = "";
+  }, 3000);
 }
 
 function selesaiUbah() {
@@ -33,9 +36,22 @@ function mulaiUbah(t) {
   nominalEl.value = t.nominal.toLocaleString("id-ID");
   catatanEl.value = t.catatan;
   pesanEl.textContent = "";
+  bannerTeksEl.textContent =
+    t.tanggal === hariIni()
+      ? "Sedang mengubah catatan. Pilih Uang Masuk atau Uang Keluar untuk menyimpan."
+      : `Mengubah catatan tanggal ${formatTanggalPanjang(t.tanggal)}. Pilih Uang Masuk atau Uang Keluar untuk menyimpan.`;
   bannerEl.hidden = false;
   window.scrollTo({ top: 0, behavior: "smooth" });
   nominalEl.focus();
+}
+
+function batalUbah() {
+  if (tujuanKembali) {
+    location.href = tujuanKembali;
+    return;
+  }
+  selesaiUbah();
+  formEl.reset();
 }
 
 function simpan(tipe) {
@@ -55,72 +71,54 @@ function simpan(tipe) {
   // Kalau gagal, biarkan isi form supaya pengguna tidak perlu mengetik ulang.
   if (!berhasil) return;
 
+  // Mengubah catatan dari Riwayat: setelah disimpan, kembali ke tanggal itu.
+  if (sedangUbah && tujuanKembali) {
+    location.href = tujuanKembali;
+    return;
+  }
+
   const jenis = tipe === "masuk" ? "Uang masuk" : "Uang keluar";
-  tampilInfo(`${sedangUbah ? "Diubah" : "Tersimpan"}: ${jenis} ${formatRupiah(nominal)}`);
+  tampilInfo(
+    `${sedangUbah ? "Diubah" : "Tersimpan"}: ${jenis} ${formatRupiah(nominal)}`,
+  );
   pesanEl.textContent = "";
   selesaiUbah();
   formEl.reset();
   tampilkan();
 }
 
+function hapusDariDaftar(t) {
+  hapusTransaksi(t.id);
+  if (idDiubah === t.id) {
+    selesaiUbah();
+    formEl.reset();
+  }
+  tampilkan();
+}
+
 function tampilkan() {
-  const hariIniData = ambilData(KEY_TRANSAKSI)
-    .filter((t) => t.tanggal === hariIni())
-    .reverse(); // yang terbaru di atas
+  const hariIniData = transaksiPadaTanggal(hariIni());
+  const hasil = hitungTotal(hariIniData);
 
-  const totalMasuk = hariIniData
-    .filter((t) => t.tipe === "masuk")
-    .reduce((jumlah, t) => jumlah + t.nominal, 0);
-  const totalKeluar = hariIniData
-    .filter((t) => t.tipe === "keluar")
-    .reduce((jumlah, t) => jumlah + t.nominal, 0);
-
-  totalMasukEl.textContent = formatRupiah(totalMasuk);
-  totalKeluarEl.textContent = formatRupiah(totalKeluar);
-  untungEl.textContent = formatRupiah(totalMasuk - totalKeluar);
+  totalMasukEl.textContent = formatRupiah(hasil.masuk);
+  totalKeluarEl.textContent = formatRupiah(hasil.keluar);
+  totalEl.textContent = formatRupiah(hasil.total);
 
   daftarEl.innerHTML = "";
 
   if (hariIniData.length === 0) {
     const kosong = document.createElement("li");
     kosong.className = "kosong";
-    kosong.textContent = "Belum ada catatan hari ini. Isi nominal di atas lalu pilih Uang Masuk atau Uang Keluar.";
+    kosong.textContent =
+      "Belum ada catatan hari ini. Isi nominal di atas lalu pilih Uang Masuk atau Uang Keluar.";
     daftarEl.appendChild(kosong);
     return;
   }
 
   hariIniData.forEach((t) => {
-    const li = document.createElement("li");
-    li.className = "item " + t.tipe;
-
-    const info = document.createElement("span");
-    info.textContent = t.catatan || (t.tipe === "masuk" ? "Uang masuk" : "Uang keluar");
-
-    const nominal = document.createElement("strong");
-    nominal.textContent = (t.tipe === "masuk" ? "+ " : "- ") + formatRupiah(t.nominal);
-
-    const waktu = document.createElement("small");
-    waktu.className = "waktu";
-    waktu.textContent = labelWaktuTransaksi(t);
-
-    const ubah = document.createElement("button");
-    ubah.type = "button";
-    ubah.className = "ubah-catat";
-    ubah.textContent = "Ubah";
-    ubah.addEventListener("click", () => mulaiUbah(t));
-
-    const hapus = buatTombolHapus(() => {
-      hapusTransaksi(t.id);
-      if (idDiubah === t.id) { selesaiUbah(); formEl.reset(); }
-      tampilkan();
-    });
-
-    const aksi = document.createElement("span");
-    aksi.className = "aksi";
-    aksi.append(ubah, hapus);
-
-    li.append(info, nominal, waktu, aksi);
-    daftarEl.appendChild(li);
+    daftarEl.appendChild(
+      buatItemTransaksi(t, { onUbah: mulaiUbah, onHapus: hapusDariDaftar }),
+    );
   });
 }
 
@@ -134,8 +132,27 @@ document.querySelectorAll("[data-tambah]").forEach((tombol) => {
   });
 });
 
-document.getElementById("btn-masuk").addEventListener("click", () => simpan("masuk"));
-document.getElementById("btn-keluar").addEventListener("click", () => simpan("keluar"));
-document.getElementById("batal-ubah").addEventListener("click", () => { selesaiUbah(); formEl.reset(); });
+document
+  .getElementById("btn-masuk")
+  .addEventListener("click", () => simpan("masuk"));
+document
+  .getElementById("btn-keluar")
+  .addEventListener("click", () => simpan("keluar"));
+document.getElementById("batal-ubah").addEventListener("click", batalUbah);
 
 tampilkan();
+
+// Dibuka dari Riwayat: index.html?ubah=ID&kembali=riwayat
+const params = new URLSearchParams(location.search);
+const idDariAlamat = Number(params.get("ubah"));
+if (idDariAlamat) {
+  const t = ambilData(KEY_TRANSAKSI).find((x) => x.id === idDariAlamat);
+  if (t) {
+    if (params.get("kembali") === "riwayat") {
+      tujuanKembali = "riwayat.html?tanggal=" + t.tanggal;
+    }
+    mulaiUbah(t);
+  }
+  // Hapus parameter supaya muat ulang tidak membuka mode ubah lagi.
+  history.replaceState(null, "", location.pathname);
+}
