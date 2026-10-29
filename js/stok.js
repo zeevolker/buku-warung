@@ -20,7 +20,7 @@ function tambah() {
     return;
   }
 
-  tambahBarang(nama, jumlah, ambilAngka(hargaEl));
+  if (!tambahBarang(nama, jumlah, ambilAngka(hargaEl))) return;
   pesanEl.textContent = "";
   document.getElementById("form-barang").reset();
   namaEl.focus();
@@ -37,7 +37,12 @@ function buatTombolUbah(teks, label, onClick) {
   return tombol;
 }
 
-function tampilkan() {
+// Urutan daftar (berisi id barang). Barang yang hampir habis ditaruh paling atas
+// saat halaman dibuka atau saat daftar berubah (tambah/hapus). Saat menekan + atau −,
+// urutannya dibekukan supaya barang yang sedang diubah tidak pindah tempat.
+let urutan = [];
+
+function tampilkan(urutUlang = true) {
   const barang = ambilData(KEY_BARANG);
   daftarEl.innerHTML = "";
 
@@ -50,8 +55,12 @@ function tampilkan() {
     return;
   }
 
-  // Barang yang hampir habis ditaruh paling atas supaya langsung terlihat.
-  barang.sort((a, b) => a.stok - b.stok);
+  if (urutUlang) {
+    barang.sort((a, b) => a.stok - b.stok);
+    urutan = barang.map((b) => b.id);
+  } else {
+    barang.sort((a, b) => urutan.indexOf(a.id) - urutan.indexOf(b.id));
+  }
 
   barang.forEach((b) => {
     const menipis = b.stok <= BATAS_MENIPIS;
@@ -96,12 +105,12 @@ function tampilkan() {
     kontrol.append(
       buatTombolUbah("−", `Kurangi stok ${b.nama}`, () => {
         ubahStok(b.id, -1);
-        tampilkan();
+        tampilkan(false);
       }),
       jumlah,
       buatTombolUbah("+", `Tambah stok ${b.nama}`, () => {
         ubahStok(b.id, +1);
-        tampilkan();
+        tampilkan(false);
       }),
       hapus,
     );

@@ -9,8 +9,27 @@ function ambilData(key) {
   }
 }
 
+// Mengembalikan true kalau berhasil, false kalau gagal (penyimpanan penuh,
+// mode penyamaran, dsb.). Kalau gagal, pengguna diberi tahu lewat banner merah.
 function simpanData(key, data) {
-  localStorage.setItem(key, JSON.stringify(data));
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+    return true;
+  } catch (e) {
+    tampilkanGagalSimpan();
+    return false;
+  }
+}
+
+function tampilkanGagalSimpan() {
+  if (document.getElementById("gagal-simpan")) return;
+  const el = document.createElement("div");
+  el.id = "gagal-simpan";
+  el.className = "gagal-simpan";
+  el.setAttribute("role", "alert");
+  el.textContent =
+    "Data gagal disimpan, jadi catatan terakhir belum tersimpan. Penyimpanan HP mungkin penuh, atau browser sedang dalam mode penyamaran.";
+  document.body.prepend(el);
 }
 
 // Tanggal lokal format YYYY-MM-DD.
@@ -35,12 +54,12 @@ function tambahTransaksi(tipe, nominal, catatan) {
     tanggal: hariIni(),
     dibuat: Date.now(), // waktu persis pencatatan
   });
-  simpanData(KEY_TRANSAKSI, data);
+  return simpanData(KEY_TRANSAKSI, data);
 }
 
 function hapusTransaksi(id) {
   const data = ambilData(KEY_TRANSAKSI).filter((t) => t.id !== id);
-  simpanData(KEY_TRANSAKSI, data);
+  return simpanData(KEY_TRANSAKSI, data);
 }
 
 function ubahTransaksi(id, tipe, nominal, catatan) {
@@ -49,7 +68,7 @@ function ubahTransaksi(id, tipe, nominal, catatan) {
       ? { ...t, tipe, nominal: Number(nominal), catatan: catatan.trim() }
       : t,
   );
-  simpanData(KEY_TRANSAKSI, data);
+  return simpanData(KEY_TRANSAKSI, data);
 }
 
 function formatRupiah(angka) {
@@ -69,7 +88,7 @@ function tambahBarang(nama, stok, harga) {
     harga: Number(harga) || 0,
     diubah: Date.now(),
   });
-  simpanData(KEY_BARANG, data);
+  return simpanData(KEY_BARANG, data);
 }
 
 // selisih bisa +1 atau -1. Stok tidak boleh di bawah 0.
@@ -79,12 +98,12 @@ function ubahStok(id, selisih) {
       ? { ...b, stok: Math.max(0, b.stok + selisih), diubah: Date.now() }
       : b,
   );
-  simpanData(KEY_BARANG, data);
+  return simpanData(KEY_BARANG, data);
 }
 
 function hapusBarang(id) {
   const data = ambilData(KEY_BARANG).filter((b) => b.id !== id);
-  simpanData(KEY_BARANG, data);
+  return simpanData(KEY_BARANG, data);
 }
 
 // ---- Format tanggal dan waktu (bahasa Indonesia) ----

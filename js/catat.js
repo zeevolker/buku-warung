@@ -48,11 +48,12 @@ function simpan(tipe) {
   }
 
   const sedangUbah = idDiubah !== null;
-  if (sedangUbah) {
-    ubahTransaksi(idDiubah, tipe, nominal, catatanEl.value);
-  } else {
-    tambahTransaksi(tipe, nominal, catatanEl.value);
-  }
+  const berhasil = sedangUbah
+    ? ubahTransaksi(idDiubah, tipe, nominal, catatanEl.value)
+    : tambahTransaksi(tipe, nominal, catatanEl.value);
+
+  // Kalau gagal, biarkan isi form supaya pengguna tidak perlu mengetik ulang.
+  if (!berhasil) return;
 
   const jenis = tipe === "masuk" ? "Uang masuk" : "Uang keluar";
   tampilInfo(`${sedangUbah ? "Diubah" : "Tersimpan"}: ${jenis} ${formatRupiah(nominal)}`);

@@ -82,8 +82,15 @@ fileEl.addEventListener("change", () => {
 
 document.getElementById("btn-pulihkan-ya").addEventListener("click", () => {
   if (!dataMenunggu) return;
-  simpanData(KEY_TRANSAKSI, dataMenunggu.transaksi);
-  simpanData(KEY_BARANG, dataMenunggu.barang);
+  const berhasil =
+    simpanData(KEY_TRANSAKSI, dataMenunggu.transaksi) &&
+    simpanData(KEY_BARANG, dataMenunggu.barang);
+  if (!berhasil) {
+    konfirmasiEl.hidden = true;
+    pesanCadanganEl.textContent =
+      "Pemulihan gagal karena data tidak bisa disimpan. Cek ruang penyimpanan HP lalu coba lagi.";
+    return;
+  }
   dataMenunggu = null;
   location.reload(); // muat ulang supaya angka ringkasan ikut diperbarui
 });
