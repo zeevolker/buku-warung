@@ -71,6 +71,7 @@ export function ubahDataLama(lama, idBaru = buatId) {
         ...dasar(waktu),
         pelanggan_id: pel.id,
         tipe: m.tipe,
+        jenis: m.tipe === "utang" ? "lain" : null,
         nominal: m.nominal,
         catatan: m.catatan || "",
         tanggal: tanggalDariMs(waktu),

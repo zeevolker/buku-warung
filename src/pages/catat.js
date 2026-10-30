@@ -3,10 +3,10 @@ import { mulaiAplikasi } from "../app.js";
 import { pasangKepala, pasangPengingat } from "../ui/kepala.js";
 import { semua, ambil } from "../data/db.js";
 import { catatTransaksi, ubahTransaksi, hapusTransaksi } from "../data/repo.js";
-import { hitungKas } from "../data/hitung.js";
+import { hitungKas, jenisKasbon } from "../data/hitung.js";
 import { formatRupiah } from "../lib/format.js";
 import { hariIni, formatTanggalLengkap, formatTanggalPanjang } from "../lib/tanggal.js";
-import { ambilAngka, pasangFormatRupiah, buatItemTransaksi, buatItemKasbon, buatKosong, aman, saatDataBerubah } from "../ui/komponen.js";
+import { ambilAngka, pasangFormatRupiah, buatItemTransaksi, buatItemKasbon, buatKosong, aman, saatDataBerubah, kabar } from "../ui/komponen.js";
 
 // Tunggu pemindahan data lama selesai sebelum menampilkan apa pun
 await mulaiAplikasi();
@@ -84,7 +84,8 @@ async function simpan(tipe) {
 }
 
 async function hapus(t) {
-  await aman(() => hapusTransaksi(t.id));
+  const h = await aman(() => hapusTransaksi(t.id));
+  if (h.galat) kabar(h.galat);
   if (idDiubah === t.id) {
     selesaiUbah();
     formEl.reset();
@@ -96,7 +97,7 @@ async function tampilkan() {
   const tgl = hariIni();
   const [transaksi, kasbon, pelanggan] = await Promise.all([semua("transaksi"), semua("kasbon"), semua("pelanggan")]);
   const hariIniData = transaksi.filter((t) => t.tanggal === tgl);
-  const kasbonHariIni = kasbon.filter((k) => k.tanggal === tgl && k.tipe === "utang");
+  const kasbonHariIni = kasbon.filter((k) => k.tanggal === tgl && k.tipe === "utang" && jenisKasbon(k) !== "tunai");
   const nama = new Map(pelanggan.map((p) => [p.id, p.nama]));
 
   const kas = hitungKas(hariIniData);

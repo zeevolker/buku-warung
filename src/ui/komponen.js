@@ -46,7 +46,7 @@ export function buatTombolHapus(onYa, teks = "Hapus") {
   return wadah;
 }
 
-const LABEL_SUMBER = { jual: "Penjualan barang", bayar_kasbon: "Bayar kasbon" };
+const LABEL_SUMBER = { jual: "Penjualan barang", bayar_kasbon: "Bayar kasbon", pinjam_kasbon: "Pinjaman kasbon" };
 
 // Satu baris catatan uang (Catat Cepat dan Riwayat)
 export function buatItemTransaksi(t, { onUbah, onHapus }) {
@@ -133,4 +133,17 @@ export function saatDataBerubah(gambarUlang) {
     if (aktif && aktif.tagName === "INPUT" && aktif.closest("ul")) return;
     gambarUlang();
   });
+}
+
+// Pesan singkat yang hilang sendiri (misalnya penghapusan yang ditolak)
+let timerKabar;
+export function kabar(teks) {
+  let k = document.getElementById("kabar");
+  if (!k) {
+    k = el("p", { id: "kabar", className: "kabar", role: "status" });
+    document.body.append(k);
+  }
+  k.textContent = teks;
+  clearTimeout(timerKabar);
+  timerKabar = setTimeout(() => (k.textContent = ""), 4000);
 }

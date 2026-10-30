@@ -23,10 +23,11 @@ Banyak pemilik warung dan pedagang kaki lima tidak mencatat keuangan, atau hanya
 
 - **Catat Cepat:** uang masuk dan keluar dengan satu form, nominal otomatis diformat, tombol nominal cepat
 - **Stok Barang:** stok berkurang otomatis saat menekan **Jual** (tunai) atau **Kasbon** (dibayar nanti); harga jual dan modal bisa diubah; penanda barang hampir habis
-- **Kasbon:** utang berupa uang atau barang dari stok, cicilan, sisa per pelanggan, pengingat lewat WhatsApp
+- **Kasbon:** dua jenis, yaitu **barang** (dari daftar stok atau di luar stok) dan **uang tunai** (pinjam dari laci); cicilan, sisa per pelanggan, pengingat lewat WhatsApp
 - **Semua saling terhubung:**
   - jual tunai → uang masuk + stok berkurang
   - kasbon barang → utang pelanggan + stok berkurang (tidak masuk Total karena uangnya belum diterima)
+  - pinjam uang tunai → utang pelanggan + uang keluar (Total berkurang karena uangnya memang keluar dari laci)
   - terima bayar kasbon → sisa utang berkurang + uang masuk
   - menghapus salah satu sisi ikut membatalkan pasangannya (stok kembali, sisa utang kembali)
 - **Riwayat:** lihat, ubah, dan hapus catatan dari tanggal mana pun; bagikan ringkasan hari itu ke WhatsApp
@@ -66,7 +67,7 @@ barang     ─< stok_mutasi        stok = jumlah semua mutasi barang itu
 pelanggan  ─< kasbon             sisa = utang − bayar
 transaksi  ── stok_mutasi        (jual tunai)
 kasbon     ── stok_mutasi        (kasbon barang)
-kasbon     ── transaksi          (bayar kasbon)
+kasbon     ── transaksi          (bayar kasbon, pinjam uang tunai)
 ```
 
 Skema lengkap ada di [`supabase/migrations`](supabase/migrations).
@@ -81,6 +82,7 @@ Skema lengkap ada di [`supabase/migrations`](supabase/migrations).
 - **Keamanan di database, bukan di kode frontend.** Row Level Security memastikan tiap akun hanya bisa membaca dan mengubah datanya sendiri. Foreign key gabungan `(user_id, id)` mencegah data menunjuk ke milik akun lain. Kunci publishable Supabase memang aman ditaruh di frontend.
 - **Relasi dijaga di satu tempat (`repo.js`).** Halaman tidak menulis ke database langsung, jadi aturan seperti "hapus penjualan = stok kembali" tidak bisa terlewat.
 - **Data versi lama dipindahkan otomatis.** Saat pertama kali dibuka, data dari localStorage (versi 1) diubah ke format baru tanpa mengubah satu angka pun, dan data lamanya tidak dihapus.
+- **Kasbon barang tidak mengurangi Total, pinjaman tunai mengurangi.** Total adalah uang di laci. Kasbon barang hanya berarti uangnya belum masuk (yang berkurang stoknya), sedangkan pinjaman tunai benar-benar mengeluarkan uang.
 - **Label "Total", bukan "Untung".** Total adalah arus kas. Untung ditampilkan terpisah dan hanya dihitung dari barang yang modalnya diketahui.
 - **Keluar akun menghapus data dari HP.** Aman untuk HP yang dipakai bergantian; datanya tetap ada di cloud.
 

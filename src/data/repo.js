@@ -7,6 +7,7 @@
 //   transaksi  ──  stok_mutasi   (jual tunai: uang masuk + stok berkurang)
 //   kasbon     ──  stok_mutasi   (kasbon barang: utang + stok berkurang, tanpa uang masuk)
 //   kasbon     ──  transaksi     (bayar kasbon: sisa berkurang + uang masuk)
+//   kasbon     ──  transaksi     (pinjam uang tunai: utang bertambah + uang keluar)
 // Menghapus satu sisi relasi ikut menghapus pasangannya, supaya angka selalu cocok.
 
 import { semua, ambil, tulis } from "./db.js";
@@ -71,6 +72,14 @@ export async function hapusTransaksi(id) {
     // Uang bayaran dihapus: catatan bayar di kasbon ikut terhapus, sisa utang naik lagi
     const k = await ambil("kasbon", t.kasbon_id);
     if (k && !k.deleted) perubahan.push({ tabel: "kasbon", baris: dihapus(k) });
+  }
+  if (t.sumber === "pinjam_kasbon" && t.kasbon_id) {
+    // Uang pinjaman dihapus: utangnya ikut terhapus, kecuali sudah ada yang dibayar
+    const k = await ambil("kasbon", t.kasbon_id);
+    if (k && !k.deleted) {
+      if (await sisaJadiMinus(k)) return tolak("Pinjaman ini sudah dibayar. Hapus dulu catatan bayarnya di halaman Kasbon.");
+      perubahan.push({ tabel: "kasbon", baris: dihapus(k) });
+    }
   }
   await tulis(perubahan);
   return {};
@@ -183,11 +192,21 @@ async function siapkanPelanggan(nama, telepon) {
   return { p: baru({ nama: nama.trim().replace(/\s+/g, " "), telepon: (telepon || "").trim() }), perluDisimpan: true };
 }
 
-// Catat utang. Kalau barangId diisi, ini kasbon barang: stok ikut berkurang
-// dan nominal dihitung dari harga jual.
-export async function catatUtang({ nama, nominal, catatan, telepon, barangId, jumlah }) {
+// Kalau utang ini dihapus, apakah sisa pelanggan jadi minus (karena sudah dibayar)?
+async function sisaJadiMinus(k) {
+  const lain = (await semua("kasbon")).filter((x) => x.id !== k.id);
+  return (hitungSisaKasbon(lain).get(k.pelanggan_id) || 0) < 0;
+}
+
+// Catat utang. Tiga jenis:
+//   barang : barang dari daftar stok -> stok berkurang, nominal dari harga jual
+//   lain   : barang di luar daftar stok (gorengan, pulsa, ...) -> nominal diisi manual
+//   tunai  : pinjam uang dari laci -> ikut tercatat sebagai uang keluar
+// Dua jenis pertama tidak mengubah Total, karena uangnya memang belum masuk.
+export async function catatUtang({ nama, nominal, catatan, telepon, barangId, jumlah, jenis }) {
   nama = (nama || "").trim();
   if (!nama) return tolak("Isi nama pelanggan dulu.");
+  jenis = barangId ? "barang" : jenis === "tunai" ? "tunai" : "lain";
 
   const perubahan = [];
   let isi;
@@ -209,9 +228,26 @@ export async function catatUtang({ nama, nominal, catatan, telepon, barangId, ju
   const { p, perluDisimpan } = await siapkanPelanggan(nama, telepon);
   if (perluDisimpan) perubahan.push({ tabel: "pelanggan", baris: p });
 
-  const k = baru({ pelanggan_id: p.id, tipe: "utang", tanggal: hariIni(), transaksi_id: null, ...isi });
+  const k = baru({ pelanggan_id: p.id, tipe: "utang", jenis, tanggal: hariIni(), transaksi_id: null, ...isi });
   perubahan.push({ tabel: "kasbon", baris: k });
   if (barangId) perubahan.push({ tabel: "stok_mutasi", baris: mutasiBaru(barangId, -jumlah, "kasbon", k.id) });
+  if (jenis === "tunai") {
+    // Uang keluar dari laci, terhubung ke utangnya
+    const t = baru({
+      tipe: "keluar",
+      nominal: k.nominal,
+      catatan: "Pinjaman kasbon: " + p.nama,
+      tanggal: hariIni(),
+      sumber: "pinjam_kasbon",
+      barang_id: null,
+      jumlah: null,
+      modal: null,
+      kasbon_id: k.id,
+      pelanggan_id: p.id,
+    });
+    k.transaksi_id = t.id;
+    perubahan.push({ tabel: "transaksi", baris: t });
+  }
 
   await tulis(perubahan);
   return { kasbon: k, pelanggan: p };
@@ -229,6 +265,7 @@ export async function terimaBayar(pelangganId, { nominal, catatan, catatKas = tr
   const k = baru({
     pelanggan_id: p.id,
     tipe: "bayar",
+    jenis: null,
     nominal,
     catatan: (catatan || "").trim(),
     tanggal: hariIni(),
@@ -263,11 +300,8 @@ export async function hapusKasbon(id) {
   const k = await ambil("kasbon", id);
   if (!k || k.deleted) return {};
 
-  if (k.tipe === "utang") {
-    // Jangan sampai sisa jadi minus (bayaran lebih besar dari utang)
-    const sisa = hitungSisaKasbon((await semua("kasbon")).filter((x) => x.id !== k.id)).get(k.pelanggan_id) || 0;
-    if (sisa < 0) return tolak("Hapus dulu catatan bayarnya, karena utang ini sudah dibayar.");
-  }
+  // Jangan sampai sisa jadi minus (bayaran lebih besar dari utang)
+  if (k.tipe === "utang" && (await sisaJadiMinus(k))) return tolak("Hapus dulu catatan bayarnya, karena utang ini sudah dibayar.");
 
   const perubahan = [{ tabel: "kasbon", baris: dihapus(k) }];
   if (k.tipe === "utang" && k.barang_id) {
@@ -276,8 +310,8 @@ export async function hapusKasbon(id) {
       .filter((m) => m.ref_id === k.id)
       .forEach((m) => perubahan.push({ tabel: "stok_mutasi", baris: dihapus(m) }));
   }
-  if (k.tipe === "bayar" && k.transaksi_id) {
-    // Bayaran dihapus: uang masuknya ikut terhapus
+  if (k.transaksi_id) {
+    // Bayaran dihapus: uang masuknya ikut terhapus. Pinjaman tunai dihapus: uang keluarnya ikut terhapus.
     const t = await ambil("transaksi", k.transaksi_id);
     if (t && !t.deleted) perubahan.push({ tabel: "transaksi", baris: dihapus(t) });
   }

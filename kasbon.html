@@ -31,17 +31,27 @@
       <input id="k-nama" type="text" maxlength="40" list="daftar-nama" autocomplete="off" placeholder="contoh: Bu Sari">
       <datalist id="daftar-nama"></datalist>
 
-      <label for="k-barang">Yang diutang</label>
-      <select id="k-barang"></select>
+      <fieldset class="pilih-jenis">
+        <legend>Jenis kasbon</legend>
+        <div class="segmen">
+          <label><input type="radio" name="k-jenis" value="barang" checked><span>Barang</span></label>
+          <label><input type="radio" name="k-jenis" value="tunai"><span>Uang tunai</span></label>
+        </div>
+      </fieldset>
 
-      <div id="baris-jumlah-barang" hidden>
-        <label for="k-jumlah-barang">Jumlah barang</label>
-        <input id="k-jumlah-barang" type="number" inputmode="numeric" min="1" value="1">
+      <div id="bagian-barang">
+        <label for="k-barang">Barang</label>
+        <select id="k-barang"></select>
+        <div id="baris-jumlah-barang" hidden>
+          <label for="k-jumlah-barang">Jumlah barang</label>
+          <input id="k-jumlah-barang" type="number" inputmode="numeric" min="1" value="1">
+        </div>
       </div>
+      <p id="k-info-jenis" class="info-jenis"></p>
 
       <div class="baris-input">
         <div>
-          <label for="k-nominal">Utang (Rp)</label>
+          <label for="k-nominal" id="label-nominal">Utang (Rp)</label>
           <input id="k-nominal" type="text" inputmode="numeric" autocomplete="off" placeholder="25.000">
         </div>
         <div>

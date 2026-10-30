@@ -7,6 +7,13 @@
 
 const hidup = (b) => !b.deleted;
 
+// Jenis utang: "barang" (dari stok), "lain" (barang di luar stok), "tunai" (pinjam uang).
+// Catatan lama belum punya kolom jenis, jadi ditebak dari ada/tidaknya barang.
+export function jenisKasbon(k) {
+  if (k.tipe !== "utang") return null;
+  return k.jenis || (k.barang_id ? "barang" : "lain");
+}
+
 // Stok tiap barang = jumlah semua pergerakan stoknya (awal, tambah, jual, kasbon, ...)
 export function hitungStok(mutasi) {
   const stok = new Map();

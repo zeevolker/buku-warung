@@ -3,10 +3,10 @@ import { mulaiAplikasi } from "../app.js";
 import { pasangKepala } from "../ui/kepala.js";
 import { semua } from "../data/db.js";
 import { hapusTransaksi } from "../data/repo.js";
-import { hitungKas } from "../data/hitung.js";
+import { hitungKas, jenisKasbon } from "../data/hitung.js";
 import { formatRupiah } from "../lib/format.js";
 import { hariIni, geserTanggal, formatTanggalLengkap, POLA_TANGGAL } from "../lib/tanggal.js";
-import { buatItemTransaksi, buatItemKasbon, buatKosong, bagikanTeks, aman, saatDataBerubah } from "../ui/komponen.js";
+import { buatItemTransaksi, buatItemKasbon, buatKosong, bagikanTeks, aman, saatDataBerubah, kabar } from "../ui/komponen.js";
 
 // Tunggu pemindahan data lama selesai sebelum menampilkan apa pun
 await mulaiAplikasi();
@@ -52,7 +52,7 @@ async function tampilkan() {
 
   const [transaksi, kasbon, pelanggan] = await Promise.all([semua("transaksi"), semua("kasbon"), semua("pelanggan")]);
   const daftarT = transaksi.filter((t) => t.tanggal === tanggal);
-  const daftarK = kasbon.filter((k) => k.tanggal === tanggal && k.tipe === "utang");
+  const daftarK = kasbon.filter((k) => k.tanggal === tanggal && k.tipe === "utang" && jenisKasbon(k) !== "tunai");
   const nama = new Map(pelanggan.map((p) => [p.id, p.nama]));
 
   const kas = hitungKas(daftarT);
@@ -64,7 +64,8 @@ async function tampilkan() {
 
   const onUbah = (t) => (location.href = `index.html?ubah=${t.id}&kembali=riwayat`);
   const onHapus = async (t) => {
-    await aman(() => hapusTransaksi(t.id));
+    const h = await aman(() => hapusTransaksi(t.id));
+    if (h.galat) kabar(h.galat);
     tampilkan();
   };
   const daftar = [

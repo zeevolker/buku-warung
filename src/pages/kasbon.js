@@ -4,6 +4,7 @@ import { pasangKepala } from "../ui/kepala.js";
 import { daftarPelanggan, daftarBarang, catatUtang, terimaBayar, hapusKasbon, hapusPelanggan, ubahTelepon } from "../data/repo.js";
 import { formatRupiah, nomorWhatsApp } from "../lib/format.js";
 import { formatWaktuLengkap } from "../lib/tanggal.js";
+import { jenisKasbon } from "../data/hitung.js";
 import { el, ambilAngka, pasangFormatRupiah, inputRupiah, buatTombolHapus, buatKosong, aman, saatDataBerubah } from "../ui/komponen.js";
 
 // Tunggu pemindahan data lama selesai sebelum menampilkan apa pun
@@ -17,16 +18,36 @@ let barangTersedia = [];
 
 // ---------- Form kasbon baru ----------
 
+const jenisDipilih = () => document.querySelector('input[name="k-jenis"]:checked').value;
+
 function barangTerpilih() {
+  if (jenisDipilih() !== "barang") return null;
   return barangTersedia.find((b) => b.id === $("k-barang").value) || null;
 }
 
-// Kalau yang diutang barang, nominal dihitung otomatis dari harga jual x jumlah
+const INFO_JENIS = {
+  stok: "Stok berkurang otomatis. Total tidak berubah karena uangnya belum diterima.",
+  lain: "Untuk barang yang tidak dicatat di Stok. Total tidak berubah karena uangnya belum diterima.",
+  tunai: "Uang keluar dari laci, jadi tercatat sebagai uang keluar dan Total berkurang. Saat dibayar, Total bertambah lagi.",
+};
+
+// Barang dari stok: nominal dihitung otomatis dari harga jual x jumlah.
+// Uang tunai: tidak perlu memilih barang.
 function perbaruiForm() {
+  const tunai = jenisDipilih() === "tunai";
   const b = barangTerpilih();
+  $("bagian-barang").hidden = tunai;
   $("baris-jumlah-barang").hidden = !b;
   $("k-nominal").readOnly = Boolean(b);
+  $("label-nominal").textContent = tunai ? "Jumlah pinjaman (Rp)" : "Utang (Rp)";
+  $("btn-utang").textContent = tunai ? "Catat Pinjaman" : "Catat Utang";
+  $("k-info-jenis").textContent = INFO_JENIS[tunai ? "tunai" : b ? "stok" : "lain"];
+  if (!b && $("k-nominal").readOnly === false && $("k-nominal").dataset.otomatis) {
+    $("k-nominal").value = "";
+    delete $("k-nominal").dataset.otomatis;
+  }
   if (b) {
+    $("k-nominal").dataset.otomatis = "1";
     const n = Math.max(1, Math.floor(Number($("k-jumlah-barang").value) || 1));
     $("k-nominal").value = (b.harga_jual * n).toLocaleString("id-ID");
     $("k-jumlah-barang").max = String(b.stok);
@@ -43,6 +64,7 @@ async function catatBaru() {
       telepon: $("k-telepon").value,
       barangId: b ? b.id : null,
       jumlah: b ? Math.floor(Number($("k-jumlah-barang").value)) : null,
+      jenis: jenisDipilih(),
     })
   );
   if (hasil.galat) {
@@ -62,14 +84,17 @@ function teksPengingat(p) {
   return `Halo ${p.nama}, mengingatkan kasbon di warung sebesar ${formatRupiah(p.sisa)}. Terima kasih.`;
 }
 
+const LABEL_JENIS = { barang: "Utang barang", lain: "Utang", tunai: "Pinjam uang" };
+const KET_KAS = { utang: " · tercatat sebagai uang keluar", bayar: " · tercatat sebagai uang masuk" };
+
 function buatBaris(k) {
-  const jenis = k.tipe === "utang" ? (k.barang_id ? "Utang barang" : "Utang") : "Bayar";
+  const jenis = k.tipe === "utang" ? LABEL_JENIS[jenisKasbon(k)] : "Bayar";
   return el(
     "div",
     { className: "mutasi " + k.tipe },
     el("span", { className: "jenis", textContent: jenis + (k.catatan ? ": " + k.catatan : "") }),
     el("strong", { textContent: (k.tipe === "utang" ? "+ " : "− ") + formatRupiah(k.nominal) }),
-    el("small", {}, formatWaktuLengkap(k.created_at), k.transaksi_id ? " · tercatat sebagai uang masuk" : ""),
+    el("small", {}, formatWaktuLengkap(k.created_at), k.transaksi_id ? KET_KAS[k.tipe] : ""),
     buatTombolHapus(async () => {
       const h = await aman(() => hapusKasbon(k.id));
       if (h.galat) pesanKartu.set(k.pelanggan_id, h.galat);
@@ -83,6 +108,11 @@ function buatDetail(p) {
   const catatan = el("input", { type: "text", maxLength: 60, placeholder: "Catatan (boleh kosong)" });
   catatan.setAttribute("aria-label", "Catatan untuk " + p.nama);
   const kotak = el("input", { type: "checkbox", checked: true });
+  const namaRadio = "jenis-" + p.id;
+  const pilihan = (nilai, teks, pilih = false) =>
+    el("label", {}, el("input", { type: "radio", name: namaRadio, value: nilai, checked: pilih }), el("span", { textContent: teks }));
+  const segmen = el("div", { className: "segmen kecil" }, pilihan("lain", "Barang", true), pilihan("tunai", "Uang tunai"));
+  const jenisUtang = () => segmen.querySelector("input:checked").value;
 
   const jalankan = async (aksi) => {
     const h = await aman(aksi);
@@ -100,6 +130,7 @@ function buatDetail(p) {
     ...p.kasbon.map(buatBaris),
     nominal,
     catatan,
+    el("fieldset", { className: "pilih-jenis" }, el("legend", { textContent: "Tambah utang berupa" }), segmen),
     el("label", { className: "centang" }, kotak, "Catat bayaran sebagai uang masuk"),
     pesanKartu.has(p.id) ? el("p", { className: "pesan-kartu", role: "alert", textContent: pesanKartu.get(p.id) }) : null,
     el(
@@ -109,7 +140,7 @@ function buatDetail(p) {
         type: "button",
         className: "utang",
         textContent: "Tambah Utang",
-        onclick: () => jalankan(() => catatUtang({ nama: p.nama, nominal: ambilAngka(nominal), catatan: catatan.value })),
+        onclick: () => jalankan(() => catatUtang({ nama: p.nama, nominal: ambilAngka(nominal), catatan: catatan.value, jenis: jenisUtang() })),
       }),
       el("button", {
         type: "button",
@@ -191,7 +222,7 @@ async function tampilkan() {
   const pilihanSebelum = $("k-barang").value;
   barangTersedia = barang.filter((b) => b.harga_jual && b.stok > 0).sort((a, b) => a.nama.localeCompare(b.nama));
   $("k-barang").replaceChildren(
-    el("option", { value: "", textContent: "Uang / lainnya (isi nominal)" }),
+    el("option", { value: "", textContent: "Di luar daftar stok" }),
     ...barangTersedia.map((b) => el("option", { value: b.id, textContent: `${b.nama} (${formatRupiah(b.harga_jual)}, stok ${b.stok})` }))
   );
   if (barangTersedia.some((b) => b.id === pilihanSebelum)) $("k-barang").value = pilihanSebelum;
@@ -208,6 +239,7 @@ async function tampilkan() {
 
 pasangFormatRupiah($("k-nominal"));
 $("k-barang").addEventListener("change", perbaruiForm);
+document.querySelectorAll('input[name="k-jenis"]').forEach((r) => r.addEventListener("change", perbaruiForm));
 $("k-jumlah-barang").addEventListener("input", perbaruiForm);
 $("btn-utang").addEventListener("click", catatBaru);
 saatDataBerubah(tampilkan);
