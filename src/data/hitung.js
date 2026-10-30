@@ -1,77 +1,100 @@
-// hitung.js: semua perhitungan angka. Fungsi di sini "murni": menerima daftar baris,
-// mengembalikan angka, tanpa membaca database. Karena itu mudah dites (lihat tests/).
+// hitung.js: semua angka di aplikasi dihitung dari daftar catatan.
 //
-// Prinsip penting: stok, sisa kasbon, dan total TIDAK disimpan sebagai satu angka,
-// tapi selalu dihitung dari catatan-catatannya. Dengan begitu dua HP yang mencatat
-// penjualan bersamaan saat offline tidak saling menimpa angka stok.
+// Ada 4 jenis catatan:
+//   jual    barang laku. dibayar "sekarang" (uang masuk) atau "nanti" (jadi utang pelanggan)
+//   keluar  uang keluar untuk "belanja" stok, "biaya" warung, atau "pinjaman" ke pelanggan
+//   bayar   pelanggan membayar utangnya (uang masuk)
+//   stok    koreksi stok tanpa uang (stok awal, barang rusak, salah hitung)
+//
+// Fungsi di sini "murni": hanya menerima catatan lalu mengembalikan angka,
+// tanpa membaca database. Karena itu mudah dites (lihat folder tests/).
 
-const hidup = (b) => !b.deleted;
+const masihAda = (c) => !c.deleted;
 
-// Jenis utang: "barang" (dari stok), "lain" (barang di luar stok), "tunai" (pinjam uang).
-// Catatan lama belum punya kolom jenis, jadi ditebak dari ada/tidaknya barang.
-export function jenisKasbon(k) {
-  if (k.tipe !== "utang") return null;
-  return k.jenis || (k.barang_id ? "barang" : "lain");
+// ---------- Efek satu catatan ----------
+
+export function uangMasuk(c) {
+  if (c.jenis === "jual" && c.dibayar === "sekarang") return c.nominal;
+  if (c.jenis === "bayar") return c.nominal;
+  return 0;
 }
 
-// Stok tiap barang = jumlah semua pergerakan stoknya (awal, tambah, jual, kasbon, ...)
-export function hitungStok(mutasi) {
+export function uangKeluar(c) {
+  return c.jenis === "keluar" ? c.nominal : 0;
+}
+
+// Perubahan stok: [{ barang_id, jumlah }], jumlah negatif = berkurang
+export function perubahanStok(c) {
+  const barang = (c.barang || []).filter((b) => b.barang_id);
+  if (c.jenis === "jual") return barang.map((b) => ({ barang_id: b.barang_id, jumlah: -b.jumlah }));
+  if (c.jenis === "keluar" && c.untuk === "belanja") return barang.map((b) => ({ barang_id: b.barang_id, jumlah: b.jumlah }));
+  if (c.jenis === "stok") return barang.map((b) => ({ barang_id: b.barang_id, jumlah: b.jumlah }));
+  return [];
+}
+
+// Perubahan utang pelanggan: positif = utang bertambah
+export function perubahanUtang(c) {
+  if (c.jenis === "jual" && c.dibayar === "nanti") return c.nominal;
+  if (c.jenis === "keluar" && c.untuk === "pinjaman") return c.nominal;
+  if (c.jenis === "bayar") return -c.nominal;
+  return 0;
+}
+
+// Untung = (harga jual - modal) x jumlah, hanya untuk barang yang modalnya diketahui
+export function untungCatatan(c) {
+  if (c.jenis !== "jual") return 0;
+  return (c.barang || [])
+    .filter((b) => b.modal !== null && b.modal !== undefined)
+    .reduce((n, b) => n + (b.harga - b.modal) * b.jumlah, 0);
+}
+
+// ---------- Rangkuman banyak catatan ----------
+
+export function hitungUang(catatan) {
+  let masuk = 0;
+  let keluar = 0;
+  for (const c of catatan.filter(masihAda)) {
+    masuk += uangMasuk(c);
+    keluar += uangKeluar(c);
+  }
+  return { masuk, keluar, selisih: masuk - keluar };
+}
+
+// Map: id barang -> stok sekarang
+export function hitungStok(catatan) {
   const stok = new Map();
-  for (const m of mutasi.filter(hidup)) {
-    stok.set(m.barang_id, (stok.get(m.barang_id) || 0) + m.jumlah);
+  for (const c of catatan.filter(masihAda)) {
+    for (const p of perubahanStok(c)) stok.set(p.barang_id, (stok.get(p.barang_id) || 0) + p.jumlah);
   }
   return stok;
 }
 
-// Total = uang masuk dikurangi uang keluar (arus kas, bukan laba)
-export function hitungKas(transaksi) {
-  let masuk = 0;
-  let keluar = 0;
-  for (const t of transaksi.filter(hidup)) {
-    if (t.tipe === "masuk") masuk += t.nominal;
-    else if (t.tipe === "keluar") keluar += t.nominal;
+// Map: id pelanggan -> sisa utang
+export function hitungUtang(catatan) {
+  const utang = new Map();
+  for (const c of catatan.filter(masihAda)) {
+    const n = perubahanUtang(c);
+    if (n && c.pelanggan_id) utang.set(c.pelanggan_id, (utang.get(c.pelanggan_id) || 0) + n);
   }
-  return { masuk, keluar, total: masuk - keluar };
+  return utang;
 }
 
-// Sisa kasbon tiap pelanggan = utang dikurangi bayar
-export function hitungSisaKasbon(kasbon) {
-  const sisa = new Map();
-  for (const k of kasbon.filter(hidup)) {
-    const nilai = k.tipe === "utang" ? k.nominal : -k.nominal;
-    sisa.set(k.pelanggan_id, (sisa.get(k.pelanggan_id) || 0) + nilai);
-  }
-  return sisa;
+export function hitungUntung(catatan) {
+  return catatan.filter(masihAda).reduce((n, c) => n + untungCatatan(c), 0);
 }
 
-// Untung dari barang = harga jual - modal, untuk penjualan tunai (lewat tombol Jual)
-// maupun kasbon barang. Hanya dihitung kalau modalnya diketahui, supaya untung tidak
-// terlihat lebih besar dari kenyataan.
-export function hitungUntungBarang(transaksi, kasbon) {
-  let untung = 0;
-  let jumlah = 0;
-  const tambah = (baris) => {
-    if (baris.modal === null || baris.modal === undefined) return;
-    untung += baris.nominal - baris.modal;
-    jumlah += 1;
-  };
-  transaksi.filter(hidup).filter((t) => t.sumber === "jual").forEach(tambah);
-  kasbon.filter(hidup).filter((k) => k.tipe === "utang" && k.barang_id).forEach(tambah);
-  return { untung, jumlah };
-}
-
-// Kasbon yang diberikan dan yang dibayar dalam satu periode
-export function hitungArusKasbon(kasbon) {
-  let utangBaru = 0;
+// Utang pelanggan dalam satu periode: yang baru dan yang dibayar
+export function hitungArusUtang(catatan) {
+  let baru = 0;
   let dibayar = 0;
-  for (const k of kasbon.filter(hidup)) {
-    if (k.tipe === "utang") utangBaru += k.nominal;
-    else dibayar += k.nominal;
+  for (const c of catatan.filter(masihAda)) {
+    const n = perubahanUtang(c);
+    if (n > 0) baru += n;
+    else dibayar -= n;
   }
-  return { utangBaru, dibayar };
+  return { baru, dibayar };
 }
 
-// Saring baris yang tanggalnya di antara `dari` dan `sampai` (inklusif)
-export function dalamRentang(baris, dari, sampai) {
-  return baris.filter((b) => hidup(b) && b.tanggal >= dari && b.tanggal <= sampai);
+export function dalamRentang(catatan, dari, sampai) {
+  return catatan.filter((c) => masihAda(c) && c.tanggal >= dari && c.tanggal <= sampai);
 }

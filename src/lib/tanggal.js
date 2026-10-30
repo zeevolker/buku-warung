@@ -66,3 +66,25 @@ export function formatTanggalLengkap(teks) {
     year: "numeric",
   });
 }
+
+// "2026-10-15" -> "2026-10-31"
+export function akhirBulan(teks = hariIni()) {
+  const d = keDate(awalBulan(teks));
+  return formatTanggal(new Date(d.getFullYear(), d.getMonth() + 1, 0));
+}
+
+// Geser sebanyak `selisih` bulan, hasilnya tanggal 1 bulan itu
+export function geserBulan(teks, selisih) {
+  const d = keDate(awalBulan(teks));
+  return formatTanggal(new Date(d.getFullYear(), d.getMonth() + selisih, 1));
+}
+
+// "2026-10-30" -> "30 Okt"
+export function formatTanggalPendek(teks) {
+  return keDate(teks).toLocaleDateString("id-ID", { day: "numeric", month: "short" });
+}
+
+// "2026-10-01" -> "Oktober 2026"
+export function formatBulan(teks) {
+  return keDate(teks).toLocaleDateString("id-ID", { month: "long", year: "numeric" });
+}

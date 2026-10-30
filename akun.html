@@ -4,102 +4,144 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Buku Warung: Akun</title>
-  <meta name="description" content="Pembukuan sederhana untuk warung: uang masuk, uang keluar, stok, dan kasbon.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
   <link rel="stylesheet" href="./src/css/style.css">
   <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#1f7a4d">
+  <meta name="theme-color" content="#fafaf8">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 </head>
 <body>
-  <main>
-    <div class="kepala">
-      <h1>Akun &amp; Data</h1>
-      <a id="status-akun" class="status-akun" href="akun.html">Akun</a>
+  <main class="halaman">
+    <div class="kembali-baris">
+      <a href="index.html" aria-label="Kembali ke Beranda">
+        <svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+      </a>
+      <h1>Akun</h1>
     </div>
 
-    <section class="kartu-akun" id="bagian-masuk" hidden>
-      <h2>Simpan data di cloud</h2>
-      <p>Masuk supaya catatanmu tersimpan aman di server, tidak hilang kalau HP rusak atau hilang, dan bisa dibuka di HP lain. Aplikasi tetap bisa dipakai tanpa sinyal.</p>
-      <button type="button" id="btn-google" class="sekunder google">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M22.6 12.2c0-.8-.1-1.5-.2-2.2H12v4.2h5.9a5 5 0 0 1-2.2 3.3v2.7h3.6c2.1-1.9 3.3-4.8 3.3-8Z"/><path fill="#34A853" d="M12 23c3 0 5.5-1 7.3-2.7l-3.6-2.8c-1 .7-2.2 1.1-3.7 1.1-2.9 0-5.3-1.9-6.2-4.5H2.1v2.9A11 11 0 0 0 12 23Z"/><path fill="#FBBC05" d="M5.8 14.1a6.6 6.6 0 0 1 0-4.2V7H2.1a11 11 0 0 0 0 10l3.7-2.9Z"/><path fill="#EA4335" d="M12 5.4c1.6 0 3 .6 4.2 1.6l3.1-3.1A11 11 0 0 0 2.1 7l3.7 2.9C6.7 7.3 9.1 5.4 12 5.4Z"/></svg>
+    <!-- Sudah masuk -->
+    <section id="bagian-akun" hidden>
+      <div class="profil">
+        <span class="avatar" id="avatar-besar"></span>
+        <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+          <strong id="profil-nama"></strong>
+          <span class="kecil" id="profil-email" style="overflow-wrap:anywhere"></span>
+        </span>
+      </div>
+    </section>
+
+    <section class="kartu" id="kartu-status" hidden>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="ikon-bulat masuk" id="status-ikon">
+          <svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><path d="M17.5 19H7a5 5 0 1 1 1-9.9A6 6 0 0 1 19.5 11 4 4 0 0 1 17.5 19Z"/><path d="m9.5 14 2 2 3.5-3.5"/></svg>
+        </span>
+        <span style="display:flex;flex-direction:column;gap:2px">
+          <strong id="status-judul">Semua data aman di cloud</strong>
+          <span class="kecil" id="status-waktu"></span>
+        </span>
+      </div>
+      <p class="petunjuk">Catatan tetap bisa dibuat tanpa sinyal. Begitu ada internet, semuanya terkirim sendiri, dan bisa dibuka di HP lain dengan akun yang sama.</p>
+      <button type="button" class="tombol-garis penuh" id="tombol-sinkron">Simpan sekarang</button>
+    </section>
+
+    <!-- Belum masuk -->
+    <section class="kartu" id="bagian-masuk" hidden>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <h2 style="font-size:18px">Simpan data di cloud</h2>
+        <p class="petunjuk">Sekarang data hanya ada di HP ini. Masuk supaya tidak hilang kalau HP rusak atau ganti HP. Aplikasi tetap bisa dipakai tanpa sinyal.</p>
+      </div>
+      <button type="button" class="tombol-garis penuh" id="tombol-google">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="#4285F4" d="M22.6 12.2c0-.8-.1-1.5-.2-2.2H12v4.2h5.9a5 5 0 0 1-2.2 3.3v2.7h3.6c2.1-1.9 3.3-4.8 3.3-8Z"/><path fill="#34A853" d="M12 23c3 0 5.5-1 7.3-2.7l-3.6-2.8c-1 .7-2.2 1.1-3.7 1.1-2.9 0-5.3-1.9-6.2-4.5H2.1v2.9A11 11 0 0 0 12 23Z"/><path fill="#FBBC05" d="M5.8 14.1a6.6 6.6 0 0 1 0-4.2V7H2.1a11 11 0 0 0 0 10l3.7-2.9Z"/><path fill="#EA4335" d="M12 5.4c1.6 0 3 .6 4.2 1.6l3.1-3.1A11 11 0 0 0 2.1 7l3.7 2.9C6.7 7.3 9.1 5.4 12 5.4Z"/></svg>
         Masuk dengan Google
       </button>
-      <p class="pemisah"><span>atau pakai email</span></p>
-      <label for="email">Email</label>
-      <input id="email" type="email" inputmode="email" autocomplete="email" placeholder="nama@gmail.com">
-      <button type="button" id="btn-kirim-kode" class="sekunder">Kirim kode masuk</button>
-      <div id="langkah-kode" hidden>
-        <p id="info-kode" class="kecil"></p>
-        <label for="kode">Kode dari email</label>
-        <input id="kode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="123456">
-        <button type="button" id="btn-cek-kode" class="tambah">Masuk</button>
+      <div class="bidang">
+        <label for="email">Atau pakai email</label>
+        <input class="input" id="email" type="email" inputmode="email" autocomplete="email" placeholder="nama@gmail.com">
       </div>
-      <p id="pesan-masuk" class="pesan-galat" role="alert"></p>
-    </section>
-
-    <section class="kartu-akun" id="bagian-akun" hidden>
-      <h2>Akun</h2>
-      <p class="akun-email" id="akun-email"></p>
-      <p id="akun-status" role="status"></p>
-      <p id="akun-terakhir" class="kecil"></p>
-      <div class="aksi-cadangan">
-        <button type="button" id="btn-sinkron" class="sekunder">Sinkronkan sekarang</button>
-        <button type="button" id="btn-keluar" class="sekunder">Keluar</button>
+      <button type="button" class="tombol-garis penuh" id="tombol-kirim">Kirim tautan masuk</button>
+      <div class="bidang" id="langkah-kode" hidden>
+        <p class="petunjuk" id="info-kode"></p>
+        <label for="kode">Kode dari email (kalau ada)</label>
+        <input class="input" id="kode" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="123456">
+        <button type="button" class="tombol penuh" id="tombol-kode">Masuk dengan kode</button>
       </div>
-      <p class="kecil">Keluar akan menghapus data dari HP ini (datanya tetap aman di cloud). Cocok kalau HP dipakai bergantian.</p>
-      <p id="pesan-akun" class="pesan-galat" role="alert"></p>
+      <p class="pesan-galat" id="pesan-masuk" role="alert"></p>
     </section>
 
-    <section class="kartu-akun" id="tanpa-cloud" hidden>
-      <h2>Data hanya di HP ini</h2>
-      <p>Penyimpanan cloud belum disiapkan di versi ini. Simpan cadangan secara berkala supaya catatan tidak hilang.</p>
+    <section class="kartu" id="tanpa-cloud" hidden>
+      <h2 style="font-size:18px">Data hanya di HP ini</h2>
+      <p class="petunjuk">Penyimpanan cloud belum disiapkan di versi ini. Simpan cadangan ke file secara berkala.</p>
     </section>
 
-    <section class="cadangan" id="cadangan">
-      <h2>Cadangan file</h2>
-      <p>Simpan semua data ke satu file, misalnya untuk arsip atau pindah HP tanpa akun.</p>
-      <p id="cadangan-terakhir" class="kecil"></p>
-      <div class="aksi-cadangan">
-        <button type="button" id="btn-cadangan" class="sekunder">Simpan cadangan</button>
-        <label class="sekunder">Pulihkan dari cadangan
-          <input id="file-cadangan" type="file" accept="application/json,.json" hidden>
+    <ul class="kartu-daftar">
+      <li>
+        <button type="button" class="baris" id="tombol-nama">
+          <span class="teks"><span class="judul">Nama warung</span></span>
+          <span class="kecil" id="nama-warung"></span>
+          <svg class="ikon redup" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+      </li>
+      <li>
+        <button type="button" class="baris" id="tombol-cadangan">
+          <span class="teks"><span class="judul">Simpan cadangan ke file</span><span class="ket" id="cadangan-terakhir"></span></span>
+          <svg class="ikon redup" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+      </li>
+      <li>
+        <label class="baris" style="cursor:pointer">
+          <span class="teks"><span class="judul">Pulihkan dari file cadangan</span></span>
+          <svg class="ikon redup" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+          <input type="file" id="file-cadangan" accept="application/json,.json" class="sr-only">
         </label>
-      </div>
-      <p id="cadangan-pesan" role="status"></p>
-      <div id="cadangan-konfirmasi" class="banner" hidden>
-        <span id="cadangan-ringkas"></span>
-        <div class="aksi-cadangan">
-          <button type="button" id="btn-pulihkan-ya" class="hapus-ya">Ya, pulihkan</button>
-          <button type="button" id="btn-pulihkan-batal" class="hapus">Batal</button>
-        </div>
-      </div>
+      </li>
+      <li>
+        <a class="baris" href="privasi.html">
+          <span class="teks"><span class="judul">Kebijakan privasi</span></span>
+          <svg class="ikon redup" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+        </a>
+      </li>
+    </ul>
+    <p class="petunjuk" id="pesan-cadangan" role="status"></p>
+
+    <section id="bagian-keluar" hidden style="display:flex;flex-direction:column;gap:8px">
+      <button type="button" class="tombol-garis penuh tombol-bahaya" id="tombol-keluar">Keluar dari akun</button>
+      <p class="petunjuk" style="text-align:center">Keluar menghapus data dari HP ini saja. Data di cloud tetap aman.</p>
+      <p class="pesan-galat" id="pesan-keluar" role="alert"></p>
     </section>
-  <p class="kecil tautan-privasi"><a href="privasi.html">Kebijakan privasi</a></p>
   </main>
 
-  <nav class="tabbar" aria-label="Menu utama">
-    <a href="index.html">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-      <span>Catat</span>
-    </a>
-    <a href="riwayat.html">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
-      <span>Riwayat</span>
-    </a>
-    <a href="ringkasan.html">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V10"/><path d="M12 20V4"/><path d="M19 20v-7"/></svg>
-      <span>Ringkasan</span>
-    </a>
-    <a href="stok.html">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5Z"/><path d="M3 8l9 5 9-5"/><path d="M12 13v8"/></svg>
-      <span>Stok</span>
-    </a>
-    <a href="kasbon.html">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h12a4 4 0 0 1 4 4v12H8a4 4 0 0 1-4-4Z"/><path d="M8 9h8"/><path d="M8 13h5"/></svg>
-      <span>Kasbon</span>
-    </a>
-  </nav>
+  <dialog class="lembar pendek" id="lembar-nama" aria-labelledby="judul-nama">
+    <div class="atas">
+      <h2 id="judul-nama">Nama warung</h2>
+      <button type="button" class="tombol-bulat" aria-label="Tutup" data-tutup>
+        <svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="isi">
+      <div class="bidang">
+        <label for="input-nama">Ditampilkan di Beranda dan pesan WhatsApp</label>
+        <input class="input" id="input-nama" maxlength="40" autocomplete="off" placeholder="contoh: Warung Sari">
+      </div>
+    </div>
+    <div class="bawah"><button type="button" class="tombol penuh" id="simpan-nama">Simpan</button></div>
+  </dialog>
+
+  <dialog class="lembar pendek" id="lembar-pulihkan" aria-labelledby="judul-pulihkan">
+    <div class="atas">
+      <h2 id="judul-pulihkan">Pulihkan data?</h2>
+      <button type="button" class="tombol-bulat" aria-label="Tutup" data-tutup>
+        <svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="isi"><p id="ringkas-pulihkan"></p></div>
+    <div class="bawah">
+      <button type="button" class="tombol penuh" id="ya-pulihkan">Ya, ganti dengan isi file</button>
+      <button type="button" class="tombol-garis penuh" data-tutup>Batal</button>
+    </div>
+  </dialog>
 
   <script type="module" src="./src/pages/akun.js"></script>
 </body>

@@ -1,126 +1,131 @@
-// akun.js: halaman Akun & Data: login, status sinkron, keluar, dan cadangan file.
-import { mulaiAplikasi, ambilStatus, sinkronSekarang, keluarAkun, ambilKlienSupabase, jumlahBelumTerkirim } from "../app.js";
-import { pasangKepala } from "../ui/kepala.js";
+// akun.js: masuk/keluar akun, status penyimpanan, nama warung, dan cadangan file.
+import { mulaiAplikasi, ambilStatus, sinkronSekarang, keluarAkun, ambilKlienSupabase, jumlahBelumTerkirim, ambilNamaWarung, aturNamaWarung } from "../app.js";
 import { supabaseAktif } from "../data/supabase.js";
-import { ambilMeta } from "../data/db.js";
 import { buatIsiCadangan, bacaIsiCadangan, ringkasIsi, pulihkan } from "../data/cadangan.js";
 import { formatWaktuLengkap, hariIni } from "../lib/tanggal.js";
-import { el } from "../ui/komponen.js";
+import { el, bukaLembar, pasangLembar, kabar, inisial } from "../ui/komponen.js";
 
-// Tunggu pemindahan data lama selesai sebelum menampilkan apa pun
 await mulaiAplikasi();
-pasangKepala();
 
 const $ = (id) => document.getElementById(id);
-const KEY_CADANGAN_TERAKHIR = "bw_cadangan_terakhir";
+const alamatKembali = () => new URL("akun.html", location.href).href;
 
-// ---------- Akun ----------
+// ---------- Tampilan sesuai status ----------
 
-function tampilAkun(s) {
+const STATUS = {
+  sinkron: ["Semua data aman di cloud", "masuk"],
+  menyinkron: ["Sedang menyimpan…", ""],
+  offline: ["Sedang offline", "keluar"],
+  gagal: ["Belum tersambung ke server", "keluar"],
+};
+
+function gambar(s = ambilStatus()) {
   const masuk = Boolean(s.email);
-  $("bagian-masuk").hidden = masuk || !supabaseAktif();
+  const nama = ambilNamaWarung();
   $("bagian-akun").hidden = !masuk;
+  $("kartu-status").hidden = !masuk;
+  $("bagian-keluar").hidden = !masuk;
+  $("bagian-masuk").hidden = masuk || !supabaseAktif();
   $("tanpa-cloud").hidden = supabaseAktif();
-  if (!masuk) return;
+  $("nama-warung").textContent = nama || "Belum diisi";
 
-  $("akun-email").textContent = s.email;
-  const teks = {
-    sinkron: "Semua data sudah tersimpan di cloud.",
-    menyinkron: "Sedang menyimpan ke cloud…",
-    offline: `Sedang offline. ${s.belum ? s.belum + " catatan" : "Perubahan"} akan dikirim saat ada sinyal.`,
-    gagal: "Gagal tersambung ke server. Akan dicoba lagi otomatis.",
-  };
-  $("akun-status").textContent = teks[s.keadaan] || "";
-  ambilMeta("sinkron_terakhir").then((ms) => {
-    $("akun-terakhir").textContent = ms ? "Terakhir tersinkron: " + formatWaktuLengkap(ms) : "";
-  });
+  if (!masuk) return;
+  $("avatar-besar").textContent = inisial(nama || s.email);
+  $("profil-nama").textContent = nama || "Buku Warung";
+  $("profil-email").textContent = s.email;
+  const [judul, gaya] = STATUS[s.keadaan] || STATUS.sinkron;
+  $("status-judul").textContent = judul;
+  $("status-ikon").className = "ikon-bulat " + gaya;
+  $("status-waktu").textContent =
+    s.keadaan === "offline" && s.belum
+      ? `${s.belum} catatan akan dikirim saat ada sinyal`
+      : s.terakhir
+        ? "Terakhir tersimpan " + formatWaktuLengkap(s.terakhir)
+        : "";
 }
+
+// ---------- Masuk ----------
 
 async function masukGoogle() {
   const klien = await ambilKlienSupabase();
-  const { error } = await klien.auth.signInWithOAuth({
-    provider: "google",
-    options: { redirectTo: new URL("akun.html", location.href).href },
-  });
+  const { error } = await klien.auth.signInWithOAuth({ provider: "google", options: { redirectTo: alamatKembali() } });
   if (error) $("pesan-masuk").textContent = "Gagal membuka login Google: " + error.message;
 }
 
-let emailDikirim = "";
+let emailTerkirim = "";
 
-async function kirimKode() {
+async function kirimTautan() {
   const email = $("email").value.trim();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     $("pesan-masuk").textContent = "Tulis alamat email yang benar.";
     return $("email").focus();
   }
-  $("btn-kirim-kode").disabled = true;
+  $("tombol-kirim").disabled = true;
   const klien = await ambilKlienSupabase();
-  const { error } = await klien.auth.signInWithOtp({
-    email,
-    options: { shouldCreateUser: true, emailRedirectTo: new URL("akun.html", location.href).href },
-  });
-  $("btn-kirim-kode").disabled = false;
+  const { error } = await klien.auth.signInWithOtp({ email, options: { shouldCreateUser: true, emailRedirectTo: alamatKembali() } });
+  $("tombol-kirim").disabled = false;
   if (error) {
     $("pesan-masuk").textContent = error.status === 429 ? "Terlalu sering. Tunggu sebentar lalu coba lagi." : "Gagal mengirim email: " + error.message;
     return;
   }
-  emailDikirim = email;
+  emailTerkirim = email;
   $("pesan-masuk").textContent = "";
   $("langkah-kode").hidden = false;
-  $("info-kode").textContent = `Kode dikirim ke ${email}. Buka emailnya, lalu ketik kodenya di sini (atau tekan tautan di email).`;
-  $("kode").focus();
+  $("info-kode").textContent = `Email dikirim ke ${email}. Buka emailnya lalu tekan tautan di dalamnya. Kalau email berisi kode angka, ketik di sini.`;
 }
 
-async function cekKode() {
+async function masukKode() {
   const token = $("kode").value.replace(/\D/g, "");
-  if (token.length < 6) {
-    $("pesan-masuk").textContent = "Ketik kode dari email.";
-    return;
-  }
+  if (token.length < 6) return ($("pesan-masuk").textContent = "Ketik kode dari email.");
   const klien = await ambilKlienSupabase();
-  const { error } = await klien.auth.verifyOtp({ email: emailDikirim, token, type: "email" });
-  $("pesan-masuk").textContent = error ? "Kode salah atau sudah kedaluwarsa. Minta kode baru." : "";
+  const { error } = await klien.auth.verifyOtp({ email: emailTerkirim, token, type: "email" });
+  $("pesan-masuk").textContent = error ? "Kode salah atau sudah kedaluwarsa. Kirim ulang." : "";
 }
 
 async function keluar() {
   const belum = await jumlahBelumTerkirim();
   if (belum && !navigator.onLine) {
-    $("pesan-akun").textContent = `Ada ${belum} catatan yang belum terkirim karena offline. Sambungkan internet dulu supaya tidak hilang.`;
+    $("pesan-keluar").textContent = `Ada ${belum} catatan yang belum terkirim. Sambungkan internet dulu supaya tidak hilang.`;
     return;
   }
   await keluarAkun();
-  location.reload();
+  location.href = "index.html";
+}
+
+// ---------- Nama warung ----------
+
+function bukaNama() {
+  $("input-nama").value = ambilNamaWarung();
+  bukaLembar($("lembar-nama"));
+}
+
+async function simpanNama() {
+  await aturNamaWarung($("input-nama").value);
+  $("lembar-nama").close();
+  gambar();
+  kabar("Nama warung disimpan.");
 }
 
 // ---------- Cadangan file ----------
-
+const KEY_CADANGAN = "bw_cadangan_terakhir";
 let dataMenunggu = null;
 
-function tampilTerakhirCadangan() {
-  let ms = 0;
-  try {
-    ms = Number(localStorage.getItem(KEY_CADANGAN_TERAKHIR));
-  } catch {
-    // abaikan
-  }
-  $("cadangan-terakhir").textContent = ms ? "Terakhir dicadangkan: " + formatWaktuLengkap(ms) : "Belum pernah dicadangkan.";
+function tampilCadanganTerakhir() {
+  const ms = Number(localStorage.getItem(KEY_CADANGAN)) || 0;
+  $("cadangan-terakhir").textContent = ms ? "Terakhir: " + formatWaktuLengkap(ms) : "Belum pernah";
 }
 
 async function simpanCadangan() {
   const isi = JSON.stringify(await buatIsiCadangan(), null, 2);
   const url = URL.createObjectURL(new Blob([isi], { type: "application/json" }));
-  const a = el("a", { href: url, download: `buku-warung-cadangan-${hariIni()}.json` });
+  const a = el("a", { href: url, download: `buku-warung-${hariIni()}.json` });
   document.body.append(a);
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
-  try {
-    localStorage.setItem(KEY_CADANGAN_TERAKHIR, String(Date.now()));
-  } catch {
-    // abaikan
-  }
-  tampilTerakhirCadangan();
-  $("cadangan-pesan").textContent = "Cadangan diunduh. Simpan file-nya di tempat aman, misalnya kirim ke WhatsApp sendiri.";
+  localStorage.setItem(KEY_CADANGAN, String(Date.now()));
+  tampilCadanganTerakhir();
+  $("pesan-cadangan").textContent = "File cadangan diunduh. Simpan di tempat aman, misalnya kirim ke WhatsApp sendiri.";
 }
 
 function bacaFile(file) {
@@ -132,55 +137,48 @@ function bacaFile(file) {
     } catch {
       hasil = null;
     }
-    if (!hasil) {
-      $("cadangan-pesan").textContent = "File ini bukan cadangan Buku Warung yang valid.";
-      return;
-    }
+    if (!hasil) return ($("pesan-cadangan").textContent = "File ini bukan cadangan Buku Warung.");
     dataMenunggu = hasil.data;
-    $("cadangan-ringkas").textContent =
-      `Ditemukan ${ringkasIsi(hasil.data)}` +
-      (hasil.dibuat ? ` (dicadangkan ${formatWaktuLengkap(hasil.dibuat)})` : "") +
-      ". Memulihkan akan MENGGANTI semua data" +
-      (ambilStatus().email ? ", termasuk di cloud dan HP lain yang memakai akun ini." : " di HP ini.");
-    $("cadangan-konfirmasi").hidden = false;
-    $("cadangan-pesan").textContent = "";
+    $("ringkas-pulihkan").textContent =
+      `File berisi ${ringkasIsi(hasil.data)}` +
+      (hasil.dibuat ? `, dibuat ${formatWaktuLengkap(hasil.dibuat)}` : "") +
+      ". Semua data sekarang akan DIGANTI dengan isi file ini" +
+      (ambilStatus().email ? ", termasuk di cloud dan HP lain yang memakai akun ini." : ".");
+    bukaLembar($("lembar-pulihkan"));
   };
   pembaca.readAsText(file);
 }
 
 async function pulihkanSekarang() {
-  if (!dataMenunggu) return;
   try {
     await pulihkan(dataMenunggu);
   } catch {
-    $("cadangan-konfirmasi").hidden = true;
-    $("cadangan-pesan").textContent = "Pemulihan gagal karena data tidak bisa disimpan. Cek ruang penyimpanan HP lalu coba lagi.";
+    $("pesan-cadangan").textContent = "Pemulihan gagal. Cek ruang penyimpanan HP lalu coba lagi.";
     return;
   }
+  $("lembar-pulihkan").close();
   dataMenunggu = null;
-  $("cadangan-konfirmasi").hidden = true;
-  $("cadangan-pesan").textContent = "Data berhasil dipulihkan.";
+  kabar("Data berhasil dipulihkan.");
   sinkronSekarang();
 }
 
 // ---------- Pasang ----------
-
-$("btn-google").addEventListener("click", masukGoogle);
-$("btn-kirim-kode").addEventListener("click", kirimKode);
-$("btn-cek-kode").addEventListener("click", cekKode);
-$("btn-sinkron").addEventListener("click", () => sinkronSekarang());
-$("btn-keluar").addEventListener("click", keluar);
-$("btn-cadangan").addEventListener("click", simpanCadangan);
+pasangLembar($("lembar-nama"));
+pasangLembar($("lembar-pulihkan"));
+$("tombol-google").addEventListener("click", masukGoogle);
+$("tombol-kirim").addEventListener("click", kirimTautan);
+$("tombol-kode").addEventListener("click", masukKode);
+$("tombol-sinkron").addEventListener("click", () => sinkronSekarang());
+$("tombol-keluar").addEventListener("click", keluar);
+$("tombol-nama").addEventListener("click", bukaNama);
+$("simpan-nama").addEventListener("click", simpanNama);
+$("tombol-cadangan").addEventListener("click", simpanCadangan);
 $("file-cadangan").addEventListener("change", (e) => {
   if (e.target.files[0]) bacaFile(e.target.files[0]);
   e.target.value = "";
 });
-$("btn-pulihkan-ya").addEventListener("click", pulihkanSekarang);
-$("btn-pulihkan-batal").addEventListener("click", () => {
-  dataMenunggu = null;
-  $("cadangan-konfirmasi").hidden = true;
-});
-
-tampilAkun(ambilStatus());
-globalThis.addEventListener("bw:status", (e) => tampilAkun(e.detail));
-tampilTerakhirCadangan();
+$("ya-pulihkan").addEventListener("click", pulihkanSekarang);
+globalThis.addEventListener("bw:status", (e) => gambar(e.detail));
+globalThis.addEventListener("bw:nama-warung", () => gambar());
+gambar();
+tampilCadanganTerakhir();

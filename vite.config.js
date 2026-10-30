@@ -2,7 +2,7 @@ import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 
 const akar = (file) => fileURLToPath(new URL(file, import.meta.url));
-const halaman = ["index", "riwayat", "ringkasan", "stok", "kasbon", "akun", "privasi"];
+const halaman = ["index", "laporan", "barang", "pelanggan", "akun", "privasi"];
 
 export default defineConfig({
   // Alamat GitHub Pages: https://zeevolker.github.io/buku-warung/

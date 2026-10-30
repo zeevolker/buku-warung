@@ -1,8 +1,8 @@
 {
   "name": "buku-warung",
   "private": true,
-  "version": "2.0.0",
-  "description": "Pembukuan sederhana untuk warung: uang masuk, uang keluar, stok, dan kasbon. Offline-first dengan sinkron ke Supabase.",
+  "version": "3.0.0",
+  "description": "Pembukuan sederhana untuk warung: jual, uang keluar, stok, dan utang pelanggan. Offline-first dengan sinkron ke Supabase.",
   "type": "module",
   "scripts": {
     "dev": "vite",

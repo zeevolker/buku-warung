@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Buku Warung: Laporan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="./src/css/style.css">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#fafaf8">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+</head>
+<body>
+  <main class="halaman">
+    <h1 class="judul-halaman">Laporan</h1>
+
+    <fieldset class="segmen tiga" aria-label="Periode">
+      <label><input type="radio" name="periode" value="hari"><span>Hari</span></label>
+      <label><input type="radio" name="periode" value="minggu" checked><span>Minggu</span></label>
+      <label><input type="radio" name="periode" value="bulan"><span>Bulan</span></label>
+    </fieldset>
+
+    <div class="navigasi-periode">
+      <button type="button" class="tombol-bulat" id="sebelum" aria-label="Periode sebelumnya">
+        <svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <strong id="judul-periode"></strong>
+      <button type="button" class="tombol-bulat" id="berikut" aria-label="Periode berikutnya">
+        <svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
+    </div>
+
+    <section class="kartu" aria-label="Ringkasan uang">
+      <div class="angka-besar" style="gap:4px">
+        <span class="kecil" id="label-selisih">Selisih uang</span>
+        <span class="nilai-kartu" id="selisih">Rp 0</span>
+      </div>
+      <div class="grafik" id="grafik" aria-hidden="true"></div>
+      <div class="rincian-baris">
+        <div><span class="redup">Uang masuk</span><span class="masuk-teks" id="masuk">Rp 0</span></div>
+        <div><span class="redup">Uang keluar</span><span class="keluar-teks" id="keluar">Rp 0</span></div>
+      </div>
+    </section>
+
+    <div class="dua-kartu">
+      <div class="kartu-kecil">
+        <span class="kecil">Untung barang</span>
+        <span class="nilai" id="untung">Rp 0</span>
+        <span class="kecil">Harga jual − modal</span>
+      </div>
+      <div class="kartu-kecil">
+        <span class="kecil">Utang pelanggan</span>
+        <span class="nilai" id="utang-bersih">Rp 0</span>
+        <span class="kecil" id="utang-rincian"></span>
+      </div>
+    </div>
+
+    <button type="button" class="tombol-garis penuh" id="bagikan">
+      <svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8"/><path d="m16 6-4-4-4 4"/><path d="M12 2v13"/></svg>
+      Bagikan ke WhatsApp
+    </button>
+
+    <section aria-labelledby="judul-catatan">
+      <h2 id="judul-catatan">Semua catatan</h2>
+      <ul class="daftar" id="daftar-catatan"></ul>
+    </section>
+  </main>
+
+  <nav class="tab-bar" aria-label="Menu utama">
+    <a href="index.html"><svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1Z"/></svg>Beranda</a>
+    <a href="laporan.html" aria-current="page"><svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V10"/><path d="M12 20V4"/><path d="M19 20v-7"/></svg>Laporan</a>
+    <a href="barang.html"><svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5Z"/><path d="M3 8l9 5 9-5"/><path d="M12 13v8"/></svg>Barang</a>
+    <a href="pelanggan.html"><svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0"/><path d="M17 4a4 4 0 0 1 0 8"/><path d="M22 21a7 7 0 0 0-4-6.3"/></svg>Pelanggan</a>
+  </nav>
+
+  <script type="module" src="./src/pages/laporan.js"></script>
+</body>
+</html>

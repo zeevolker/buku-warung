@@ -1,6 +1,6 @@
 // app.js: dijalankan di setiap halaman. Menyiapkan data, service worker, akun, dan sinkron.
 
-import { apakahKosong, tulis, ambilMeta, aturMeta, kosongkanSemua, jumlahBelumTerkirim } from "./data/db.js";
+import { ambilMeta, aturMeta, kosongkanSemua, jumlahBelumTerkirim } from "./data/db.js";
 import { jalankanMigrasi } from "./data/migrasi.js";
 import { sinkronSekali } from "./data/sync.js";
 import { supabaseAktif, ambilKlien, remoteSupabase } from "./data/supabase.js";
@@ -8,7 +8,7 @@ import { hariIni } from "./lib/tanggal.js";
 
 // ---------- Status sinkron (ditampilkan di pojok kanan atas) ----------
 // keadaan: "tamu" | "sinkron" | "menyinkron" | "offline" | "gagal"
-const status = { keadaan: "tamu", belum: 0, email: null };
+const status = { keadaan: "tamu", belum: 0, email: null, terakhir: null };
 
 function kabariStatus(ubah) {
   Object.assign(status, ubah);
@@ -39,7 +39,7 @@ export async function sinkronSekarang() {
   kabariStatus({ keadaan: "menyinkron" });
   try {
     await sinkronSekali(remoteSupabase(klien));
-    kabariStatus({ keadaan: "sinkron", belum: await jumlahBelumTerkirim() });
+    kabariStatus({ keadaan: "sinkron", belum: await jumlahBelumTerkirim(), terakhir: Date.now() });
   } catch (e) {
     console.warn("Sinkron gagal:", e);
     kabariStatus({ keadaan: navigator.onLine ? "gagal" : "offline", belum: await jumlahBelumTerkirim() });
@@ -71,6 +71,9 @@ async function siapkanPemilik(userId) {
 
 async function masukSesi(session) {
   await siapkanPemilik(session.user.id);
+  // Nama warung disimpan di akun, jadi ikut muncul di HP lain
+  const nama = session.user.user_metadata?.nama_warung;
+  if (nama) simpanNamaLokal(nama);
   kabariStatus({ keadaan: "menyinkron", email: session.user.email });
   await sinkronSekarang();
 }
@@ -80,14 +83,41 @@ export async function keluarAkun() {
   await sinkronSekarang();
   if (klien) await klien.auth.signOut();
   await kosongkanSemua();
-  kabariStatus({ keadaan: "tamu", email: null, belum: 0 });
+  simpanNamaLokal("");
+  kabariStatus({ keadaan: "tamu", email: null, belum: 0, terakhir: null });
 }
 
 export { jumlahBelumTerkirim };
 
+// ---------- Nama warung ----------
+const KEY_NAMA = "bw_nama_warung";
+
+function simpanNamaLokal(nama) {
+  try {
+    localStorage.setItem(KEY_NAMA, nama);
+  } catch {
+    // abaikan
+  }
+  globalThis.dispatchEvent(new CustomEvent("bw:nama-warung", { detail: nama }));
+}
+
+export function ambilNamaWarung() {
+  try {
+    return localStorage.getItem(KEY_NAMA) || "";
+  } catch {
+    return "";
+  }
+}
+
+export async function aturNamaWarung(nama) {
+  nama = (nama || "").trim().slice(0, 40);
+  simpanNamaLokal(nama);
+  if (klien && status.email) await klien.auth.updateUser({ data: { nama_warung: nama } });
+}
+
 async function mulaiAkun() {
   const belum = await jumlahBelumTerkirim().catch(() => 0);
-  kabariStatus({ keadaan: "tamu", belum });
+  kabariStatus({ keadaan: "tamu", belum, terakhir: await ambilMeta("sinkron_terakhir").catch(() => null) });
   if (!supabaseAktif()) return;
 
   klien = await ambilKlien();
@@ -156,7 +186,7 @@ function pantauGantiHari() {
 
 export async function mulaiAplikasi() {
   try {
-    await jalankanMigrasi({ apakahKosong, tulis });
+    await jalankanMigrasi();
   } catch (e) {
     console.error("Migrasi data lama gagal:", e);
   }

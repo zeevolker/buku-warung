@@ -1,7 +1,9 @@
 // format.js: format angka, nomor HP, dan pembuat ID.
 
+// 15000 -> "Rp 15.000", -9000 -> "−Rp 9.000"
 export function formatRupiah(angka) {
-  return "Rp " + Number(angka || 0).toLocaleString("id-ID");
+  const n = Number(angka || 0);
+  return (n < 0 ? "−Rp " : "Rp ") + Math.abs(n).toLocaleString("id-ID");
 }
 
 // Nomor HP Indonesia untuk wa.me: "0812-3456" -> "628123456"

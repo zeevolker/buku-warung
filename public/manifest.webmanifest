@@ -1,13 +1,13 @@
 {
   "name": "Buku Warung",
   "short_name": "Buku Warung",
-  "description": "Catat uang masuk, uang keluar, stok barang, dan kasbon untuk warung dan pedagang kecil.",
+  "description": "Pembukuan sederhana untuk warung: jual, uang keluar, stok, dan utang pelanggan.",
   "lang": "id",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#f2f5f3",
-  "theme_color": "#1f7a4d",
+  "background_color": "#fafaf8",
+  "theme_color": "#fafaf8",
   "icons": [
     {
       "src": "icons/icon-192.png",
