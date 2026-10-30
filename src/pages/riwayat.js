@@ -2,7 +2,7 @@
 import { mulaiAplikasi } from "../app.js";
 import { pasangKepala } from "../ui/kepala.js";
 import { semua } from "../data/db.js";
-import { hapusTransaksi } from "../data/repo.js";
+import { hapusTransaksi, hapusKasbon } from "../data/repo.js";
 import { hitungKas, jenisKasbon } from "../data/hitung.js";
 import { formatRupiah } from "../lib/format.js";
 import { hariIni, geserTanggal, formatTanggalLengkap, POLA_TANGGAL } from "../lib/tanggal.js";
@@ -42,6 +42,12 @@ function teksBagikan() {
   return baris.join("\n");
 }
 
+async function hapusKasbonIni(k) {
+  const h = await aman(() => hapusKasbon(k.id));
+  if (h.galat) kabar(h.galat);
+  tampilkan();
+}
+
 async function tampilkan() {
   const hari = hariIni();
   pilihEl.value = tanggal;
@@ -52,8 +58,9 @@ async function tampilkan() {
 
   const [transaksi, kasbon, pelanggan] = await Promise.all([semua("transaksi"), semua("kasbon"), semua("pelanggan")]);
   const daftarT = transaksi.filter((t) => t.tanggal === tanggal);
-  const daftarK = kasbon.filter((k) => k.tanggal === tanggal && k.tipe === "utang" && jenisKasbon(k) !== "tunai");
+  // Kasbon dari pelanggan yang sudah dihapus tidak ditampilkan lagi
   const nama = new Map(pelanggan.map((p) => [p.id, p.nama]));
+  const daftarK = kasbon.filter((k) => k.tanggal === tanggal && k.tipe === "utang" && jenisKasbon(k) !== "tunai" && nama.has(k.pelanggan_id));
 
   const kas = hitungKas(daftarT);
   ringkas = { ...kas, jumlah: daftarT.length, kasbon: daftarK.reduce((n, k) => n + k.nominal, 0) };
@@ -70,7 +77,7 @@ async function tampilkan() {
   };
   const daftar = [
     ...daftarT.map((t) => ({ waktu: t.created_at, li: buatItemTransaksi(t, { onUbah, onHapus }) })),
-    ...daftarK.map((k) => ({ waktu: k.created_at, li: buatItemKasbon(k, nama.get(k.pelanggan_id) || "pelanggan") })),
+    ...daftarK.map((k) => ({ waktu: k.created_at, li: buatItemKasbon(k, nama.get(k.pelanggan_id), hapusKasbonIni) })),
   ].sort((a, b) => b.waktu - a.waktu);
 
   $("daftar-riwayat").replaceChildren(...(daftar.length ? daftar.map((d) => d.li) : [buatKosong("Tidak ada catatan pada tanggal ini.")]));

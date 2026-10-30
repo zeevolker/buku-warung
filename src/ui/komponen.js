@@ -72,14 +72,19 @@ export function buatItemTransaksi(t, { onUbah, onHapus }) {
 }
 
 // Kasbon yang diberikan pada hari itu: bukan uang masuk, jadi tidak ikut Total
-export function buatItemKasbon(k, namaPelanggan) {
+export function buatItemKasbon(k, namaPelanggan, onHapus) {
   return el(
     "li",
     { className: "item kasbon-hari" },
     el("span", { textContent: `Kasbon ${namaPelanggan}` + (k.catatan ? `: ${k.catatan}` : "") }),
     el("strong", { textContent: formatRupiah(k.nominal) }),
     el("small", { className: "waktu" }, formatWaktuLengkap(k.created_at), el("span", { className: "label-sumber", textContent: "Kasbon, tidak masuk Total" })),
-    el("span", { className: "aksi" }, el("a", { className: "btn-kecil", href: "kasbon.html", textContent: "Lihat" }))
+    el(
+      "span",
+      { className: "aksi" },
+      el("a", { className: "btn-kecil", href: "kasbon.html", textContent: "Lihat" }),
+      onHapus ? buatTombolHapus(() => onHapus(k)) : null
+    )
   );
 }
 

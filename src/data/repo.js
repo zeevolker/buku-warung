@@ -77,7 +77,7 @@ export async function hapusTransaksi(id) {
     // Uang pinjaman dihapus: utangnya ikut terhapus, kecuali sudah ada yang dibayar
     const k = await ambil("kasbon", t.kasbon_id);
     if (k && !k.deleted) {
-      if (await sisaJadiMinus(k)) return tolak("Pinjaman ini sudah dibayar. Hapus dulu catatan bayarnya di halaman Kasbon.");
+      if (await sisaJadiMinus(k)) return tolak("Pinjaman ini sudah dibayar sebagian. Hapus dulu catatan bayarnya di halaman Kasbon.");
       perubahan.push({ tabel: "kasbon", baris: dihapus(k) });
     }
   }
@@ -193,7 +193,11 @@ async function siapkanPelanggan(nama, telepon) {
 }
 
 // Kalau utang ini dihapus, apakah sisa pelanggan jadi minus (karena sudah dibayar)?
+// Pelanggan yang sudah dihapus tidak dicek lagi: kasbonnya sudah tidak tampil di mana pun,
+// jadi catatan uangnya harus tetap bisa dihapus.
 async function sisaJadiMinus(k) {
+  const p = await ambil("pelanggan", k.pelanggan_id);
+  if (!p || p.deleted) return false;
   const lain = (await semua("kasbon")).filter((x) => x.id !== k.id);
   return (hitungSisaKasbon(lain).get(k.pelanggan_id) || 0) < 0;
 }

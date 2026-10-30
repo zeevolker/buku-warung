@@ -2,7 +2,7 @@
 import { mulaiAplikasi } from "../app.js";
 import { pasangKepala, pasangPengingat } from "../ui/kepala.js";
 import { semua, ambil } from "../data/db.js";
-import { catatTransaksi, ubahTransaksi, hapusTransaksi } from "../data/repo.js";
+import { catatTransaksi, ubahTransaksi, hapusTransaksi, hapusKasbon } from "../data/repo.js";
 import { hitungKas, jenisKasbon } from "../data/hitung.js";
 import { formatRupiah } from "../lib/format.js";
 import { hariIni, formatTanggalLengkap, formatTanggalPanjang } from "../lib/tanggal.js";
@@ -93,12 +93,19 @@ async function hapus(t) {
   tampilkan();
 }
 
+async function hapusKasbonIni(k) {
+  const h = await aman(() => hapusKasbon(k.id));
+  if (h.galat) kabar(h.galat);
+  tampilkan();
+}
+
 async function tampilkan() {
   const tgl = hariIni();
   const [transaksi, kasbon, pelanggan] = await Promise.all([semua("transaksi"), semua("kasbon"), semua("pelanggan")]);
   const hariIniData = transaksi.filter((t) => t.tanggal === tgl);
-  const kasbonHariIni = kasbon.filter((k) => k.tanggal === tgl && k.tipe === "utang" && jenisKasbon(k) !== "tunai");
+  // Kasbon dari pelanggan yang sudah dihapus tidak ditampilkan lagi
   const nama = new Map(pelanggan.map((p) => [p.id, p.nama]));
+  const kasbonHariIni = kasbon.filter((k) => k.tanggal === tgl && k.tipe === "utang" && jenisKasbon(k) !== "tunai" && nama.has(k.pelanggan_id));
 
   const kas = hitungKas(hariIniData);
   $("total-masuk").textContent = formatRupiah(kas.masuk);
@@ -107,7 +114,7 @@ async function tampilkan() {
 
   const daftar = [
     ...hariIniData.map((t) => ({ waktu: t.created_at, li: buatItemTransaksi(t, { onUbah: mulaiUbah, onHapus: hapus }) })),
-    ...kasbonHariIni.map((k) => ({ waktu: k.created_at, li: buatItemKasbon(k, nama.get(k.pelanggan_id) || "pelanggan") })),
+    ...kasbonHariIni.map((k) => ({ waktu: k.created_at, li: buatItemKasbon(k, nama.get(k.pelanggan_id), hapusKasbonIni) })),
   ].sort((a, b) => b.waktu - a.waktu);
 
   $("daftar").replaceChildren(

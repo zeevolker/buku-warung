@@ -219,11 +219,21 @@ async function tampilkan() {
   $("daftar-nama").replaceChildren(...pelanggan.map((p) => el("option", { value: p.nama })));
 
   // Pilihan barang: hanya yang punya harga jual dan stok
+  // Semua barang ditampilkan; yang belum bisa dikasbonkan diberi alasannya
   const pilihanSebelum = $("k-barang").value;
-  barangTersedia = barang.filter((b) => b.harga_jual && b.stok > 0).sort((a, b) => a.nama.localeCompare(b.nama));
+  const urut = [...barang].sort((a, b) => a.nama.localeCompare(b.nama));
+  barangTersedia = urut.filter((b) => b.harga_jual && b.stok > 0);
+  const opsiBarang = (b) => {
+    const alasan = !b.harga_jual ? "harga jual belum diisi" : b.stok <= 0 ? "stok habis" : "";
+    return el("option", {
+      value: b.id,
+      disabled: Boolean(alasan),
+      textContent: alasan ? `${b.nama} (${alasan})` : `${b.nama} · ${formatRupiah(b.harga_jual)} · stok ${b.stok}`,
+    });
+  };
   $("k-barang").replaceChildren(
     el("option", { value: "", textContent: "Di luar daftar stok" }),
-    ...barangTersedia.map((b) => el("option", { value: b.id, textContent: `${b.nama} (${formatRupiah(b.harga_jual)}, stok ${b.stok})` }))
+    ...(urut.length ? urut.map(opsiBarang) : [el("option", { value: "-", disabled: true, textContent: "Belum ada barang di halaman Stok" })])
   );
   if (barangTersedia.some((b) => b.id === pilihanSebelum)) $("k-barang").value = pilihanSebelum;
   perbaruiForm();
