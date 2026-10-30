@@ -523,3 +523,13 @@ input[readonly] { background: var(--bg); color: var(--muted); }
 .pesan-galat { color: var(--keluar) !important; font-weight: 600; }
 .pesan-galat:empty, #pesan-akun:empty { display: none; }
 .kecil { font-size: var(--t-xs); }
+
+/* ---------- halaman dokumen (kebijakan privasi) ---------- */
+.dokumen { padding-bottom: var(--s6); }
+.dokumen p, .dokumen li { color: var(--ink); }
+.dokumen a { color: var(--masuk); font-weight: 600; }
+.dokumen .kembali { display: inline-flex; align-items: center; text-decoration: none; color: var(--ink); }
+.daftar-biasa { list-style: disc; padding-left: 1.25em; }
+.daftar-biasa li { margin-bottom: var(--s2); }
+.tautan-privasi { margin-top: var(--s6); text-align: center; }
+.tautan-privasi a { color: var(--muted); }

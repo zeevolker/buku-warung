@@ -7,8 +7,8 @@
 // - File di assets/ (namanya mengandung hash, jadi tidak pernah berubah): pakai salinan dulu.
 // - Permintaan ke server lain (Supabase, Google) tidak disentuh.
 
-const VERSI = "bw-v2";
-const HALAMAN = ["./", "index.html", "riwayat.html", "ringkasan.html", "stok.html", "kasbon.html", "akun.html", "manifest.webmanifest", "icons/icon.svg", "icons/icon-192.png", "icons/icon-512.png"];
+const VERSI = "bw-v2.1";
+const HALAMAN = ["./", "index.html", "riwayat.html", "ringkasan.html", "stok.html", "kasbon.html", "akun.html", "privasi.html", "manifest.webmanifest", "icons/icon.svg", "icons/icon-192.png", "icons/icon-512.png"];
 
 async function daftarAset() {
   try {
