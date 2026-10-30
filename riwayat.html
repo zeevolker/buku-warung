@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Buku Warung: Riwayat</title>
-  <link rel="stylesheet" href="css/style.css">
+  <meta name="description" content="Pembukuan sederhana untuk warung: uang masuk, uang keluar, stok, dan kasbon.">
+  <link rel="stylesheet" href="./src/css/style.css">
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#1f7a4d">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
@@ -12,7 +13,10 @@
 </head>
 <body>
   <main>
-    <h1>Riwayat</h1>
+    <div class="kepala">
+      <h1>Riwayat</h1>
+      <a id="status-akun" class="status-akun" href="akun.html">Akun</a>
+    </div>
 
     <div class="navtanggal">
       <button type="button" id="btn-sebelum" class="navbtn" aria-label="Hari sebelumnya">&lsaquo;</button>
@@ -57,9 +61,6 @@
     </a>
   </nav>
 
-  <script src="js/storage.js"></script>
-  <script src="js/ui.js"></script>
-  <script src="js/riwayat.js"></script>
-  <script src="js/pwa.js"></script>
+  <script type="module" src="./src/pages/riwayat.js"></script>
 </body>
 </html>

@@ -1,97 +1,110 @@
 # Buku Warung
 
-Aplikasi web pembukuan sederhana untuk warung dan pedagang kaki lima: catat uang masuk dan keluar, lihat total harian sampai bulanan, dan pantau stok barang. Dibuat dengan HTML, CSS, dan JavaScript murni, tanpa framework.
+Aplikasi pembukuan sederhana untuk warung dan pedagang kaki lima: catat uang masuk dan keluar, jual barang langsung dari daftar stok, kelola kasbon pelanggan, dan lihat ringkasan harian sampai bulanan. Tetap bisa dipakai tanpa sinyal, dan data tersimpan aman di cloud setelah masuk dengan akun.
 
 **Demo:** [zeevolker.github.io/buku-warung](https://zeevolker.github.io/buku-warung/)
 
 <p>
-  <img src="screenshots/catat-cepat.png" alt="Halaman Catat Cepat" width="23%">
-  <img src="screenshots/riwayat.png" alt="Halaman Riwayat" width="23%">
-  <img src="screenshots/ringkasan.png" alt="Halaman Ringkasan" width="23%">
+  <img src="screenshots/catat.png" alt="Halaman Catat Cepat" width="23%">
   <img src="screenshots/stok.png" alt="Halaman Stok Barang" width="23%">
   <img src="screenshots/kasbon.png" alt="Halaman Kasbon" width="23%">
+  <img src="screenshots/ringkasan.png" alt="Halaman Ringkasan" width="23%">
 </p>
 
 *Tangkapan layar memakai data contoh.*
 
 ## Masalah yang ingin diselesaikan
 
-Banyak pemilik warung dan pedagang kaki lima tidak mencatat keuangan, atau hanya mencatat di buku tulis. Akibatnya mereka sulit tahu untung sebenarnya dan baru sadar barang habis saat pembeli sudah menanyakannya.
+Banyak pemilik warung dan pedagang kaki lima tidak mencatat keuangan, atau hanya mencatat di buku tulis. Akibatnya mereka sulit tahu untung sebenarnya, lupa siapa yang masih berutang, dan baru sadar barang habis saat pembeli sudah menanyakannya.
 
 [Tambahkan 2-3 kalimat dari hasil wawancaramu: siapa yang kamu tanya, apa kata mereka tentang cara mencatat sekarang.]
 
 ## Fitur
 
-- **Catat Cepat:** catat uang masuk dan keluar dengan satu form dan dua tombol besar
-  - nominal otomatis diformat (15.000) dan ada tombol nominal cepat (+1.000 sampai +50.000)
-  - tiap catatan menampilkan tanggal dan jam, bisa diubah, dan dihapus dengan konfirmasi
-- **Riwayat:** lihat, ubah, dan hapus catatan dari tanggal mana pun (tombol ‹ ›, atau pilih tanggal), dan bagikan total hari itu ke WhatsApp
-- **Ringkasan:** uang masuk, uang keluar, dan total untuk hari ini, minggu ini, dan bulan ini, ditambah untung dari barang (harga jual dikurangi modal) untuk penjualan lewat tombol Jual
-- **Stok Barang:** daftar barang dengan tombol + dan −, penanda merah untuk barang yang hampir habis, dan waktu terakhir diubah
-  - tombol **Jual**: stok berkurang dan uang masuk tercatat sekaligus. Menghapus catatan penjualan mengembalikan stoknya
-  - harga jual dan harga beli (modal) bisa diisi atau diubah kapan saja
-- **Kasbon:** catat utang pelanggan, terima cicilan, lihat sisa tiap orang dan total yang belum dibayar. Pembayaran bisa otomatis tercatat sebagai uang masuk, dan ada tombol pengingat lewat WhatsApp
-- **Cadangan data:** simpan semua data ke file JSON dan pulihkan kembali, dengan validasi file sebelum data diganti. Pengingat muncul kalau sudah 7 hari belum dicadangkan
-- **Bisa dipasang di layar utama HP dan jalan offline** (PWA)
-- Tampilan mobile-first dengan tombol dan tulisan besar
-- Bekerja tanpa server dan tanpa akun, data tersimpan di perangkat pengguna
+- **Catat Cepat:** uang masuk dan keluar dengan satu form, nominal otomatis diformat, tombol nominal cepat
+- **Stok Barang:** stok berkurang otomatis saat menekan **Jual** (tunai) atau **Kasbon** (dibayar nanti); harga jual dan modal bisa diubah; penanda barang hampir habis
+- **Kasbon:** utang berupa uang atau barang dari stok, cicilan, sisa per pelanggan, pengingat lewat WhatsApp
+- **Semua saling terhubung:**
+  - jual tunai → uang masuk + stok berkurang
+  - kasbon barang → utang pelanggan + stok berkurang (tidak masuk Total karena uangnya belum diterima)
+  - terima bayar kasbon → sisa utang berkurang + uang masuk
+  - menghapus salah satu sisi ikut membatalkan pasangannya (stok kembali, sisa utang kembali)
+- **Riwayat:** lihat, ubah, dan hapus catatan dari tanggal mana pun; bagikan ringkasan hari itu ke WhatsApp
+- **Ringkasan:** total kas, untung dari barang (harga jual − modal, termasuk kasbon barang), kasbon diberikan dan dibayar, serta total kasbon yang belum dibayar
+- **Akun dan sinkron cloud:** masuk dengan Google atau kode lewat email; data tersinkron ke server dan bisa dipakai di beberapa HP
+- **Offline-first:** semua aksi tersimpan di HP dulu, lalu terkirim saat ada sinyal
+- **Mode tamu dan cadangan file:** bisa dipakai tanpa akun; data bisa disimpan ke file JSON dan dipulihkan
+- **Bisa dipasang di layar utama HP** (PWA)
 
 ## Teknologi
 
-- HTML, CSS, dan JavaScript (tanpa framework)
-- `localStorage` untuk penyimpanan data
-- Web App Manifest dan Service Worker untuk instal dan mode offline
-- Di-deploy di GitHub Pages
+- HTML, CSS, JavaScript (ES modules, tanpa framework)
+- [Vite](https://vite.dev) untuk server pengembangan dan build
+- IndexedDB untuk penyimpanan di HP
+- [Supabase](https://supabase.com): PostgreSQL, Row Level Security, dan Auth (Google + email OTP)
+- Service worker untuk mode offline
+- `node:test` untuk tes unit, GitHub Actions untuk tes dan deploy otomatis ke GitHub Pages
 
-## Cara menjalankan
-
-1. Unduh atau clone repositori ini
-2. Buka `index.html` di browser (atau gunakan ekstensi Live Server di VS Code)
-
-Tidak ada instalasi atau proses build.
-
-## Struktur proyek
+## Arsitektur
 
 ```
-buku-warung/
-├── index.html        Catat Cepat
-├── ringkasan.html    Ringkasan harian/mingguan/bulanan
-├── riwayat.html      Riwayat per tanggal
-├── stok.html         Stok Barang
-├── kasbon.html       Kasbon (utang pelanggan)
-├── manifest.webmanifest
-├── sw.js             Service worker (mode offline)
-├── icons/            Ikon aplikasi
-├── css/style.css
-└── js/
-    ├── storage.js    Baca/tulis data (localStorage) dan format tanggal
-    ├── ui.js         Komponen bersama (tombol hapus berkonfirmasi, format nominal)
-    ├── catat.js
-    ├── riwayat.js
-    ├── ringkasan.js
-    ├── stok.js
-    ├── kasbon.js
-    ├── cadangan.js   Simpan dan pulihkan data lewat file JSON
-    ├── pengingat.js  Pengingat untuk mencadangkan data
-    └── pwa.js        Daftar service worker, muat ulang saat ganti hari
+ Halaman (src/pages)          ── hanya menampilkan dan memanggil aksi
+        │
+ src/data/repo.js             ── aturan bisnis dan relasi antar data
+        │
+ src/data/db.js  (IndexedDB)  ── semua data disimpan di HP dulu, ditandai "dirty"
+        │
+ src/data/sync.js             ── kirim yang dirty, tarik perubahan dari server
+        │
+ Supabase (PostgreSQL + RLS)  ── satu salinan per akun, dipakai bersama oleh semua HP akun itu
 ```
+
+### Model data
+
+```
+barang     ─< stok_mutasi        stok = jumlah semua mutasi barang itu
+pelanggan  ─< kasbon             sisa = utang − bayar
+transaksi  ── stok_mutasi        (jual tunai)
+kasbon     ── stok_mutasi        (kasbon barang)
+kasbon     ── transaksi          (bayar kasbon)
+```
+
+Skema lengkap ada di [`supabase/migrations`](supabase/migrations).
 
 ## Keputusan desain
 
-- **Tanpa framework di versi 1.** Aplikasinya kecil, dan aku ingin menguatkan dasar JavaScript (DOM, event, pengolahan array) sebelum memakai framework.
-- **Semua akses data lewat `storage.js`.** Kalau nanti pindah ke database atau backend, hanya file itu yang perlu diubah.
-- **Tanggal memakai waktu lokal, bukan UTC.** `toISOString()` memakai UTC, sehingga dini hari di Indonesia tanggalnya bisa mundur sehari.
-- **Bahasa sehari-hari.** "Uang Masuk" dan "Uang Keluar", bukan istilah akuntansi.
-- **Menu di bawah layar, bukan di atas.** Mudah dijangkau jempol, tidak bisa terlipat di layar sempit, dan disembunyikan saat keyboard terbuka.
-- **Satu sistem desain.** Warna, jarak, ukuran huruf, dan bentuk didefinisikan sekali di `:root` lalu dipakai ulang. Elemen yang dibuat menonjol hanya satu: total hari ini.
-- **Label "Total", bukan "Untung".** Angkanya uang masuk dikurangi uang keluar (arus kas). Belanja stok ikut mengurangi total hari itu, jadi ini bukan laba sebenarnya, dan labelnya sengaja tidak menjanjikan itu.
-- **Kasbon dihitung dari daftar utang dan bayar, bukan satu angka sisa.** Sisa selalu dihitung ulang, jadi salah catat bisa dibetulkan dengan menghapus satu baris, dan pembayaran yang melebihi sisa ditolak.
-- **Menu bawah baru muncul lagi sesaat setelah kolom kehilangan fokus.** Kalau tidak, menu menutupi tombol yang baru ditekan.
-- **"Total" dan "Untung dari barang" dipisah.** Total tetap arus kas (masuk dikurangi keluar). Untung hanya muncul kalau modal barangnya diketahui, dan penjualan tanpa harga beli tidak dihitung supaya untung tidak terlihat lebih besar dari kenyataan.
-- **Cadangan dibuat sebelum fitur lain.** Data hanya ada di satu perangkat, dan kehilangan catatan adalah risiko terbesar bagi pengguna.
-- **Service worker mengutamakan internet, salinan sebagai cadangan.** Pembaruan kode langsung sampai ke pengguna, tapi aplikasi tetap terbuka saat sinyal buruk.
-- **Gagal menyimpan tidak boleh diam-diam.** Kalau penyimpanan penuh atau browser dalam mode penyamaran, muncul peringatan dan isian form dipertahankan.
-- **Urutan daftar stok dibekukan saat menekan + atau −.** Barang yang sedang diubah tidak berpindah tempat di bawah jari pengguna.
+- **Offline-first, bukan online-only.** Sinyal di warung sering lemah. Setiap aksi langsung tersimpan di IndexedDB, dan sinkron berjalan di belakang tanpa membuat pengguna menunggu.
+- **Stok dan sisa kasbon dihitung, tidak disimpan sebagai angka.** Kalau dua HP sama-sama menjual barang saat offline, menimpa satu angka "stok" akan menghilangkan salah satu penjualan. Dengan mencatat setiap pergerakan stok sebagai baris baru, hasil gabungannya selalu benar.
+- **ID dibuat di HP (UUID).** Data bisa dibuat saat offline tanpa menunggu nomor dari server, dan tidak bentrok dengan data dari HP lain.
+- **Versi terbaru yang menang (last-write-wins).** Untuk perubahan seperti nama atau harga barang, versi dengan `updated_at` terbaru dipakai. Aturan yang sama diterapkan di HP dan di trigger database, sehingga HP yang lama offline tidak bisa menimpa perubahan yang lebih baru.
+- **Hapus lunak.** Baris tidak dibuang, hanya ditandai `deleted`, supaya penghapusan ikut tersinkron ke HP lain.
+- **Keamanan di database, bukan di kode frontend.** Row Level Security memastikan tiap akun hanya bisa membaca dan mengubah datanya sendiri. Foreign key gabungan `(user_id, id)` mencegah data menunjuk ke milik akun lain. Kunci publishable Supabase memang aman ditaruh di frontend.
+- **Relasi dijaga di satu tempat (`repo.js`).** Halaman tidak menulis ke database langsung, jadi aturan seperti "hapus penjualan = stok kembali" tidak bisa terlewat.
+- **Data versi lama dipindahkan otomatis.** Saat pertama kali dibuka, data dari localStorage (versi 1) diubah ke format baru tanpa mengubah satu angka pun, dan data lamanya tidak dihapus.
+- **Label "Total", bukan "Untung".** Total adalah arus kas. Untung ditampilkan terpisah dan hanya dihitung dari barang yang modalnya diketahui.
+- **Keluar akun menghapus data dari HP.** Aman untuk HP yang dipakai bergantian; datanya tetap ada di cloud.
+
+## Menjalankan di komputer
+
+Butuh [Node.js](https://nodejs.org) versi 20.11 atau lebih baru.
+
+```bash
+npm install
+npm run dev      # buka alamat yang muncul, misalnya http://localhost:5173/buku-warung/
+npm test         # tes unit
+npm run build    # hasil build di folder dist/
+```
+
+Tanpa file `.env.local`, aplikasi berjalan dalam mode tamu (data hanya di browser). Untuk mencoba login saat pengembangan, salin `.env.example` menjadi `.env.local` lalu isi alamat dan kunci Supabase.
+
+## Menyiapkan Supabase
+
+1. Jalankan SQL di `supabase/migrations/` (sudah diterapkan di proyek `buku-warung`).
+2. **Authentication → URL Configuration**
+   - Site URL: `https://zeevolker.github.io/buku-warung/`
+   - Redirect URLs: `https://zeevolker.github.io/buku-warung/**` dan `http://localhost:5173/**`
+3. **Authentication → Email Templates**, template *Magic Link* dan *Confirm signup*: tambahkan `{{ .Token }}` ke isi email supaya pengguna menerima kode 6 angka (penting untuk aplikasi yang dipasang di layar utama, karena tautan email terbuka di browser biasa).
+4. **Authentication → Providers → Google**: aktifkan, lalu isi Client ID dan Client Secret dari Google Cloud Console (OAuth client tipe *Web application*, dengan Authorized redirect URI `https://<project>.supabase.co/auth/v1/callback`).
 
 ## Hasil uji ke pengguna
 
@@ -103,20 +116,19 @@ buku-warung/
 
 ## Keterbatasan saat ini
 
-- Data tersimpan di browser satu perangkat, jadi tidak tersinkron antar HP. Cadangan manual lewat file JSON mengurangi risiko, tapi harus dilakukan pengguna sendiri
-- Data di tab browser dan di aplikasi yang dipasang di layar utama bisa terpisah di sebagian perangkat
-- Untung hanya dihitung dari penjualan lewat tombol Jual yang harga belinya diisi. Penjualan yang dicatat manual di Catat Cepat tidak mengurangi stok dan tidak masuk hitungan untung
+- Penjualan yang dicatat manual di Catat Cepat tidak mengurangi stok; pakai tombol Jual di halaman Stok
+- Konflik diselesaikan per baris (versi terbaru menang), bukan per kolom
+- Email bawaan Supabase dibatasi beberapa email per jam; untuk banyak pengguna perlu SMTP sendiri
 - Belum ada ekspor laporan ke CSV atau PDF
 
 ## Rencana pengembangan
 
 - [x] Cadangan dan pemulihan data (file JSON)
-- [x] Bisa dipasang di HP dan jalan offline
-- [x] Riwayat per tanggal, termasuk mengubah catatan lama
-- [x] Bagikan total harian ke WhatsApp
-- [x] Pengingat cadangan
-- [x] Hubungkan penjualan dengan pengurangan stok, dan hitung untung dari harga beli
+- [x] PWA: bisa dipasang dan jalan offline
+- [x] Riwayat per tanggal dan bagikan ke WhatsApp
+- [x] Stok terhubung ke penjualan, untung dari harga beli
+- [x] Kasbon terhubung ke stok dan uang masuk
+- [x] IndexedDB + sinkron cloud (Supabase) + login Google dan email
+- [ ] Belanja stok tercatat sebagai uang keluar
 - [ ] Ekspor laporan ke CSV
-- [x] Pencatatan kasbon (utang pelanggan)
-- [ ] Sinkronisasi data otomatis (backend dan database)
-- [ ] Versi dengan framework, setelah kebutuhan dari pengguna jelas
+- [ ] Beberapa pengguna untuk satu warung (pemilik dan penjaga)

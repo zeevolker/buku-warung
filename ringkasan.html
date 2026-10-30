@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Buku Warung: Ringkasan</title>
-  <link rel="stylesheet" href="css/style.css">
+  <meta name="description" content="Pembukuan sederhana untuk warung: uang masuk, uang keluar, stok, dan kasbon.">
+  <link rel="stylesheet" href="./src/css/style.css">
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#1f7a4d">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
@@ -12,7 +13,15 @@
 </head>
 <body>
   <main>
-    <h1>Ringkasan</h1>
+    <div class="kepala">
+      <h1>Ringkasan</h1>
+      <a id="status-akun" class="status-akun" href="akun.html">Akun</a>
+    </div>
+    <a id="piutang" class="piutang" href="kasbon.html" hidden>
+      <span>Kasbon belum dibayar</span>
+      <strong id="piutang-total">Rp 0</strong>
+      <small id="piutang-jumlah"></small>
+    </a>
 
     <section class="periode" data-periode="hari">
       <h2>Hari ini</h2>
@@ -21,8 +30,10 @@
         <div class="baris"><dt>Uang keluar</dt><dd data-isi="keluar"></dd></div>
         <div class="baris total"><dt>Total</dt><dd data-isi="total"></dd></div>
         <div class="baris untung" hidden><dt>Untung dari barang</dt><dd data-isi="untung"></dd></div>
+        <div class="baris kasbon-baru" hidden><dt>Kasbon diberikan</dt><dd data-isi="kasbon-baru"></dd></div>
+        <div class="baris kasbon-bayar" hidden><dt>Kasbon dibayar</dt><dd data-isi="kasbon-bayar"></dd></div>
       </dl>
-      <p class="catatan-untung" data-isi="catatan-untung"></p>
+      <p class="catatan-untung" data-isi="catatan"></p>
     </section>
 
     <section class="periode" data-periode="minggu">
@@ -32,8 +43,10 @@
         <div class="baris"><dt>Uang keluar</dt><dd data-isi="keluar"></dd></div>
         <div class="baris total"><dt>Total</dt><dd data-isi="total"></dd></div>
         <div class="baris untung" hidden><dt>Untung dari barang</dt><dd data-isi="untung"></dd></div>
+        <div class="baris kasbon-baru" hidden><dt>Kasbon diberikan</dt><dd data-isi="kasbon-baru"></dd></div>
+        <div class="baris kasbon-bayar" hidden><dt>Kasbon dibayar</dt><dd data-isi="kasbon-bayar"></dd></div>
       </dl>
-      <p class="catatan-untung" data-isi="catatan-untung"></p>
+      <p class="catatan-untung" data-isi="catatan"></p>
     </section>
 
     <section class="periode" data-periode="bulan">
@@ -43,28 +56,10 @@
         <div class="baris"><dt>Uang keluar</dt><dd data-isi="keluar"></dd></div>
         <div class="baris total"><dt>Total</dt><dd data-isi="total"></dd></div>
         <div class="baris untung" hidden><dt>Untung dari barang</dt><dd data-isi="untung"></dd></div>
+        <div class="baris kasbon-baru" hidden><dt>Kasbon diberikan</dt><dd data-isi="kasbon-baru"></dd></div>
+        <div class="baris kasbon-bayar" hidden><dt>Kasbon dibayar</dt><dd data-isi="kasbon-bayar"></dd></div>
       </dl>
-      <p class="catatan-untung" data-isi="catatan-untung"></p>
-    </section>
-  
-    <section class="cadangan" id="cadangan">
-      <h2>Cadangan data</h2>
-      <p>Data hanya tersimpan di HP ini. Simpan cadangan secara berkala supaya tidak hilang kalau data browser terhapus atau kamu ganti HP.</p>
-      <p id="cadangan-terakhir" class="kecil"></p>
-      <div class="aksi-cadangan">
-        <button type="button" id="btn-cadangan" class="sekunder">Simpan cadangan</button>
-        <label class="sekunder">Pulihkan dari cadangan
-          <input id="file-cadangan" type="file" accept="application/json,.json" hidden>
-        </label>
-      </div>
-      <p id="cadangan-pesan" role="status"></p>
-      <div id="cadangan-konfirmasi" class="banner" hidden>
-        <span id="cadangan-ringkas"></span>
-        <div class="aksi-cadangan">
-          <button type="button" id="btn-pulihkan-ya" class="hapus-ya">Ya, pulihkan</button>
-          <button type="button" id="btn-pulihkan-batal" class="hapus">Batal</button>
-        </div>
-      </div>
+      <p class="catatan-untung" data-isi="catatan"></p>
     </section>
   </main>
 
@@ -91,9 +86,6 @@
     </a>
   </nav>
 
-  <script src="js/storage.js"></script>
-  <script src="js/ringkasan.js"></script>
-  <script src="js/cadangan.js"></script>
-  <script src="js/pwa.js"></script>
+  <script type="module" src="./src/pages/ringkasan.js"></script>
 </body>
 </html>

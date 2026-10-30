@@ -1,0 +1,22 @@
+{
+  "name": "buku-warung",
+  "private": true,
+  "version": "2.0.0",
+  "description": "Pembukuan sederhana untuk warung: uang masuk, uang keluar, stok, dan kasbon. Offline-first dengan sinkron ke Supabase.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0"
+  },
+  "devDependencies": {
+    "vite": "^6.3.0"
+  },
+  "engines": {
+    "node": ">=20.11"
+  }
+}
