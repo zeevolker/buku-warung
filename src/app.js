@@ -8,7 +8,7 @@ import { hariIni } from "./lib/tanggal.js";
 
 // ---------- Status sinkron (ditampilkan di pojok kanan atas) ----------
 // keadaan: "tamu" | "sinkron" | "menyinkron" | "offline" | "gagal"
-const status = { keadaan: "tamu", belum: 0, email: null, terakhir: null };
+const status = { keadaan: "tamu", belum: 0, email: null, terakhir: null, pulihkanSandi: false };
 
 function kabariStatus(ubah) {
   Object.assign(status, ubah);
@@ -81,7 +81,9 @@ async function masukSesi(session) {
 // Keluar akun: kirim yang tersisa, lalu kosongkan data di HP ini (aman untuk HP bersama).
 export async function keluarAkun() {
   await sinkronSekarang();
-  if (klien) await klien.auth.signOut();
+  // Pakai ambilKlien(), bukan variabel klien, supaya tetap bisa keluar walau akun belum selesai disiapkan
+  const k = await ambilKlien();
+  if (k) await k.auth.signOut();
   await kosongkanSemua();
   simpanNamaLokal("");
   kabariStatus({ keadaan: "tamu", email: null, belum: 0, terakhir: null });
@@ -132,6 +134,8 @@ async function mulaiAkun() {
     setTimeout(() => {
       if (peristiwa === "SIGNED_IN" && sesi && sesi.user.email !== status.email) masukSesi(sesi);
       if (peristiwa === "SIGNED_OUT") kabariStatus({ keadaan: "tamu", email: null });
+      // Dibuka dari email "lupa kata sandi": halaman Akun akan meminta kata sandi baru
+      if (peristiwa === "PASSWORD_RECOVERY") kabariStatus({ pulihkanSandi: true });
     }, 0);
   });
 

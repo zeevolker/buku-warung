@@ -53,22 +53,32 @@
         <h2 style="font-size:18px">Simpan data di cloud</h2>
         <p class="petunjuk">Sekarang data hanya ada di HP ini. Masuk supaya tidak hilang kalau HP rusak atau ganti HP. Aplikasi tetap bisa dipakai tanpa sinyal.</p>
       </div>
-      <button type="button" class="tombol-garis penuh" id="tombol-google">
-        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="#4285F4" d="M22.6 12.2c0-.8-.1-1.5-.2-2.2H12v4.2h5.9a5 5 0 0 1-2.2 3.3v2.7h3.6c2.1-1.9 3.3-4.8 3.3-8Z"/><path fill="#34A853" d="M12 23c3 0 5.5-1 7.3-2.7l-3.6-2.8c-1 .7-2.2 1.1-3.7 1.1-2.9 0-5.3-1.9-6.2-4.5H2.1v2.9A11 11 0 0 0 12 23Z"/><path fill="#FBBC05" d="M5.8 14.1a6.6 6.6 0 0 1 0-4.2V7H2.1a11 11 0 0 0 0 10l3.7-2.9Z"/><path fill="#EA4335" d="M12 5.4c1.6 0 3 .6 4.2 1.6l3.1-3.1A11 11 0 0 0 2.1 7l3.7 2.9C6.7 7.3 9.1 5.4 12 5.4Z"/></svg>
-        Masuk dengan Google
-      </button>
+
+      <fieldset class="segmen" aria-label="Sudah punya akun?">
+        <label><input type="radio" name="mode-masuk" value="masuk" checked><span>Masuk</span></label>
+        <label><input type="radio" name="mode-masuk" value="daftar"><span>Daftar baru</span></label>
+      </fieldset>
       <div class="bidang">
-        <label for="email">Atau pakai email</label>
+        <label for="email">Email</label>
         <input class="input" id="email" type="email" inputmode="email" autocomplete="email" placeholder="nama@gmail.com">
       </div>
-      <button type="button" class="tombol-garis penuh" id="tombol-kirim">Kirim tautan masuk</button>
-      <div class="bidang" id="langkah-kode" hidden>
-        <p class="petunjuk" id="info-kode"></p>
-        <label for="kode">Kode dari email (kalau ada)</label>
-        <input class="input" id="kode" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="123456">
-        <button type="button" class="tombol penuh" id="tombol-kode">Masuk dengan kode</button>
+      <div class="bidang">
+        <label for="sandi">Kata sandi</label>
+        <input class="input" id="sandi" type="password" autocomplete="current-password" placeholder="Minimal 8 huruf atau angka">
       </div>
+      <button type="button" class="tombol penuh" id="tombol-masuk">Masuk</button>
+      <button type="button" class="tautan" id="tombol-lupa">Lupa kata sandi?</button>
       <p class="pesan-galat" id="pesan-masuk" role="alert"></p>
+      <p class="petunjuk" id="info-masuk" role="status"></p>
+
+      <div id="cara-lain" style="display:flex;flex-direction:column;gap:14px">
+        <p class="pemisah"><span>atau</span></p>
+        <button type="button" class="tombol-garis penuh" id="tombol-google">
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="#4285F4" d="M22.6 12.2c0-.8-.1-1.5-.2-2.2H12v4.2h5.9a5 5 0 0 1-2.2 3.3v2.7h3.6c2.1-1.9 3.3-4.8 3.3-8Z"/><path fill="#34A853" d="M12 23c3 0 5.5-1 7.3-2.7l-3.6-2.8c-1 .7-2.2 1.1-3.7 1.1-2.9 0-5.3-1.9-6.2-4.5H2.1v2.9A11 11 0 0 0 12 23Z"/><path fill="#FBBC05" d="M5.8 14.1a6.6 6.6 0 0 1 0-4.2V7H2.1a11 11 0 0 0 0 10l3.7-2.9Z"/><path fill="#EA4335" d="M12 5.4c1.6 0 3 .6 4.2 1.6l3.1-3.1A11 11 0 0 0 2.1 7l3.7 2.9C6.7 7.3 9.1 5.4 12 5.4Z"/></svg>
+          Masuk dengan Google
+        </button>
+      </div>
+      <p class="petunjuk" id="catatan-iphone" hidden>Di aplikasi layar utama iPhone, login Google terbuka di Safari dan tidak tersambung ke aplikasi ini. Pakai email dan kata sandi.</p>
     </section>
 
     <section class="kartu" id="tanpa-cloud" hidden>
@@ -127,6 +137,18 @@
       </div>
     </div>
     <div class="bawah"><button type="button" class="tombol penuh" id="simpan-nama">Simpan</button></div>
+  </dialog>
+
+  <dialog class="lembar pendek" id="lembar-sandi-baru" aria-labelledby="judul-sandi-baru">
+    <div class="atas"><h2 id="judul-sandi-baru">Buat kata sandi baru</h2></div>
+    <div class="isi">
+      <div class="bidang">
+        <label for="sandi-baru">Kata sandi baru</label>
+        <input class="input" id="sandi-baru" type="password" autocomplete="new-password" placeholder="Minimal 8 huruf atau angka">
+      </div>
+      <p class="pesan-galat" id="pesan-sandi-baru" role="alert"></p>
+    </div>
+    <div class="bawah"><button type="button" class="tombol penuh" id="simpan-sandi-baru">Simpan kata sandi</button></div>
   </dialog>
 
   <dialog class="lembar pendek" id="lembar-pulihkan" aria-labelledby="judul-pulihkan">

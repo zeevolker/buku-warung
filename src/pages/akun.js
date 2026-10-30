@@ -52,34 +52,88 @@ async function masukGoogle() {
   if (error) $("pesan-masuk").textContent = "Gagal membuka login Google: " + error.message;
 }
 
-let emailTerkirim = "";
+// ---------- Masuk dengan email + kata sandi ----------
+// Cara ini tidak membuka halaman lain, jadi juga jalan di aplikasi layar utama iPhone.
+// (Di iPhone, Safari dan aplikasi layar utama menyimpan data terpisah. Login Google dan
+// tautan email terbuka di Safari, sehingga sesinya tidak sampai ke aplikasi.)
 
-async function kirimTautan() {
-  const email = $("email").value.trim();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    $("pesan-masuk").textContent = "Tulis alamat email yang benar.";
-    return $("email").focus();
-  }
-  $("tombol-kirim").disabled = true;
-  const klien = await ambilKlienSupabase();
-  const { error } = await klien.auth.signInWithOtp({ email, options: { shouldCreateUser: true, emailRedirectTo: alamatKembali() } });
-  $("tombol-kirim").disabled = false;
-  if (error) {
-    $("pesan-masuk").textContent = error.status === 429 ? "Terlalu sering. Tunggu sebentar lalu coba lagi." : "Gagal mengirim email: " + error.message;
-    return;
-  }
-  emailTerkirim = email;
+const modeDaftar = () => document.querySelector('input[name="mode-masuk"]:checked').value === "daftar";
+const emailValid = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+
+function perbaruiMode() {
+  $("tombol-masuk").textContent = modeDaftar() ? "Daftar" : "Masuk";
+  $("sandi").autocomplete = modeDaftar() ? "new-password" : "current-password";
+  $("tombol-lupa").hidden = modeDaftar();
   $("pesan-masuk").textContent = "";
-  $("langkah-kode").hidden = false;
-  $("info-kode").textContent = `Email dikirim ke ${email}. Buka emailnya lalu tekan tautan di dalamnya. Kalau email berisi kode angka, ketik di sini.`;
+  $("info-masuk").textContent = "";
 }
 
-async function masukKode() {
-  const token = $("kode").value.replace(/\D/g, "");
-  if (token.length < 6) return ($("pesan-masuk").textContent = "Ketik kode dari email.");
+function terjemahkanGalat(error) {
+  const pesan = (error?.message || "").toLowerCase();
+  if (error?.status === 429 || pesan.includes("rate limit")) return "Terlalu sering mencoba. Tunggu beberapa menit lalu coba lagi.";
+  if (pesan.includes("invalid login")) return "Email atau kata sandi salah.";
+  if (pesan.includes("not confirmed")) return "Email belum dikonfirmasi. Buka email dari Buku Warung, tekan tautannya, lalu masuk di sini.";
+  if (pesan.includes("already registered")) return "Email ini sudah terdaftar. Pilih Masuk.";
+  if (pesan.includes("password")) return "Kata sandi terlalu lemah. Pakai minimal 8 huruf dan angka.";
+  return "Gagal: " + (error?.message || "coba lagi.");
+}
+
+async function masukSandi() {
+  const email = $("email").value.trim();
+  const password = $("sandi").value;
+  $("pesan-masuk").textContent = "";
+  $("info-masuk").textContent = "";
+  if (!emailValid(email)) return ($("pesan-masuk").textContent = "Tulis alamat email yang benar.");
+  if (password.length < 8) return ($("pesan-masuk").textContent = "Kata sandi minimal 8 huruf atau angka.");
+
+  $("tombol-masuk").disabled = true;
   const klien = await ambilKlienSupabase();
-  const { error } = await klien.auth.verifyOtp({ email: emailTerkirim, token, type: "email" });
-  $("pesan-masuk").textContent = error ? "Kode salah atau sudah kedaluwarsa. Kirim ulang." : "";
+  const { data, error } = modeDaftar()
+    ? await klien.auth.signUp({ email, password, options: { emailRedirectTo: alamatKembali() } })
+    : await klien.auth.signInWithPassword({ email, password });
+  $("tombol-masuk").disabled = false;
+
+  if (error) return ($("pesan-masuk").textContent = terjemahkanGalat(error));
+  if (modeDaftar() && !data.session) {
+    // Supabase meminta konfirmasi email dulu
+    $("info-masuk").textContent = `Akun dibuat. Buka email di ${email}, tekan tautan konfirmasinya, lalu kembali ke sini dan pilih Masuk.`;
+    document.querySelector('input[name="mode-masuk"][value="masuk"]').checked = true;
+    $("tombol-masuk").textContent = "Masuk";
+    $("tombol-lupa").hidden = false;
+  }
+  // Kalau berhasil masuk, app.js menyinkronkan data dan halaman ini berganti tampilan sendiri
+}
+
+async function lupaSandi() {
+  const email = $("email").value.trim();
+  if (!emailValid(email)) {
+    $("pesan-masuk").textContent = "Tulis email akunmu dulu, lalu tekan Lupa kata sandi.";
+    return $("email").focus();
+  }
+  const klien = await ambilKlienSupabase();
+  const { error } = await klien.auth.resetPasswordForEmail(email, { redirectTo: alamatKembali() });
+  if (error) return ($("pesan-masuk").textContent = terjemahkanGalat(error));
+  $("pesan-masuk").textContent = "";
+  $("info-masuk").textContent = `Tautan untuk membuat kata sandi baru dikirim ke ${email}.`;
+}
+
+// Dibuka dari tautan "lupa kata sandi" di email
+async function simpanSandiBaru() {
+  const password = $("sandi-baru").value;
+  if (password.length < 8) return ($("pesan-sandi-baru").textContent = "Minimal 8 huruf atau angka.");
+  const klien = await ambilKlienSupabase();
+  const { error } = await klien.auth.updateUser({ password });
+  if (error) return ($("pesan-sandi-baru").textContent = terjemahkanGalat(error));
+  $("lembar-sandi-baru").close();
+  kabar("Kata sandi baru disimpan. Sekarang bisa masuk di HP mana pun dengan kata sandi ini.");
+}
+
+let sudahMintaSandi = false;
+function cekPemulihan(s) {
+  if (s.pulihkanSandi && !sudahMintaSandi) {
+    sudahMintaSandi = true;
+    bukaLembar($("lembar-sandi-baru"));
+  }
 }
 
 async function keluar() {
@@ -166,8 +220,16 @@ async function pulihkanSekarang() {
 pasangLembar($("lembar-nama"));
 pasangLembar($("lembar-pulihkan"));
 $("tombol-google").addEventListener("click", masukGoogle);
-$("tombol-kirim").addEventListener("click", kirimTautan);
-$("tombol-kode").addEventListener("click", masukKode);
+$("tombol-masuk").addEventListener("click", masukSandi);
+$("tombol-lupa").addEventListener("click", lupaSandi);
+$("simpan-sandi-baru").addEventListener("click", simpanSandiBaru);
+document.querySelectorAll('input[name="mode-masuk"]').forEach((r) => r.addEventListener("change", perbaruiMode));
+$("sandi").addEventListener("keydown", (e) => e.key === "Enter" && masukSandi());
+
+// Aplikasi layar utama iPhone: sembunyikan login Google, karena terbuka di Safari dan tidak tersambung
+const iphoneLayarUtama = navigator.standalone === true;
+$("cara-lain").hidden = iphoneLayarUtama;
+$("catatan-iphone").hidden = !iphoneLayarUtama;
 $("tombol-sinkron").addEventListener("click", () => sinkronSekarang());
 $("tombol-keluar").addEventListener("click", keluar);
 $("tombol-nama").addEventListener("click", bukaNama);
@@ -178,7 +240,12 @@ $("file-cadangan").addEventListener("change", (e) => {
   e.target.value = "";
 });
 $("ya-pulihkan").addEventListener("click", pulihkanSekarang);
-globalThis.addEventListener("bw:status", (e) => gambar(e.detail));
+globalThis.addEventListener("bw:status", (e) => {
+  gambar(e.detail);
+  cekPemulihan(e.detail);
+});
 globalThis.addEventListener("bw:nama-warung", () => gambar());
+pasangLembar($("lembar-sandi-baru"));
 gambar();
+cekPemulihan(ambilStatus());
 tampilCadanganTerakhir();
