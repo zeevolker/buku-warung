@@ -94,6 +94,16 @@ async function masukSandi() {
   $("tombol-masuk").disabled = false;
 
   if (error) return ($("pesan-masuk").textContent = terjemahkanGalat(error));
+
+  // Email sudah punya akun (misalnya dari login Google): Supabase tidak mengirim email apa pun
+  // dan tidak memberi error, demi keamanan. Tandanya: daftar identitasnya kosong.
+  if (modeDaftar() && data.user && data.user.identities?.length === 0) {
+    document.querySelector('input[name="mode-masuk"][value="masuk"]').checked = true;
+    perbaruiMode();
+    $("pesan-masuk").textContent = "Email ini sudah punya akun, misalnya dari login Google. Tekan Lupa kata sandi untuk membuat kata sandi, lalu masuk.";
+    return;
+  }
+
   if (modeDaftar() && !data.session) {
     // Supabase meminta konfirmasi email dulu
     $("info-masuk").textContent = `Akun dibuat. Buka email di ${email}, tekan tautan konfirmasinya, lalu kembali ke sini dan pilih Masuk.`;
