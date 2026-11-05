@@ -323,7 +323,7 @@ function mulaiSuara() {
     pengenal = null;
     sesi.abort();
     $("lembar-suara").close();
-    kabar("Pengenal suara tidak merespons. Di iPhone, pastikan Siri atau Dikte menyala dan buka lewat Safari, atau ketik manual.", LAMA_PESAN_SUARA);
+    kabar("Pengenal suara tidak merespons. Pastikan mikrofon tidak sedang dipakai telepon, dan Siri atau Dikte menyala, atau ketik manual.", LAMA_PESAN_SUARA);
   }, BATAS_TANPA_RESPONS);
 }
 
