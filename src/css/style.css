@@ -145,6 +145,8 @@ svg.ikon { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-w
   background: var(--surface); border: 1px solid var(--line); color: var(--ink);
 }
 .aksi-utama button.utama { background: var(--ink); border-color: var(--ink); color: #fff; }
+.suara-teks { margin: 0; min-height: 56px; font-size: 18px; font-weight: 600; overflow-wrap: anywhere; }
+.suara-teks:empty::before { content: "Silakan bicara…"; color: var(--muted); font-weight: 500; }
 
 .kartu-tautan {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;

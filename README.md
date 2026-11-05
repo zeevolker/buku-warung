@@ -37,6 +37,7 @@ Pedagang hanya perlu menjawab dua pertanyaan: **uangnya masuk atau keluar?** dan
 ## Fitur
 
 - **Beranda:** uang di laci hari ini, tiga tombol utama, total utang pelanggan, dan semua catatan hari ini
+- **Catat dengan suara:** ucapkan "jual dua indomie" atau "bayar listrik 100 ribu", lembar yang sesuai terbuka dan sudah terisi, lalu periksa dan tekan Simpan sendiri (butuh internet dan browser yang mendukung)
 - **Laporan:** per hari, minggu, atau bulan, dengan grafik harian, untung barang, perubahan utang pelanggan, dan bagikan ke WhatsApp
 - **Barang:** stok berubah otomatis, penanda hampir habis, ubah harga, dan koreksi stok
 - **Pelanggan:** siapa yang masih berutang, riwayat tiap pelanggan, dan pengingat lewat WhatsApp
@@ -85,6 +86,7 @@ src/
 ├── data/
 │   ├── hitung.js     Semua perhitungan (fungsi murni, dites di tests/)
 │   ├── aksi.js       Semua yang bisa dilakukan pengguna (jual, keluar, bayar, ...)
+│   ├── suara.js      Mengubah kalimat ucapan jadi isian lembar (fungsi murni, dites di tests/)
 │   ├── db.js         Penyimpanan IndexedDB
 │   ├── sync.js       Sinkron dua arah dengan Supabase
 │   ├── supabase.js   Koneksi ke Supabase
@@ -105,6 +107,7 @@ tests/                Tes unit
 - **Versi terbaru menang.** Untuk perubahan nama atau harga, versi dengan `updated_at` terbaru yang dipakai. Aturan yang sama ada di HP dan di trigger database.
 - **Keamanan di database.** Row Level Security memastikan tiap akun hanya bisa membaca datanya sendiri. Kunci publishable Supabase memang aman berada di frontend.
 - **Bahasa pedagang, bukan istilah akuntansi.** "Uang di laci", "bayar nanti", "belanja stok". Kata "kasbon" hanya muncul sebagai penjelas.
+- **Suara dibaca dengan parser aturan, bukan AI.** Gratis, cepat, bisa dites dengan `node:test`, dan tanpa kuota. Pengenal suara bawaan browser hanya mengubah suara jadi teks, sisanya aturan biasa di `src/data/suara.js`, dan hasilnya tidak pernah tersimpan sebelum pengguna menekan Simpan.
 - **Data lama dipindahkan otomatis** dari versi 1 (localStorage) dan versi 2 (IndexedDB) tanpa mengubah satu angka pun. Ini dibuktikan oleh tes di `tests/migrasi.test.js`.
 
 ## Menjalankan di komputer

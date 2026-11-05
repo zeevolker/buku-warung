@@ -46,6 +46,9 @@
         <svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Terima bayar
       </button>
     </div>
+    <button type="button" class="tombol-garis penuh" id="tombol-suara" hidden>
+      <svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>Catat dengan suara
+    </button>
 
     <a href="pelanggan.html" class="kartu-tautan" id="kartu-utang" hidden>
       <span class="isi">
@@ -174,6 +177,23 @@
     </div>
     <div class="bawah">
       <button type="button" class="tombol penuh" id="simpan-bayar">Simpan</button>
+    </div>
+  </dialog>
+
+  <!-- ===== Lembar Catat dengan suara ===== -->
+  <dialog class="lembar pendek" id="lembar-suara" aria-labelledby="judul-suara">
+    <div class="atas">
+      <h2 id="judul-suara">Mendengarkan…</h2>
+      <button type="button" class="tombol-bulat" aria-label="Batal" data-tutup>
+        <svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="isi">
+      <p class="suara-teks" id="suara-teks" aria-live="polite"></p>
+      <p class="petunjuk">Contoh: "jual dua indomie", "Budi utang kopi tiga", "bayar listrik 100 ribu"</p>
+    </div>
+    <div class="bawah">
+      <button type="button" class="tombol penuh" id="suara-berhenti">Berhenti</button>
     </div>
   </dialog>
 

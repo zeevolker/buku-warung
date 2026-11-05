@@ -5,6 +5,7 @@ import { supabaseAktif } from "../data/supabase.js";
 import { semua, semuaMentah } from "../data/db.js";
 import { daftarBarang, daftarPelanggan, catatJual, catatKeluar, catatBayar } from "../data/aksi.js";
 import { hitungUang } from "../data/hitung.js";
+import { uraikanKalimat } from "../data/suara.js";
 import { formatRupiah } from "../lib/format.js";
 import { hariIni, formatTanggalLengkap } from "../lib/tanggal.js";
 import { el, ambilAngka, pasangFormatRupiah, ribuan, bukaLembar, pasangLembar, aman, kabar, saatDataBerubah, itemCatatan, kosong, inisial } from "../ui/komponen.js";
@@ -224,6 +225,7 @@ async function simpanKeluar() {
 // ===================== Lembar Terima bayar =====================
 
 let berutang = [];
+let nominalSuara = null; // nominal yang diucapkan, supaya tidak tertimpa saat pelanggan dipilih
 
 function perbaruiBayar() {
   const p = berutang.find((x) => x.id === $("bayar-pelanggan").value);
@@ -231,6 +233,7 @@ function perbaruiBayar() {
 }
 
 async function bukaBayar(idPelanggan) {
+  nominalSuara = null;
   berutang = (await daftarPelanggan()).filter((p) => p.utang > 0).sort((a, b) => a.nama.localeCompare(b.nama));
   $("bayar-galat").textContent = "";
   if (!berutang.length) return kabar("Tidak ada pelanggan yang punya utang.");
@@ -250,14 +253,164 @@ async function simpanBayar() {
   tampilkan();
 }
 
+// ===================== Catat dengan suara =====================
+// Lembarnya hanya diisi, tidak pernah disimpan: pengguna memeriksa lalu menekan Simpan sendiri.
+
+const ambilPengenal = () => globalThis.SpeechRecognition || globalThis.webkitSpeechRecognition;
+
+const PESAN_GALAT_SUARA = {
+  "not-allowed": "Izin mikrofon ditolak. Izinkan mikrofon untuk situs ini di pengaturan browser, atau ketik manual.",
+  "service-not-allowed": "Izin mikrofon ditolak. Izinkan mikrofon untuk situs ini di pengaturan browser, atau ketik manual.",
+  "no-speech": "Suara belum terdengar. Coba lagi lebih dekat ke HP.",
+  network: "Pengenal suara butuh internet. Periksa sinyal lalu coba lagi, atau ketik manual.",
+  "audio-capture": "Mikrofon tidak ditemukan. Coba lagi atau ketik manual.",
+};
+
+let pengenal = null; // sesi merekam yang sedang berjalan
+
+function perbaruiTombolSuara() {
+  $("tombol-suara").hidden = !(ambilPengenal() && navigator.onLine);
+}
+
+function mulaiSuara() {
+  const Pengenal = ambilPengenal();
+  const sesi = new Pengenal();
+  let teks = "";
+  sesi.lang = "id-ID";
+  sesi.interimResults = true;
+  sesi.continuous = false;
+  sesi.onresult = (e) => {
+    teks = Array.from(e.results, (hasil) => hasil[0].transcript).join(" ").trim();
+    $("suara-teks").textContent = teks;
+  };
+  sesi.onerror = (e) => {
+    if (pengenal !== sesi) return; // sesi lama yang sudah dibatalkan, jangan ganggu sesi baru
+    pengenal = null; // onend sesudah ini tidak perlu memproses apa pun
+    $("lembar-suara").close();
+    // "aborted" berarti dibatalkan oleh aplikasi sendiri, jadi tidak perlu pesan
+    if (e.error !== "aborted") kabar(PESAN_GALAT_SUARA[e.error] || "Pengenal suara belum bisa dipakai. Coba lagi atau ketik manual.");
+  };
+  sesi.onend = () => {
+    if (pengenal !== sesi) return; // sudah dibatalkan atau gagal
+    pengenal = null;
+    $("lembar-suara").close();
+    if (teks) prosesUcapan(teks);
+    else kabar(PESAN_GALAT_SUARA["no-speech"]);
+  };
+
+  $("judul-suara").textContent = "Mendengarkan…";
+  $("suara-teks").textContent = "";
+  $("suara-berhenti").disabled = false;
+  pengenal = sesi;
+  bukaLembar($("lembar-suara"));
+  try {
+    sesi.start();
+  } catch (e) {
+    console.error(e);
+    pengenal = null;
+    $("lembar-suara").close();
+    kabar("Pengenal suara belum bisa dipakai. Coba lagi atau ketik manual.");
+  }
+}
+
+function berhentiSuara() {
+  if (!pengenal) return;
+  $("judul-suara").textContent = "Memproses…";
+  $("suara-berhenti").disabled = true;
+  pengenal.stop(); // hasil terakhir tetap datang, lalu onend
+}
+
+// Lembar ditutup dengan tombol silang, klik di luar, atau tombol Esc: batalkan rekaman
+function batalSuara() {
+  if (!pengenal || $("lembar-suara").open) return; // sudah dibuka lagi untuk sesi baru
+  const sesi = pengenal;
+  pengenal = null;
+  sesi.abort();
+}
+
+async function prosesUcapan(teks) {
+  const [barang, pelanggan] = await Promise.all([daftarBarang(), daftarPelanggan()]);
+  const hasil = uraikanKalimat(teks, { barang, pelanggan });
+  if (!hasil.jenis) return kabar(`Belum mengerti: '${teks}'. Coba lagi atau ketik manual.`);
+  const nama = pelanggan.find((p) => p.id === hasil.pelanggan_id)?.nama || "";
+  if (hasil.jenis === "jual") await isiJual(hasil, nama);
+  else if (hasil.jenis === "keluar") await isiKeluar(hasil, nama);
+  else await isiBayar(hasil, nama);
+  // Lembar Terima bayar tidak terbuka kalau tidak ada yang berutang; pesannya sudah muncul
+  if (document.querySelector("dialog[open]")) kabar("Periksa dulu, lalu Simpan");
+}
+
+async function isiJual(h, namaPelanggan) {
+  await bukaJual();
+  const catatan = [];
+  for (const item of h.item) {
+    const b = barangJual.find((x) => x.id === item.barang_id);
+    if (!b.harga_jual) catatan.push(`Harga jual ${b.nama} belum diisi.`);
+    else if (b.stok <= 0) catatan.push(`Stok ${b.nama} habis.`);
+    else {
+      jumlahDipilih.set(b.id, Math.min(item.jumlah, b.stok));
+      if (item.jumlah > b.stok) catatan.push(`Stok ${b.nama} tinggal ${b.stok}.`);
+    }
+  }
+  // Kalau ada barang, totalnya mengikuti harga barang. Nominal yang disebut tidak ditambahkan,
+  // karena akan terhitung dua kali.
+  if (!h.item.length && h.nominal) $("jual-lainnya").value = ribuan(h.nominal);
+  if (h.item.length && h.nominal && h.nominal !== totalJual()) catatan.push(`Total mengikuti harga barang, bukan ${formatRupiah(h.nominal)} yang disebut.`);
+  $("jual-keterangan").value = h.keterangan;
+  document.querySelector(`input[name="dibayar"][value="${h.dibayar}"]`).checked = true;
+  $("jual-pelanggan").value = namaPelanggan;
+  $("jual-galat").textContent = catatan.join(" ");
+  gambarDaftarJual();
+  perbaruiRingkasJual();
+}
+
+async function isiKeluar(h, namaPelanggan) {
+  await bukaKeluar();
+  document.activeElement?.blur(); // jangan munculkan keyboard, pengguna hanya perlu memeriksa
+  document.querySelector(`input[name="untuk"][value="${h.untuk}"]`).checked = true;
+  if (h.nominal) $("keluar-nominal").value = ribuan(h.nominal);
+  const item = h.item[0];
+  if (item) {
+    $("keluar-barang").value = item.barang_id;
+    $("keluar-jumlah").value = item.jumlah;
+  }
+  $("keluar-pelanggan").value = namaPelanggan;
+  const catatan = [];
+  // Kolom keterangan hanya tampil untuk biaya; pada lainnya, tunjukkan kata yang tidak dikenali
+  if (h.untuk === "biaya") $("keluar-keterangan").value = h.keterangan;
+  else if (h.keterangan) catatan.push(`Belum dikenali: "${h.keterangan}".`);
+  if (h.item.length > 1) catatan.push("Satu catatan belanja hanya untuk satu barang. Catat barang lainnya terpisah.");
+  $("keluar-galat").textContent = catatan.join(" ");
+  perbaruiKeluar();
+}
+
+async function isiBayar(h, namaPelanggan) {
+  await bukaBayar(h.pelanggan_id);
+  if (!$("lembar-bayar").open) return;
+  // Kalau namanya tidak dikenali, biarkan kosong supaya tidak tercatat ke orang yang salah
+  const adaUtang = berutang.some((p) => p.id === h.pelanggan_id);
+  $("bayar-pelanggan").value = adaUtang ? h.pelanggan_id : "";
+  nominalSuara = h.nominal;
+  if (h.nominal) $("bayar-nominal").value = ribuan(h.nominal);
+  else if (!adaUtang) $("bayar-nominal").value = "";
+  $("bayar-galat").textContent = adaUtang ? "" : namaPelanggan ? `${namaPelanggan} tidak punya utang. Pilih pelanggan.` : "Pilih pelanggan yang membayar.";
+  perbaruiBayar();
+}
+
 // ===================== Pasang =====================
 
-for (const id of ["lembar-jual", "lembar-keluar", "lembar-bayar"]) pasangLembar($(id));
+for (const id of ["lembar-jual", "lembar-keluar", "lembar-bayar", "lembar-suara"]) pasangLembar($(id));
 for (const id of ["jual-lainnya", "keluar-nominal", "bayar-nominal"]) pasangFormatRupiah($(id));
 
 $("tombol-jual").addEventListener("click", bukaJual);
 $("tombol-keluar").addEventListener("click", bukaKeluar);
 $("tombol-bayar").addEventListener("click", () => bukaBayar());
+$("tombol-suara").addEventListener("click", mulaiSuara);
+$("suara-berhenti").addEventListener("click", berhentiSuara);
+$("lembar-suara").addEventListener("close", batalSuara);
+globalThis.addEventListener("online", perbaruiTombolSuara);
+globalThis.addEventListener("offline", perbaruiTombolSuara);
+perbaruiTombolSuara();
 $("simpan-jual").addEventListener("click", simpanJual);
 $("simpan-keluar").addEventListener("click", simpanKeluar);
 $("simpan-bayar").addEventListener("click", simpanBayar);
@@ -269,7 +422,7 @@ document.querySelectorAll('input[name="untuk"]').forEach((r) => r.addEventListen
 for (const id of ["keluar-barang", "keluar-jumlah", "keluar-nominal"]) $(id).addEventListener("input", perbaruiKeluar);
 $("bayar-pelanggan").addEventListener("change", () => {
   const p = berutang.find((x) => x.id === $("bayar-pelanggan").value);
-  $("bayar-nominal").value = p ? ribuan(p.utang) : "";
+  $("bayar-nominal").value = p ? ribuan(nominalSuara ?? p.utang) : "";
   perbaruiBayar();
 });
 

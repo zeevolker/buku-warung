@@ -104,8 +104,9 @@ export function kabar(teks) {
   let k = document.getElementById("kabar");
   if (!k) {
     k = el("p", { id: "kabar", className: "kabar", role: "status" });
-    document.body.append(k);
   }
+  // Lembar yang terbuka menutupi semua elemen lain, jadi pesannya ditaruh di dalam lembar itu
+  (document.querySelector("dialog[open]") || document.body).append(k);
   k.textContent = teks;
   clearTimeout(timerKabar);
   timerKabar = setTimeout(() => (k.textContent = ""), 3500);
