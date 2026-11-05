@@ -100,7 +100,7 @@ export function pasangHapusDuaKali(tombol, onYa) {
 
 // ---------- Pesan sementara ----------
 let timerKabar;
-export function kabar(teks) {
+export function kabar(teks, lama = 3500) {
   let k = document.getElementById("kabar");
   if (!k) {
     k = el("p", { id: "kabar", className: "kabar", role: "status" });
@@ -109,7 +109,7 @@ export function kabar(teks) {
   (document.querySelector("dialog[open]") || document.body).append(k);
   k.textContent = teks;
   clearTimeout(timerKabar);
-  timerKabar = setTimeout(() => (k.textContent = ""), 3500);
+  timerKabar = setTimeout(() => (k.textContent = ""), lama);
 }
 
 // Jalankan aksi yang menyimpan data; kalau penyimpanan HP gagal, beri tahu pengguna

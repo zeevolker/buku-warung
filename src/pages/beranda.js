@@ -260,11 +260,16 @@ const ambilPengenal = () => globalThis.SpeechRecognition || globalThis.webkitSpe
 
 const PESAN_GALAT_SUARA = {
   "not-allowed": "Izin mikrofon ditolak. Izinkan mikrofon untuk situs ini di pengaturan browser, atau ketik manual.",
-  "service-not-allowed": "Izin mikrofon ditolak. Izinkan mikrofon untuk situs ini di pengaturan browser, atau ketik manual.",
+  "service-not-allowed": "Pengenal suara belum aktif. Di iPhone, nyalakan Siri atau Dikte di Pengaturan, lalu coba lagi, atau ketik manual.",
   "no-speech": "Suara belum terdengar. Coba lagi lebih dekat ke HP.",
   network: "Pengenal suara butuh internet. Periksa sinyal lalu coba lagi, atau ketik manual.",
   "audio-capture": "Mikrofon tidak ditemukan. Coba lagi atau ketik manual.",
 };
+
+const LAMA_PESAN_SUARA = 8000; // pesannya berisi petunjuk, jadi perlu waktu untuk dibaca
+// Safari di iPhone kadang diam saja tanpa hasil dan tanpa galat, jadi aplikasi yang harus berhenti menunggu
+const BATAS_TANPA_RESPONS = 12000;
+const BATAS_SETELAH_BERHENTI = 2000;
 
 let pengenal = null; // sesi merekam yang sedang berjalan
 
@@ -288,14 +293,15 @@ function mulaiSuara() {
     pengenal = null; // onend sesudah ini tidak perlu memproses apa pun
     $("lembar-suara").close();
     // "aborted" berarti dibatalkan oleh aplikasi sendiri, jadi tidak perlu pesan
-    if (e.error !== "aborted") kabar(PESAN_GALAT_SUARA[e.error] || "Pengenal suara belum bisa dipakai. Coba lagi atau ketik manual.");
+    if (e.error !== "aborted") kabar(PESAN_GALAT_SUARA[e.error] || `Pengenal suara belum bisa dipakai (${e.error}). Coba lagi atau ketik manual.`, LAMA_PESAN_SUARA);
   };
   sesi.onend = () => {
     if (pengenal !== sesi) return; // sudah dibatalkan atau gagal
     pengenal = null;
+    sesi.abort(); // Safari bisa tetap memakai mikrofon setelah selesai
     $("lembar-suara").close();
     if (teks) prosesUcapan(teks);
-    else kabar(PESAN_GALAT_SUARA["no-speech"]);
+    else kabar(PESAN_GALAT_SUARA["no-speech"], LAMA_PESAN_SUARA);
   };
 
   $("judul-suara").textContent = "Mendengarkan…";
@@ -309,15 +315,25 @@ function mulaiSuara() {
     console.error(e);
     pengenal = null;
     $("lembar-suara").close();
-    kabar("Pengenal suara belum bisa dipakai. Coba lagi atau ketik manual.");
+    kabar("Pengenal suara belum bisa dipakai. Coba lagi atau ketik manual.", LAMA_PESAN_SUARA);
+    return;
   }
+  setTimeout(() => {
+    if (pengenal !== sesi || teks) return; // sudah selesai, atau sudah ada suara yang terdengar
+    pengenal = null;
+    sesi.abort();
+    $("lembar-suara").close();
+    kabar("Pengenal suara tidak merespons. Di iPhone, pastikan Siri atau Dikte menyala dan buka lewat Safari, atau ketik manual.", LAMA_PESAN_SUARA);
+  }, BATAS_TANPA_RESPONS);
 }
 
 function berhentiSuara() {
   if (!pengenal) return;
+  const sesi = pengenal;
   $("judul-suara").textContent = "Memproses…";
   $("suara-berhenti").disabled = true;
-  pengenal.stop(); // hasil terakhir tetap datang, lalu onend
+  sesi.stop(); // hasil terakhir tetap datang, lalu onend
+  setTimeout(() => sesi.onend(), BATAS_SETELAH_BERHENTI); // kalau onend tidak datang, pakai teks yang sudah ada
 }
 
 // Lembar ditutup dengan tombol silang, klik di luar, atau tombol Esc: batalkan rekaman
