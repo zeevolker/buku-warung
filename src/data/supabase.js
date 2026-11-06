@@ -29,6 +29,14 @@ export function remoteSupabase(klien) {
       const { error } = await klien.from(tabel).upsert(daftar, { onConflict: "id" });
       if (error) throw error;
     },
+    // id setelah `setelah`, urut. Untuk sinkron penuh, jadi galat harus dilempar, bukan dianggap kosong.
+    async ambilId(tabel, setelah, batas) {
+      let tanya = klien.from(tabel).select("id").order("id", { ascending: true }).limit(batas);
+      if (setelah !== null) tanya = tanya.gt("id", setelah);
+      const { data, error } = await tanya;
+      if (error) throw error;
+      return data.map((b) => b.id);
+    },
     async ambilSejak(tabel, sejakIso, batas) {
       const { data, error } = await klien.from(tabel).select("*").gte("server_updated_at", sejakIso).order("server_updated_at", { ascending: true }).limit(batas);
       if (error) throw error;

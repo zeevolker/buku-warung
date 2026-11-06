@@ -6,7 +6,7 @@ export default function Privasi() {
   return (
     <KerangkaLayar judul="Kebijakan Privasi" kembali="/akun">
       <div className={gaya.isi}>
-        <p className={gaya.tanggal}>Berlaku sejak 6 November 2026</p>
+        <p className={gaya.tanggal}>Berlaku sejak 7 November 2026</p>
         <p>Buku Warung adalah aplikasi pembukuan sederhana untuk warung dan pedagang kecil. Halaman ini menjelaskan data apa yang disimpan dan bagaimana data itu dipakai.</p>
 
         <h2>Tanpa akun</h2>
@@ -34,7 +34,7 @@ export default function Privasi() {
 
         <h2>Menghapus data</h2>
         <p>
-          Kamu bisa menghapus catatan kapan saja di dalam aplikasi. Untuk menghapus akun beserta seluruh datanya, kirim permintaan lewat <a href="https://github.com/zeevolker/buku-warung/issues">halaman proyek di GitHub</a>.
+          Kamu bisa menghapus catatan kapan saja di dalam aplikasi. Data yang kamu hapus dihapus permanen dari cloud setelah 30 hari, kecuali barang atau pelanggan yang masih tercantum di catatan lama. Untuk menghapus akun beserta seluruh datanya, kirim permintaan lewat <a href="https://github.com/zeevolker/buku-warung/issues">halaman proyek di GitHub</a>.
         </p>
 
         <h2>Perubahan</h2>
