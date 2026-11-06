@@ -10,14 +10,24 @@ import LembarLaci from "../../komponen/lembar/LembarLaci.jsx";
 import LembarHitungUlang from "../../komponen/lembar/LembarHitungUlang.jsx";
 import LembarRincian from "../../komponen/lembar/LembarRincian.jsx";
 import LembarBarang from "../Barang/LembarBarang.jsx";
+import Panduan from "./Panduan.jsx";
+import PitaStatus from "./PitaStatus.jsx";
+import LembarAjakan from "./LembarAjakan.jsx";
+import { aturMeta } from "../../data/db.js";
+import { useAkun } from "../../data/akun.js";
+import { supabaseAktif } from "../../data/supabase.js";
 import BarisCatatan from "../../komponen/BarisCatatan.jsx";
 import PesanSingkat, { usePesan } from "../../komponen/PesanSingkat.jsx";
-import { useCatatanHari, useIsi, useNamaWarung, usePelanggan, usePengingat, useSekarang, useTanggalHariIni } from "../../data/pakai.js";
+import { useCatatanHari, useIsi, useJumlahCatatan, useMeta, useNamaWarung, usePelanggan, usePengingat, useSekarang, useTanggalHariIni } from "../../data/pakai.js";
 import { arusLaci } from "../../data/hitung.js";
 import { formatRupiah } from "../../data/format.js";
 import gaya from "./Beranda.module.css";
 
 const JUMLAH_DAFTAR = 4;
+const AJAKAN_PERTAMA = 10; // ajakan simpan ke cloud muncul setelah sekian catatan
+const AJAKAN_BERIKUTNYA = 20; // "Nanti saja": muncul lagi setelah sekian catatan lagi
+const WARNA_TITIK = { sinkron: "#5aa77c", menyinkron: "#5aa77c", offline: "#d9a93e", gagal: "#b5583a", tamu: "#a3a59e" };
+const LABEL_STATUS = { sinkron: "tersimpan di cloud", menyinkron: "sedang menyimpan", offline: "offline", gagal: "gagal menyimpan", tamu: "data tersimpan di HP ini" };
 
 function ikonGaris(isi, warna) {
   return (
@@ -43,6 +53,16 @@ export default function Beranda() {
   const [barangAwal, setBarangAwal] = useState(null); // barang yang langsung terpilih di lembar Belanja
   const [rincian, setRincian] = useState(null);
   const { pesan, tampilkanPesan } = usePesan();
+  const akun = useAkun();
+  const jumlahCatatan = useJumlahCatatan();
+  const tutorial = useMeta("tutorial");
+  const cocokkanLaci = useMeta("cocokkan_laci");
+  const ajakanBerikut = useMeta("ajakan_berikut");
+
+  // Hanya satu lembar otomatis pada satu waktu, dan tidak menimpa lembar yang sedang dibuka
+  const bebas = !lembar && !rincian && !tutorial;
+  const tampilCocokkan = Boolean(cocokkanLaci) && bebas;
+  const tampilAjakan = !akun.email && supabaseAktif() && bebas && !cocokkanLaci && jumlahCatatan >= (ajakanBerikut || AJAKAN_PERTAMA);
 
   const tutup = () => setLembar(null);
   const arus = arusLaci(hariIni);
@@ -60,12 +80,13 @@ export default function Beranda() {
           </svg>
           {pengingat > 0 && <span className={gaya.lencana}>{pengingat}</span>}
         </Link>
-        {/* Titik abu-abu: data baru tersimpan di HP. Warna status cloud menyusul di Tahap 4. */}
-        <Link to="/akun" className={gaya.avatar} aria-label="Akun, data tersimpan di HP ini">
+        <Link to="/akun" className={gaya.avatar} aria-label={`Akun, ${LABEL_STATUS[akun.keadaan]}`}>
           {namaWarung[0].toUpperCase()}
-          <span className={gaya.titik} />
+          <span className={gaya.titik} style={{ background: WARNA_TITIK[akun.keadaan] }} />
         </Link>
       </header>
+
+      <PitaStatus akun={akun} />
 
       <section className={gaya.kartuLaci} aria-label="Isi laci">
         <span className={gaya.labelLaci}>Isi laci</span>
@@ -83,7 +104,7 @@ export default function Beranda() {
       </section>
 
       <div className={gaya.barisJual}>
-        <m.button type="button" className={gaya.tombolJual} whileTap={{ scale: 0.98 }} onClick={() => setLembar("jual")}>
+        <m.button type="button" data-panduan="jual" className={gaya.tombolJual} whileTap={{ scale: 0.98 }} onClick={() => setLembar("jual")}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true">
             <path d="M12 5v14M5 12h14" />
           </svg>
@@ -99,7 +120,7 @@ export default function Beranda() {
       </div>
 
       <div className={gaya.tigaTombol}>
-        <button type="button" className={gaya.petak} onClick={() => {
+        <button type="button" data-panduan="belanja" className={gaya.petak} onClick={() => {
             setBarangAwal(null);
             setLembar("belanja");
           }}>
@@ -114,7 +135,7 @@ export default function Beranda() {
           </span>
           Belanja
         </button>
-        <button type="button" className={gaya.petak} onClick={() => setLembar("bon")}>
+        <button type="button" data-panduan="bon" className={gaya.petak} onClick={() => setLembar("bon")}>
           <span className={gaya.ikonPetak} style={{ background: "var(--bon-latar)" }}>
             {ikonGaris(<path d="M5 12l5 5L19 7" />, "#7d5a12")}
           </span>
@@ -200,6 +221,9 @@ export default function Beranda() {
         }}
       />
 
+      <LembarHitungUlang terbuka={tampilCocokkan} judul="Cocokkan isi laci" onTutup={() => aturMeta("cocokkan_laci", 0)} onTersimpan={tampilkanPesan} />
+      <LembarAjakan terbuka={tampilAjakan} jumlah={jumlahCatatan} onNanti={() => aturMeta("ajakan_berikut", jumlahCatatan + AJAKAN_BERIKUTNYA)} />
+      {Boolean(tutorial) && <Panduan onSelesai={() => aturMeta("tutorial", 0)} />}
       <PesanSingkat pesan={pesan} />
     </div>
   );

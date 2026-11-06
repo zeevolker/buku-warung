@@ -1,0 +1,36 @@
+.kuning,
+.merah {
+  padding: 12px 16px;
+  border-radius: var(--sudut-kecil);
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.kuning {
+  background: var(--bon-latar);
+  color: #4f3608;
+}
+
+.merah {
+  background: var(--keluar-latar);
+  color: #7e3a24;
+}
+
+.merah span {
+  flex: 1;
+}
+
+.merah button {
+  flex: none;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: var(--sudut-kapsul);
+  background: var(--kartu);
+  color: #7e3a24;
+  font-size: 13px;
+  font-weight: 700;
+}

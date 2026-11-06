@@ -52,9 +52,10 @@ function IsiHitungUlang({ onTutup, onTersimpan }) {
   );
 }
 
-export default function LembarHitungUlang({ terbuka, onTutup, onTersimpan }) {
+// judul bisa diganti, misalnya "Cocokkan isi laci" setelah data v3 dipindahkan
+export default function LembarHitungUlang({ terbuka, onTutup, onTersimpan, judul = "Hitung ulang laci" }) {
   return (
-    <Lembar terbuka={terbuka} onTutup={onTutup} judul="Hitung ulang laci">
+    <Lembar terbuka={terbuka} onTutup={onTutup} judul={judul}>
       <IsiHitungUlang onTutup={onTutup} onTersimpan={onTersimpan} />
     </Lembar>
   );

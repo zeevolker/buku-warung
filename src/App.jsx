@@ -1,9 +1,11 @@
 // App.jsx: daftar rute, transisi antar layar, dan menu bawah.
-import { lazy, Suspense, useEffect } from "react";
-import { Routes, Route, useLocation } from "react-router";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { Routes, Route, useLocation, useNavigate } from "react-router";
 import { AnimatePresence, m } from "motion/react";
 import MenuBawah from "./komponen/MenuBawah.jsx";
 import { isiSekarang } from "./data/ringkasan.js";
+import { ambilMeta, aturMeta, db } from "./data/db.js";
+import { mulaiAkun, useAkun } from "./data/akun.js";
 
 // Setiap layar dimuat saat dibutuhkan
 const Beranda = lazy(() => import("./layar/Beranda/Beranda.jsx"));
@@ -21,18 +23,87 @@ const Privasi = lazy(() => import("./layar/Privasi/Privasi.jsx"));
 // Layar yang tampil tanpa menu bawah
 const TANPA_MENU = ["/masuk", "/mulai", "/privasi"];
 
+// Layar yang boleh dibuka sebelum selesai mengisi data awal
+const BEBAS_MULAI = TANPA_MENU;
+
+// Data lama dipindahkan lebih dulu. Library migrasi hanya dimuat kalau memang belum pernah berjalan.
+let janjiPindah = null;
+function pindahkanDataLama() {
+  janjiPindah ??= (async () => {
+    if (localStorage.getItem("bw4_migrasi_lokal")) return;
+    const { pindahkanDataHp } = await import("./data/migrasi.js");
+    await pindahkanDataHp();
+  })();
+  return janjiPindah;
+}
+
+// Layar selamat datang dilewati untuk layar bebas, dan saat baru kembali dari login Google,
+// karena kodenya di alamat masih diproses Supabase.
+function harusLewatMulai(alamat) {
+  return !BEBAS_MULAI.includes(alamat) && !window.location.search.includes("code=");
+}
+
+// Yang sudah punya data tidak perlu lewat layar pertama kali lagi
+async function sudahSelesaiMulai() {
+  if (await ambilMeta("mulai_selesai")) return true;
+  if ((await db.catatan.count()) || (await db.barang.count())) {
+    await aturMeta("mulai_selesai", 1);
+    return true;
+  }
+  return false;
+}
+
 export default function App() {
   const lokasi = useLocation();
+  const pindah = useNavigate();
+  const akun = useAkun();
+  const [siap, setSiap] = useState(false);
+
+  // Sekali saat aplikasi dibuka: pindahkan data lama, lalu sambungkan akun di belakang layar
+  useEffect(() => {
+    pindahkanDataLama()
+      .catch((e) => console.error("Migrasi data lama gagal:", e))
+      .then(sudahSelesaiMulai)
+      .then((selesai) => {
+        // Diarahkan sebelum tampil, supaya pengguna baru tidak sempat melihat Beranda kosong
+        if (!selesai && harusLewatMulai(lokasi.pathname)) pindah("/mulai", { replace: true });
+      })
+      .catch((e) => console.error(e))
+      .finally(() => {
+        setSiap(true);
+        mulaiAkun().catch((e) => console.warn("Gagal menyiapkan akun:", e));
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Pertama kali: arahkan ke layar selamat datang
+  useEffect(() => {
+    if (!siap || !harusLewatMulai(lokasi.pathname)) return;
+    let batal = false;
+    sudahSelesaiMulai().then((selesai) => {
+      if (!selesai && !batal) pindah("/mulai", { replace: true });
+    });
+    return () => {
+      batal = true;
+    };
+  }, [siap, lokasi.pathname, akun.email, pindah]);
+
+  // Dibuka dari email "lupa kata sandi"
+  useEffect(() => {
+    if (akun.pulihkanSandi && lokasi.pathname !== "/masuk") pindah("/masuk", { replace: true });
+  }, [akun.pulihkanSandi, lokasi.pathname, pindah]);
 
   // Simpan ringkasan hari-hari yang sudah lewat, supaya layar lain tidak perlu menghitung ulang
   useEffect(() => {
-    isiSekarang().catch((e) => console.warn("Ringkasan gagal disimpan:", e));
-  }, []);
+    if (siap) isiSekarang().catch((e) => console.warn("Ringkasan gagal disimpan:", e));
+  }, [siap]);
 
   // Layar baru selalu mulai dari atas
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [lokasi.pathname]);
+
+  if (!siap) return null;
 
   return (
     <>

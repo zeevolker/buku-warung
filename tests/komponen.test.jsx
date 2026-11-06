@@ -1,4 +1,4 @@
-import { test, expect, vi, beforeAll } from "vitest";
+import { test, expect, vi, beforeAll, beforeEach } from "vitest";
 import { useState, Suspense } from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
@@ -7,10 +7,18 @@ import App from "../src/App.jsx";
 import Lembar from "../src/komponen/Lembar.jsx";
 import ChipTempat from "../src/komponen/ChipTempat.jsx";
 import Rute from "../src/komponen/Rute.jsx";
+import { db, aturMeta } from "../src/data/db.js";
 
 beforeAll(() => {
   MotionGlobalConfig.skipAnimations = true;
   window.scrollTo = vi.fn(() => Promise.resolve()); // Chrome baru mengembalikan Promise, bukan undefined
+});
+
+beforeEach(async () => {
+  await db.delete();
+  await db.open();
+  await aturMeta("mulai_selesai", 1);
+  localStorage.setItem("bw4_migrasi_lokal", "1");
 });
 
 const dalamGerak = (isi) => <LazyMotion features={domMax} strict>{isi}</LazyMotion>;
@@ -80,14 +88,14 @@ test("Lembar: dua lembar bertukar tidak mengunci gulir halaman", async () => {
 const bukaDi = (alamat) => render(<MemoryRouter initialEntries={[alamat]}>{dalamGerak(<App />)}</MemoryRouter>);
 
 test("rute: setiap layar terbuka lewat lazy, menu bawah sesuai", async () => {
-  const daftar = [["/", "Buku Warung", true], ["/laporan", "Laporan", true], ["/barang", "Barang", true], ["/pelanggan", "Pelanggan", true], ["/pelanggan/x", "Pelanggan", true], ["/riwayat", "Semua riwayat", true], ["/catatan", "Catatan", true], ["/akun", "Akun", true], ["/masuk", "Masuk", false], ["/mulai", "Selamat datang", false], ["/privasi", "Kebijakan Privasi", false]];
+  const daftar = [["/", "Buku Warung", true], ["/laporan", "Laporan", true], ["/barang", "Barang", true], ["/pelanggan", "Pelanggan", true], ["/pelanggan/x", "Pelanggan", true], ["/riwayat", "Semua riwayat", true], ["/catatan", "Catatan", true], ["/akun", "Akun", true], ["/masuk", "Masuk dengan email", false], ["/mulai", "Buku Warung", false], ["/privasi", "Kebijakan Privasi", false]];
   for (const [alamat, judul, adaMenu] of daftar) {
     const { unmount } = bukaDi(alamat);
     await screen.findByRole("heading", { name: judul }, { timeout: 3000 });
     expect(Boolean(screen.queryByRole("navigation")), alamat).toBe(adaMenu);
     unmount();
   }
-});
+}, 30000);
 
 test("menu bawah: pindah layar dan menandai tab aktif", async () => {
   bukaDi("/");

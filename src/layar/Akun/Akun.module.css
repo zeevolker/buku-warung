@@ -1,0 +1,119 @@
+.profil {
+  padding: 10px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--teks-redup);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.profil strong {
+  font-size: 18px;
+  color: var(--teks);
+}
+
+.avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--laci-latar);
+  color: var(--laci-teks);
+  font-size: 28px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.status {
+  padding: 14px 16px;
+  border-radius: 22px;
+  background: var(--laci-latar);
+  color: var(--laci-teks);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  --warna-titik: #5aa77c;
+}
+
+.status_offline {
+  background: var(--bon-latar);
+  color: var(--bon-teks);
+  --warna-titik: #d9a93e;
+}
+
+.status_gagal {
+  background: var(--keluar-latar);
+  color: #7e3a24;
+  --warna-titik: #b5583a;
+}
+
+.titik {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--warna-titik);
+}
+
+.teksStatus {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+}
+
+.teksStatus strong {
+  font-size: 15px;
+}
+
+.status button {
+  flex: none;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: var(--sudut-kapsul);
+  background: var(--kartu);
+  color: inherit;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.status button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.baris {
+  width: 100%;
+  min-height: 52px;
+  padding: 14px 16px;
+  border: none;
+  background: none;
+  color: var(--teks);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: none;
+}
+
+.baris span {
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--teks-redup);
+  overflow-wrap: anywhere;
+}
+
+.peringatan {
+  font-size: 15px;
+  color: var(--luar-teks);
+}

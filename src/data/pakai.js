@@ -79,4 +79,7 @@ export function useSekarang() {
   return sekarang;
 }
 
+export const useMeta = (kunci) => useLiveQuery(() => ambilMeta(kunci), [kunci], null);
+export const useJumlahCatatan = () => useLiveQuery(() => db.catatan.filter((c) => !c.deleted).count(), [], 0);
+
 export const useNamaWarung = () => useLiveQuery(() => ambilMeta("nama_warung"), [], null);
