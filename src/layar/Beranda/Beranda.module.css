@@ -1,0 +1,295 @@
+.layar {
+  max-width: var(--lebar-layar);
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 24px 22px calc(var(--tinggi-menu) + 40px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ---------- Kepala ---------- */
+.kepala {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.kepala h1 {
+  flex: 1;
+  min-width: 0;
+  font-size: 20px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.bulat,
+.avatar {
+  position: relative;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.bulat {
+  background: var(--kartu);
+  color: var(--teks);
+  box-shadow: var(--bayangan);
+}
+
+.avatar {
+  background: var(--laci-latar);
+  color: var(--laci-teks);
+  font-weight: 700;
+}
+
+.lencana {
+  position: absolute;
+  right: -2px;
+  top: -2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border: 2px solid var(--latar);
+  border-radius: 9px;
+  background: var(--keluar-teks);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: content-box;
+}
+
+.titik {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 11px;
+  height: 11px;
+  border: 2px solid var(--latar);
+  border-radius: 50%;
+  background: #a3a59e;
+}
+
+/* ---------- Kartu isi laci ---------- */
+.kartuLaci {
+  padding: 22px;
+  border-radius: 28px;
+  background: var(--laci-latar);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.labelLaci {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--laci-teks);
+}
+
+.angkaLaci {
+  min-height: 46px;
+  font-size: 38px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  line-height: 1.2;
+  color: #24452f;
+  overflow-wrap: anywhere;
+}
+
+.hariIni {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--laci-teks);
+}
+
+.kapsulMasuk,
+.kapsulKeluar {
+  padding: 3px 10px;
+  border-radius: var(--sudut-kapsul);
+  font-weight: 700;
+}
+
+.kapsulMasuk {
+  background: var(--kartu);
+  color: #3c7a57;
+}
+
+.kapsulKeluar {
+  background: var(--keluar-latar);
+  color: #a14d31;
+}
+
+/* ---------- Tombol mencatat ---------- */
+.barisJual {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.tombolJual {
+  flex: 1;
+  min-height: 60px;
+  border: none;
+  border-radius: 22px;
+  background: var(--utama);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.tombolSuara {
+  flex: none;
+  width: 64px;
+  border: none;
+  border-radius: 22px;
+  background: var(--kartu);
+  color: var(--laci-teks);
+  box-shadow: var(--bayangan);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tombolSuara:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.tigaTombol {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.petak {
+  padding: 14px 6px;
+  border: none;
+  border-radius: var(--sudut-kecil);
+  background: var(--kartu);
+  box-shadow: var(--bayangan);
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.ikonPetak {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stripPengingat {
+  min-height: 44px;
+  padding: 12px 16px;
+  border-radius: var(--sudut-kecil);
+  background: var(--keluar-latar);
+  color: #a14d31;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.stripBon {
+  min-height: 48px;
+  padding: 14px 16px;
+  border-radius: var(--sudut-kecil);
+  background: var(--bon-latar);
+  color: var(--bon-teks);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.stripBon strong {
+  font-size: 15px;
+}
+
+/* ---------- Daftar hari ini ---------- */
+.judulBagian {
+  margin: 12px 0 10px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.judulBagian h2 {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.judulBagian a {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--laci-teks);
+}
+
+.daftar {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--kartu);
+  border-radius: 22px;
+  box-shadow: var(--bayangan);
+  overflow: hidden;
+}
+
+/* ---------- Kosong ---------- */
+.kosong {
+  margin-top: 12px;
+  padding: 28px 22px;
+  border: 2px dashed #dcdbd5;
+  border-radius: var(--sudut);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.kosong strong {
+  font-size: 16px;
+}
+
+.kosong span {
+  font-size: 14px;
+  color: var(--teks-redup);
+}
+
+.kosong a {
+  min-height: 44px;
+  padding: 11px 18px;
+  border-radius: var(--sudut-kapsul);
+  background: var(--kartu);
+  box-shadow: var(--bayangan);
+  color: var(--laci-teks);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}

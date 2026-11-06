@@ -1,0 +1,207 @@
+/* bersama.module.css: gaya yang dipakai semua lembar */
+.susun {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.kartu {
+  background: var(--kartu);
+  border-radius: 22px;
+  box-shadow: var(--bayangan);
+}
+
+.kartuRute {
+  padding: 14px 16px;
+  background: var(--kartu);
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.barisRute {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.keteranganRute {
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--teks-redup);
+  text-align: right;
+}
+
+.hargaPerUnit {
+  margin-top: -6px;
+  font-size: 13px;
+  color: var(--teks-redup);
+  text-align: center;
+}
+
+.simpan {
+  width: 100%;
+  min-height: 54px;
+  border: none;
+  border-radius: 18px;
+  background: var(--utama);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.simpan:disabled {
+  background: #ecebe6;
+  color: #9a9c95;
+  cursor: not-allowed;
+}
+
+.input {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 18px;
+  background: var(--kartu);
+  box-shadow: var(--bayangan);
+  font-size: 16px;
+}
+
+.galat {
+  color: var(--keluar-teks);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.galat:empty {
+  display: none;
+}
+
+.tautan {
+  min-height: 44px;
+  border: none;
+  background: none;
+  color: var(--laci-teks);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Tombol pelanggan */
+.deret {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  min-height: 44px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: var(--sudut-kapsul);
+  background: var(--kartu);
+  box-shadow: var(--bayangan);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.chipAktif {
+  background: var(--bon-latar);
+  color: var(--bon-teks);
+  box-shadow: inset 0 0 0 2px #d9a93e;
+}
+
+.chipBaru {
+  composes: chip;
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px #dcdbd5;
+  color: var(--laci-teks);
+}
+
+/* Kotak kuning: belanja melebihi laci */
+.kotakKuning {
+  padding: 16px;
+  border-radius: 22px;
+  background: var(--bon-latar);
+  color: var(--bon-teks);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.kotakKuning strong {
+  display: block;
+  color: #4f3608;
+}
+
+.duaTombol {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.tombolYa,
+.tombolUbah {
+  min-height: 44px;
+  border: none;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.tombolYa {
+  background: var(--kartu);
+  color: #4f3608;
+  box-shadow: inset 0 0 0 2px #d9a93e;
+}
+
+.tombolUbah {
+  background: transparent;
+  color: var(--bon-teks);
+  box-shadow: inset 0 0 0 1.5px #e6cf98;
+}
+
+/* Kotak merah: hapus ditolak */
+.kotakTolak {
+  padding: 16px;
+  border-radius: 20px;
+  background: var(--keluar-latar);
+  color: #7e3a24;
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.kotakTolak strong {
+  font-size: 15px;
+}
+
+.tautanTolak {
+  align-self: flex-start;
+  min-height: 32px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #7e3a24;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.hapus {
+  width: 100%;
+  min-height: 54px;
+  border: none;
+  border-radius: 18px;
+  background: var(--keluar-latar);
+  color: #a14d31;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.hapus:disabled {
+  background: #ecebe6;
+  color: #9a9c95;
+  cursor: not-allowed;
+}

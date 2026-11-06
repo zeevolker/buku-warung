@@ -1,0 +1,104 @@
+.ubah {
+  flex: none;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: var(--sudut-kapsul);
+  background: var(--kartu);
+  box-shadow: var(--bayangan);
+  color: var(--laci-teks);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.kartuBon {
+  padding: 22px;
+  border-radius: 28px;
+  background: var(--bon-latar);
+  color: var(--bon-teks);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.angka {
+  font-size: 38px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  color: #4f3608;
+  overflow-wrap: anywhere;
+}
+
+.tombolUtama,
+.tombolKedua {
+  min-height: 52px;
+  padding: 10px;
+  border: none;
+  border-radius: 18px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.tombolUtama {
+  background: var(--utama);
+  color: #fff;
+}
+
+.tombolKedua {
+  background: var(--kartu);
+  box-shadow: var(--bayangan);
+}
+
+.judulRiwayat {
+  margin-top: 6px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.gelembung {
+  padding: 16px;
+  border-radius: 20px 20px 6px 20px;
+  background: #dff3e4;
+  font-size: 15px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.kolomPesan {
+  width: 100%;
+  min-height: 200px;
+  padding: 14px 16px;
+  border: none;
+  border-radius: 18px;
+  background: var(--kartu);
+  box-shadow: var(--bayangan);
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.kirim {
+  min-height: 54px;
+  border-radius: 18px;
+  background: var(--utama);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.keterangan {
+  margin-top: -8px;
+  font-size: 14px;
+  color: var(--teks-redup);
+}

@@ -1,0 +1,69 @@
+.lapisan {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+}
+
+/* Bayangan raksasa inilah lapisan gelapnya, jadi tombol di dalam kotak ini tetap terlihat */
+.sorot {
+  position: fixed;
+  border-radius: 26px;
+  box-shadow: 0 0 0 3px #f2d27a, 0 0 0 200vmax rgba(30, 34, 30, 0.62);
+}
+
+.gelembung {
+  position: fixed;
+  left: 22px;
+  right: 22px;
+  max-width: calc(var(--lebar-layar) - 44px);
+  margin: 0 auto;
+  padding: 20px;
+  border-radius: var(--sudut);
+  background: var(--kartu);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--luar-teks);
+}
+
+.gelembung strong {
+  font-size: 19px;
+  color: var(--teks);
+}
+
+.nomor {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--laci-teks);
+}
+
+.tombol {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.lewati {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: none;
+  background: none;
+  color: var(--teks-redup);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.lanjut {
+  min-height: 44px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 14px;
+  background: var(--utama);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+}

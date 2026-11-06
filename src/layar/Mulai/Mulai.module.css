@@ -1,0 +1,108 @@
+.layar,
+.layarLangkah {
+  max-width: var(--lebar-layar);
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 24px 26px calc(34px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+}
+
+.layarLangkah {
+  padding-top: 70px;
+}
+
+.tengah {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  text-align: center;
+}
+
+.logo {
+  width: 120px;
+  height: 120px;
+  margin-bottom: 14px;
+  border-radius: 36px;
+  background: var(--utama);
+  box-shadow: 0 14px 30px rgba(60, 107, 82, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.judulBesar {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.slogan {
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--luar-teks);
+}
+
+.slogan strong {
+  color: var(--laci-teks);
+  font-weight: 800;
+}
+
+.bawah {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.kecil {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--teks-redup);
+  text-align: center;
+}
+
+.isiLangkah {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.nomor {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--laci-teks);
+}
+
+.keterangan {
+  margin-top: -14px;
+  font-size: 15px;
+  color: var(--luar-teks);
+}
+
+.kolomNama {
+  width: 100%;
+  padding: 18px;
+  border: none;
+  border-radius: var(--sudut-kecil);
+  background: var(--kartu);
+  box-shadow: var(--bayangan);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.pilihanUang {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.memuat {
+  padding: 80px 26px;
+  text-align: center;
+  color: var(--teks-redup);
+}

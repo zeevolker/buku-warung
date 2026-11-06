@@ -1,0 +1,113 @@
+/* umum.module.css: gaya yang dipakai beberapa layar */
+.kartu {
+  background: var(--kartu);
+  border-radius: 22px;
+  box-shadow: var(--bayangan);
+  overflow: hidden;
+}
+
+.daftarPolos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tombolTambah {
+  flex: none;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: var(--sudut-kapsul);
+  background: var(--utama);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.cari {
+  min-height: 48px;
+  padding: 0 16px;
+  border-radius: 18px;
+  background: var(--kartu);
+  box-shadow: var(--bayangan);
+  color: #8a8c86;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cari input {
+  flex: 1;
+  min-width: 0;
+  min-height: 46px;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--teks);
+  font-size: 16px;
+}
+
+.deretFilter {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.filter {
+  flex: none;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: var(--sudut-kapsul);
+  background: var(--kartu);
+  box-shadow: var(--bayangan);
+  color: var(--luar-teks);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.filterAktif {
+  background: var(--teks);
+  color: #fff;
+  font-weight: 700;
+}
+
+.filterPeringatan {
+  background: var(--keluar-latar);
+  color: #a14d31;
+  font-weight: 700;
+}
+
+.kosong {
+  padding: 28px 22px;
+  border: 2px dashed #dcdbd5;
+  border-radius: var(--sudut);
+  color: var(--teks-redup);
+  font-size: 14px;
+  text-align: center;
+}
+
+.judulKecil {
+  margin: 4px 4px 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--teks-redup);
+}
+
+/* Isian di lembar */
+.bidang {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--luar-teks);
+}
+
+.duaKolom {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}

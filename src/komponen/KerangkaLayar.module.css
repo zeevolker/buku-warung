@@ -1,0 +1,38 @@
+.layar {
+  max-width: var(--lebar-layar);
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0 auto;
+  /* Jarak bawah supaya isi tidak tertutup menu mengambang */
+  padding: 24px 22px calc(var(--tinggi-menu) + 40px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.kepala {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.kembali {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--kartu);
+  color: var(--teks);
+  box-shadow: var(--bayangan);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.judul {
+  flex: 1;
+  min-width: 0;
+  font-size: 22px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}

@@ -1,151 +1,207 @@
-// migrasi.js: pindahkan data dari versi lama ke format v3 (barang, pelanggan, catatan).
+// migrasi.js: memindahkan data v3 ke format "dari → ke". Berjalan otomatis sekali,
+// untuk data di HP (saat v4 pertama dibuka) dan data di cloud (saat sinkron pertama).
 //
-//   versi 1  data di localStorage (bw_barang, bw_transaksi, bw_kasbon)
-//   versi 2  data di IndexedDB (tabel transaksi, kasbon, stok_mutasi)
-//
-// Dijalankan sekali saat aplikasi dibuka. Data versi 1 di localStorage tidak dihapus,
-// supaya masih bisa dipulihkan kalau ada masalah.
+// Id, waktu, barang, pelanggan, dan modal dipertahankan apa adanya. v3 tidak pernah mencatat
+// uang awal, jadi isi laci hasil pindahan bisa beda dari uang fisik, bahkan minus. Karena itu
+// setelah pindah, aplikasi menampilkan sekali lembar "Cocokkan isi laci".
 
-import { buatId } from "../lib/format.js";
-import { tanggalDariMs } from "../lib/tanggal.js";
-import { semuaMentah, simpan, ambilMeta, aturMeta, kosongkanTabelLama } from "./db.js";
+import { db, ambilMeta, aturMeta } from "./db.js";
+import { tandaiBerubah } from "./ringkasan.js";
+import { dariV1, dariV2 } from "./migrasiLama.js";
+import { tanggalDariMs } from "./tanggal.js";
 
-const kosong = { dibayar: null, untuk: null, pelanggan_id: null, barang: [], keterangan: "" };
+const NAMA_DB_LAMA = "buku-warung";
+const PENANDA_SELESAI = "bw4_migrasi_lokal"; // di localStorage, supaya tidak hilang saat keluar akun
 
-// ---------- Versi 1 -> v3 (fungsi murni) ----------
-export function dariV1(lama, idBaru = buatId) {
-  const sekarang = Date.now();
-  const dasar = (waktu) => ({ id: idBaru(), created_at: waktu || sekarang, updated_at: sekarang, deleted: false });
-  const hasil = { barang: [], pelanggan: [], catatan: [] };
+// ---------- Fungsi murni ----------
 
-  const barangBaru = new Map(); // id lama -> baris baru
-  for (const b of lama.barang || []) {
-    const baris = { ...dasar(b.id), nama: b.nama, harga_jual: b.harga || 0, harga_beli: b.hargaBeli || 0 };
-    barangBaru.set(b.id, baris);
-    hasil.barang.push(baris);
-  }
-
-  // Bayaran kasbon versi 1 juga tercatat sebagai uang masuk "Bayar kasbon: Nama".
-  // Uang masuk itu dilewati, karena catatan "bayar" di bawah sudah menghitungnya.
-  const bayaranKasbon = new Set();
-  for (const p of lama.kasbon || []) {
-    for (const m of p.mutasi || []) if (m.tipe === "bayar") bayaranKasbon.add(`${p.nama}|${m.nominal}|${Math.round((m.dibuat || 0) / 10000)}`);
-  }
-
-  const terjual = new Map(); // id barang baru -> jumlah terjual
-  for (const t of lama.transaksi || []) {
-    const waktu = t.dibuat || t.id;
-    const tanggal = t.tanggal || tanggalDariMs(waktu);
-    const b = barangBaru.get(t.barangId);
-    if (t.tipe === "masuk" && b && t.jumlah) {
-      terjual.set(b.id, (terjual.get(b.id) || 0) + t.jumlah);
-      const modal = Number.isFinite(t.modal) ? Math.round(t.modal / t.jumlah) : null;
-      hasil.catatan.push({ ...dasar(waktu), ...kosong, jenis: "jual", tanggal, nominal: t.nominal, dibayar: "sekarang", barang: [{ barang_id: b.id, nama: b.nama, jumlah: t.jumlah, harga: Math.round(t.nominal / t.jumlah), modal }] });
-    } else if (t.tipe === "masuk") {
-      const nama = (t.catatan || "").replace("Bayar kasbon: ", "");
-      const kunci = `${nama}|${t.nominal}|${Math.round((waktu || 0) / 10000)}`;
-      if ((t.catatan || "").startsWith("Bayar kasbon: ") && bayaranKasbon.has(kunci)) continue;
-      hasil.catatan.push({ ...dasar(waktu), ...kosong, jenis: "jual", tanggal, nominal: t.nominal, dibayar: "sekarang", keterangan: t.catatan || "" });
-    } else {
-      hasil.catatan.push({ ...dasar(waktu), ...kosong, jenis: "keluar", tanggal, nominal: t.nominal, untuk: "biaya", keterangan: t.catatan || "" });
+function tujuanCatatan(c, hargaBeli) {
+  const b = c.barang?.[0];
+  const jumlah = b?.jumlah || 0;
+  switch (c.jenis) {
+    case "jual":
+      return { dari: "pembeli", ke: c.dibayar === "nanti" ? "bon" : "laci" };
+    case "keluar":
+      return { dari: "laci", ke: c.untuk === "belanja" ? "agen" : c.untuk === "pinjaman" ? "bon" : "biaya" };
+    case "bayar":
+      return { dari: "bon", ke: "laci" };
+    case "stok": {
+      // Di v3 koreksi stok tanpa uang. Di v4 dinilai dengan harga beli.
+      const harga = hargaBeli(b?.barang_id);
+      return {
+        ...(jumlah > 0 ? { dari: "pemilik", ke: "stok" } : { dari: "stok", ke: "biaya" }),
+        nominal: Math.abs(jumlah) * harga,
+        item: b ? [{ ...b, jumlah: Math.abs(jumlah), harga, modal: harga }] : [],
+      };
     }
+    default:
+      return null;
   }
+}
 
-  // Versi 1 menyimpan stok akhir. Stok awal = stok akhir + yang sudah terjual.
-  for (const [idLama, b] of barangBaru) {
-    const lamaB = (lama.barang || []).find((x) => x.id === idLama);
-    const awal = (lamaB.stok || 0) + (terjual.get(b.id) || 0);
-    if (awal) hasil.catatan.push({ ...dasar(b.created_at), ...kosong, jenis: "stok", tanggal: tanggalDariMs(b.created_at), keterangan: "Stok awal", barang: [{ barang_id: b.id, nama: b.nama, jumlah: awal }] });
-  }
+// Catatan v3 yang tanggalnya tidak sama dengan created_at (misalnya hasil pindahan versi lama)
+// memakai jam 12 siang tanggal itu, supaya tetap masuk laporan hari yang sama.
+function waktuCatatan(c) {
+  if (!c.tanggal || tanggalDariMs(c.created_at) === c.tanggal) return c.created_at;
+  const [t, b, h] = c.tanggal.split("-").map(Number);
+  return new Date(t, b - 1, h, 12).getTime();
+}
 
-  for (const p of lama.kasbon || []) {
-    const pel = { ...dasar(p.id), nama: p.nama, telepon: p.telepon || "" };
-    hasil.pelanggan.push(pel);
-    for (const m of p.mutasi || []) {
-      const isi = m.tipe === "utang" ? { jenis: "jual", dibayar: "nanti", keterangan: m.catatan || "" } : { jenis: "bayar" };
-      hasil.catatan.push({ ...dasar(m.dibuat), ...kosong, ...isi, tanggal: tanggalDariMs(m.dibuat || sekarang), nominal: m.nominal, pelanggan_id: pel.id });
-    }
+export function catatanDariV3(catatan, barang = []) {
+  const harga = new Map(barang.map((b) => [b.id, b.harga_beli || 0]));
+  const hargaBeli = (id) => harga.get(id) || 0;
+  const hasil = [];
+  for (const c of catatan) {
+    const tujuan = tujuanCatatan(c, hargaBeli);
+    if (!tujuan) continue;
+    hasil.push({
+      id: c.id,
+      created_at: c.created_at,
+      updated_at: c.updated_at,
+      deleted: Boolean(c.deleted),
+      dirty: 1,
+      waktu: waktuCatatan(c),
+      pelanggan_id: tujuan.dari === "bon" || tujuan.ke === "bon" ? c.pelanggan_id : null,
+      nominal: c.nominal || 0,
+      item: c.barang || [],
+      keterangan: c.keterangan || "",
+      ...tujuan,
+    });
   }
   return hasil;
 }
 
-// ---------- Versi 2 -> v3 (fungsi murni) ----------
-// Setiap kejadian versi 2 bisa tersebar di 2-3 tabel (misalnya bayar kasbon = baris kasbon
-// + baris transaksi). Di v3 semuanya jadi SATU catatan, memakai id baris utamanya.
-export function dariV2({ barang = [], pelanggan = [], transaksi = [], kasbon = [], stok_mutasi = [] }) {
-  const ada = (b) => !b.deleted;
-  const namaBarang = new Map(barang.map((b) => [b.id, b.nama]));
-  const kasbonAda = new Map(kasbon.filter(ada).map((k) => [k.id, k]));
-  const pelangganAda = new Set(pelanggan.filter(ada).map((p) => p.id));
-  const catatan = [];
-  const dasar = (b) => ({ id: b.id, created_at: b.created_at, updated_at: Date.now(), deleted: false, ...kosong, tanggal: b.tanggal });
-
-  for (const t of transaksi.filter(ada)) {
-    // Bayar kasbon / pinjaman tunai yang kasbonnya masih ada: diwakili catatan kasbonnya
-    if ((t.sumber === "bayar_kasbon" || t.sumber === "pinjam_kasbon") && kasbonAda.has(t.kasbon_id)) continue;
-    if (t.sumber === "jual" && t.barang_id && t.jumlah) {
-      const modal = t.modal === null || t.modal === undefined ? null : Math.round(t.modal / t.jumlah);
-      catatan.push({ ...dasar(t), jenis: "jual", nominal: t.nominal, dibayar: "sekarang", barang: [{ barang_id: t.barang_id, nama: namaBarang.get(t.barang_id) || t.catatan, jumlah: t.jumlah, harga: Math.round(t.nominal / t.jumlah), modal }] });
-    } else if (t.tipe === "masuk") {
-      if (t.sumber === "bayar_kasbon" && pelangganAda.has(t.pelanggan_id)) catatan.push({ ...dasar(t), jenis: "bayar", nominal: t.nominal, pelanggan_id: t.pelanggan_id });
-      else catatan.push({ ...dasar(t), jenis: "jual", nominal: t.nominal, dibayar: "sekarang", keterangan: t.catatan || "" });
-    } else {
-      catatan.push({ ...dasar(t), jenis: "keluar", nominal: t.nominal, untuk: "biaya", keterangan: t.catatan || "" });
-    }
-  }
-
-  for (const k of kasbonAda.values()) {
-    const jenis = k.tipe === "bayar" ? null : k.jenis || (k.barang_id ? "barang" : "lain");
-    if (k.tipe === "bayar") {
-      catatan.push({ ...dasar(k), jenis: "bayar", nominal: k.nominal, pelanggan_id: k.pelanggan_id });
-    } else if (jenis === "tunai") {
-      catatan.push({ ...dasar(k), jenis: "keluar", untuk: "pinjaman", nominal: k.nominal, pelanggan_id: k.pelanggan_id, keterangan: k.catatan || "" });
-    } else {
-      const isi = jenis === "barang" && k.jumlah
-        ? [{ barang_id: k.barang_id, nama: namaBarang.get(k.barang_id) || k.catatan, jumlah: k.jumlah, harga: Math.round(k.nominal / k.jumlah), modal: k.modal === null || k.modal === undefined ? null : Math.round(k.modal / k.jumlah) }]
-        : [];
-      catatan.push({ ...dasar(k), jenis: "jual", dibayar: "nanti", nominal: k.nominal, pelanggan_id: k.pelanggan_id, barang: isi, keterangan: isi.length ? "" : k.catatan || "" });
-    }
-  }
-
-  // Pergerakan stok tanpa uang (stok awal, tombol + dan −). Yang karena jual/kasbon sudah ikut di atas.
-  for (const m of stok_mutasi.filter(ada)) {
-    if (m.alasan === "jual" || m.alasan === "kasbon") continue;
-    catatan.push({ ...dasar(m), jenis: "stok", keterangan: m.alasan === "awal" ? "Stok awal" : "Koreksi stok", barang: [{ barang_id: m.barang_id, nama: namaBarang.get(m.barang_id) || "", jumlah: m.jumlah }] });
-  }
-  return catatan;
+export function barangDariV3(b, dirty = 0) {
+  return { id: b.id, created_at: b.created_at, updated_at: b.updated_at, deleted: Boolean(b.deleted), dirty, nama: b.nama, harga_jual: b.harga_jual || 0, harga_beli: b.harga_beli || 0, batas_hampir_habis: b.batas_hampir_habis ?? 5 };
 }
 
-// ---------- Menjalankan migrasi ----------
-function bacaV1() {
-  const baca = (k) => {
-    try {
-      return JSON.parse(localStorage.getItem(k)) || [];
-    } catch {
-      return [];
-    }
+export function pelangganDariV3(p, dirty = 0) {
+  return { id: p.id, created_at: p.created_at, updated_at: p.updated_at, deleted: Boolean(p.deleted), dirty, nama: p.nama, no_wa: p.no_wa || p.telepon || "" };
+}
+
+// Seluruh data v3 ke format v4
+export function dataDariV3({ barang = [], pelanggan = [], catatan = [] }) {
+  return {
+    barang: barang.map((b) => barangDariV3(b, 1)),
+    pelanggan: pelanggan.map((p) => pelangganDariV3(p, 1)),
+    catatan: catatanDariV3(catatan, barang),
   };
-  return { barang: baca("bw_barang"), transaksi: baca("bw_transaksi"), kasbon: baca("bw_kasbon") };
 }
 
-export async function jalankanMigrasi() {
-  if ((await ambilMeta("versi_data")) === 3) return;
+// ---------- Menulis ke database ----------
 
-  // Versi 2: tabel lama di IndexedDB
-  const lama = {};
-  for (const t of ["barang", "pelanggan", "transaksi", "kasbon", "stok_mutasi"]) lama[t] = await semuaMentah(t);
-  const catatanV2 = dariV2(lama);
-  if (catatanV2.length) {
-    await simpan(catatanV2.map((baris) => ({ tabel: "catatan", baris })));
-  } else if (!localStorage.getItem("bw_migrasi_v2")) {
-    // Versi 1: localStorage (hanya kalau belum pernah dipindahkan oleh versi 2)
-    const v1 = bacaV1();
-    if (v1.barang.length || v1.transaksi.length || v1.kasbon.length) {
-      const h = dariV1(v1);
-      await simpan([...h.barang.map((baris) => ({ tabel: "barang", baris })), ...h.pelanggan.map((baris) => ({ tabel: "pelanggan", baris })), ...h.catatan.map((baris) => ({ tabel: "catatan", baris }))]);
-    }
+// Hanya menambah baris yang belum ada, jadi aman kalau terpanggil dua kali
+async function tambahYangBelumAda(tabel, daftar) {
+  const ada = new Set(await tabel.toCollection().primaryKeys());
+  const baru = daftar.filter((b) => !ada.has(b.id));
+  if (baru.length) await tabel.bulkAdd(baru);
+  return baru;
+}
+
+async function tandaiSudahPindah(catatanBaru) {
+  if (!catatanBaru.length) return;
+  await tandaiBerubah(Math.min(...catatanBaru.map((c) => c.waktu)));
+  await aturMeta("cocokkan_laci", 1);
+}
+
+// ---------- Data di HP ----------
+
+// Membaca database v3 tanpa membuatnya kalau ternyata belum ada
+async function bacaDbLama() {
+  if (!globalThis.indexedDB) return null;
+  if (indexedDB.databases) {
+    const daftar = await indexedDB.databases();
+    if (!daftar.some((d) => d.name === NAMA_DB_LAMA)) return null;
   }
-  localStorage.setItem("bw_migrasi_v2", "1");
-  await kosongkanTabelLama();
-  await aturMeta("versi_data", 3);
+  const lama = await new Promise((ok) => {
+    const req = indexedDB.open(NAMA_DB_LAMA);
+    req.onupgradeneeded = () => req.transaction.abort(); // belum ada: batalkan
+    req.onerror = () => ok(null);
+    req.onsuccess = () => ok(req.result);
+  });
+  if (!lama) return null;
+  const hasil = {};
+  for (const nama of lama.objectStoreNames) {
+    hasil[nama] = await new Promise((ok, gagal) => {
+      const req = lama.transaction(nama).objectStore(nama).getAll();
+      req.onsuccess = () => ok(req.result);
+      req.onerror = () => gagal(req.error);
+    });
+  }
+  lama.close();
+  return hasil;
 }
+
+function bacaLocalStorage(kunci) {
+  try {
+    return JSON.parse(localStorage.getItem(kunci)) || [];
+  } catch {
+    return [];
+  }
+}
+
+// Data v3 di HP. Kalau HP ini belum pernah membuka v3, data versi 1 atau 2 yang dipakai.
+function dataLamaDiHp(lama) {
+  const dasar = { barang: lama?.barang || [], pelanggan: lama?.pelanggan || [] };
+  if (lama?.catatan?.length) return { ...dasar, catatan: lama.catatan };
+  const dariDua = lama ? dariV2(lama) : [];
+  if (dariDua.length) return { ...dasar, catatan: dariDua };
+  if (!localStorage.getItem("bw_migrasi_v2")) {
+    const v1 = { barang: bacaLocalStorage("bw_barang"), transaksi: bacaLocalStorage("bw_transaksi"), kasbon: bacaLocalStorage("bw_kasbon") };
+    if (v1.barang.length || v1.transaksi.length || v1.kasbon.length) return dariV1(v1);
+  }
+  return { ...dasar, catatan: [] };
+}
+
+export const sudahPindahLokal = () => Boolean(localStorage.getItem(PENANDA_SELESAI));
+
+// Mengembalikan jumlah catatan yang dipindahkan
+export async function pindahkanDataHp() {
+  if (sudahPindahLokal()) return 0;
+  const lama = await bacaDbLama();
+  const data = dataLamaDiHp(lama);
+  const adaIsi = data.barang.length || data.pelanggan.length || data.catatan.length;
+
+  let jumlah = 0;
+  if (adaIsi) {
+    const meta = new Map((lama?.meta || []).map((m) => [m.kunci, m.nilai]));
+    await db.transaction("rw", db.barang, db.pelanggan, db.catatan, db.meta, async () => {
+      // Barang dan pelanggan memakai tabel server yang sama, jadi status dirty-nya dipertahankan
+      await tambahYangBelumAda(db.barang, data.barang.map((b) => barangDariV3(b, b.dirty ? 1 : 0)));
+      await tambahYangBelumAda(db.pelanggan, data.pelanggan.map((p) => pelangganDariV3(p, p.dirty ? 1 : 0)));
+      const baru = await tambahYangBelumAda(db.catatan, catatanDariV3(data.catatan, data.barang));
+      await tandaiSudahPindah(baru);
+      jumlah = baru.length;
+      await aturMeta("mulai_selesai", 1);
+      if (meta.get("pemilik")) await aturMeta("pemilik", meta.get("pemilik"));
+      const nama = localStorage.getItem("bw_nama_warung");
+      if (nama) await aturMeta("nama_warung", nama);
+    });
+  }
+  localStorage.setItem(PENANDA_SELESAI, "1");
+  return jumlah;
+}
+
+// ---------- Data di cloud ----------
+
+// Catatan v3 di server diubah ke v4 dan ditandai dirty, jadi terkirim ke tabel catatan2
+export async function pindahkanCatatanCloud(remote) {
+  const semua = [];
+  let sejak = "1970-01-01T00:00:00Z";
+  for (let putaran = 0; putaran < 100; putaran++) {
+    const daftar = await remote.ambilSejak("catatan", sejak, 1000);
+    const baru = daftar.filter((c) => !semua.some((x) => x.id === c.id));
+    semua.push(...baru);
+    if (daftar.length < 1000 || !baru.length) break;
+    sejak = daftar[daftar.length - 1].server_updated_at;
+  }
+  if (!semua.length) return 0;
+  const barang = await db.barang.toArray();
+  return db.transaction("rw", db.catatan, db.meta, async () => {
+    const baru = await tambahYangBelumAda(db.catatan, catatanDariV3(semua, barang));
+    await tandaiSudahPindah(baru);
+    return baru.length;
+  });
+}
+
+export const perluCocokkanLaci = () => ambilMeta("cocokkan_laci");

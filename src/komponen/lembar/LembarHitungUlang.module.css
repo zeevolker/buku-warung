@@ -1,0 +1,24 @@
+.baris {
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+  color: var(--teks-redup);
+}
+
+.baris strong {
+  font-size: 16px;
+  color: var(--teks);
+}
+
+.label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--laci-teks);
+}

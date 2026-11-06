@@ -1,0 +1,23 @@
+/* dasar.css: gaya dasar seluruh aplikasi */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--latar);
+  color: var(--teks);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, p { margin: 0; }
+
+button { font: inherit; color: inherit; cursor: pointer; }
+
+/* 16px supaya iPhone tidak memperbesar halaman saat kolom ditekan */
+input, select, textarea { font: inherit; font-size: 16px; color: inherit; }
+
+:focus-visible { outline: 2px solid var(--utama); outline-offset: 2px; }

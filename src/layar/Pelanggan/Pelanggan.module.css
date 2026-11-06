@@ -1,0 +1,78 @@
+.kartuBon {
+  padding: 20px;
+  border-radius: 26px;
+  background: var(--bon-latar);
+  color: var(--bon-teks);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+}
+
+.labelBon {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.angkaBon {
+  font-size: 32px;
+  font-weight: 800;
+  color: #4f3608;
+  overflow-wrap: anywhere;
+}
+
+.baris {
+  min-height: 56px;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--teks);
+  text-decoration: none;
+}
+
+.inisial {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--bon-latar);
+  color: var(--bon-teks);
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.inisialLunas {
+  background: var(--luar-latar);
+  color: var(--teks-redup);
+}
+
+.nama,
+.namaLunas {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+
+.nama {
+  font-weight: 700;
+}
+
+.namaLunas {
+  font-weight: 600;
+  color: var(--teks-redup);
+}
+
+.nominal {
+  font-size: 15px;
+  color: var(--bon-teks);
+}
+
+.lunas {
+  font-size: 13px;
+  color: var(--teks-redup);
+}

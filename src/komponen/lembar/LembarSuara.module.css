@@ -1,0 +1,104 @@
+.susun {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+.lingkaran {
+  margin-top: 16px; /* ruang untuk denyut, supaya tidak terpotong tepi gulir */
+  position: relative;
+  width: 150px;
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.luar,
+.tengah {
+  position: absolute;
+  border-radius: 50%;
+}
+
+.luar {
+  inset: 0;
+  background: var(--laci-latar);
+}
+
+.tengah {
+  inset: 20px;
+  background: #cfe3d6;
+}
+
+.inti {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: var(--utama);
+  box-shadow: 0 10px 24px rgba(60, 107, 82, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.teks {
+  min-height: 62px;
+  font-size: 22px;
+  font-weight: 700;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.contoh {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.contoh span {
+  padding: 8px 12px;
+  border-radius: var(--sudut-kapsul);
+  background: var(--kartu);
+  box-shadow: var(--bayangan);
+  color: var(--luar-teks);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.selesai {
+  width: 100%;
+  min-height: 54px;
+  border: none;
+  border-radius: 18px;
+  background: var(--kartu);
+  box-shadow: var(--bayangan);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.tanya {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: var(--keluar-latar);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ucapan {
+  font-size: 15px;
+  color: var(--teks-redup);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.judulContoh {
+  margin-bottom: -8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--teks-redup);
+}

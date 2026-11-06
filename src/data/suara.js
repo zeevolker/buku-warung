@@ -1,4 +1,4 @@
-// suara.js: mengubah kalimat ucapan menjadi isian lembar Jual, Keluar, atau Terima bayar.
+// suara.js: mengubah kalimat ucapan menjadi isian lembar Jual, Belanja, atau Terima bon.
 //
 // Fungsi di sini "murni": hanya menerima teks dan daftar nama lalu mengembalikan objek,
 // tanpa DOM dan tanpa database. Tidak ada yang tersimpan dari sini; pengguna selalu
@@ -15,7 +15,7 @@ const KATA_KUNCI = {
   beli: "beli membeli",
   belanja: "belanja belanjaan kulakan",
   cicil: "cicil nyicil mencicil cicilan lunas lunasi melunasi",
-  utang: "utang ngutang berutang kasbon ngebon",
+  utang: "utang ngutang berutang kasbon bon ngebon",
   pinjam: "pinjam minjam meminjam dipinjam pinjaman",
   bayar: "bayar membayar dibayar",
   terima: "terima menerima",
@@ -280,7 +280,7 @@ function isiJumlah(cocok, kata, angka) {
 // ---------- Fungsi utama ----------
 
 export function uraikanKalimat(teks, { barang = [], pelanggan = [] } = {}) {
-  const tidakDikenali = { jenis: null, dibayar: null, untuk: null, item: [], nominal: null, pelanggan_id: null, keterangan: String(teks ?? "").trim() };
+  const tidakDikenali = { jenis: null, bayar: null, item: [], nominal: null, pelanggan_id: null, keterangan: String(teks ?? "").trim() };
   const kata = pecahKata(teks);
   if (!kata.length) return tidakDikenali;
 
@@ -361,9 +361,8 @@ export function uraikanKalimat(teks, { barang = [], pelanggan = [] } = {}) {
   for (const a of angka) if (a.dipakai) for (let i = a.mulai; i < a.akhir; i++) terpakai.add(i);
 
   return {
-    jenis,
-    dibayar: jenis === "jual" ? (ada.has("utang") || ada.has("nanti") ? "nanti" : "sekarang") : null,
-    untuk,
+    jenis: jenis === "bayar" ? "terimaBon" : jenis === "keluar" ? untuk : jenis, // "jual" | "belanja" | "biaya" | "pinjaman" | "terimaBon"
+    bayar: jenis === "jual" ? (ada.has("utang") || ada.has("nanti") ? "bon" : "tunai") : null,
     item,
     nominal: uang ? uang.nilai : null,
     pelanggan_id: pakaiPelanggan && cocokPelanggan ? cocokPelanggan.id : null,
