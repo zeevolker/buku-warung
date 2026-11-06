@@ -79,25 +79,39 @@ export async function tandaiBerubah(waktu) {
   if (!mulai || tanggal < mulai) await aturMeta("ringkasan_ulang", tanggal);
 }
 
-// Isi laci, bon, dan stok sekarang. Hari yang sudah lewat diambil dari ringkasan,
-// hari ini dihitung dari catatan hari ini.
-// Fungsi ini menulis ke tabel meta, jadi jangan dipanggil di dalam useLiveQuery.
-export async function isiSekarang() {
+// Ringkasan sampai kemarin. Yang belum masuk dihitung di memori, tanpa menulis ke database.
+async function ringkasanTerbaru() {
   const kemarin = geserTanggal(hariIni(), -1);
-  let ringkasan = (await ambilMeta("ringkasan")) || {};
+  const ringkasan = (await ambilMeta("ringkasan")) || {};
   const sampai = (await ambilMeta("ringkasan_sampai")) || AWAL;
   const ulang = await ambilMeta("ringkasan_ulang");
-
   // Mulai dari yang paling awal: perubahan di tanggal lama, atau hari yang belum masuk ringkasan
   const belumMasuk = geserTanggal(sampai, 1);
   const mulai = ulang && ulang < belumMasuk ? ulang : belumMasuk;
-  if (mulai <= kemarin) {
-    ringkasan = bangunRingkasan(ringkasan, await catatanSejak(mulai), mulai, kemarin);
+  const perluBangun = mulai <= kemarin;
+  return {
+    kemarin,
+    ulang,
+    perluBangun,
+    ringkasan: perluBangun ? bangunRingkasan(ringkasan, await catatanSejak(mulai), mulai, kemarin) : ringkasan,
+  };
+}
+
+// Isi laci, bon, dan stok sekarang, hanya membaca. Aman dipakai di dalam useLiveQuery.
+export async function bacaIsi() {
+  const { ringkasan, kemarin } = await ringkasanTerbaru();
+  return isiSampai(ringkasan, await catatanSejak(hariIni()), kemarin);
+}
+
+// Sama dengan bacaIsi, tapi hasil ringkasannya disimpan supaya lain kali lebih cepat.
+// Fungsi ini menulis ke tabel meta, jadi jangan dipanggil di dalam useLiveQuery.
+export async function isiSekarang() {
+  const { ringkasan, kemarin, ulang, perluBangun } = await ringkasanTerbaru();
+  if (perluBangun) {
     await aturMeta("ringkasan", ringkasan);
     await aturMeta("ringkasan_sampai", kemarin);
   }
   // Perubahan yang hanya mengenai hari ini tidak perlu disimpan di ringkasan
   if (ulang) await db.meta.delete("ringkasan_ulang");
-
   return isiSampai(ringkasan, await catatanSejak(hariIni()), kemarin);
 }

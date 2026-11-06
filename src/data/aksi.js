@@ -204,6 +204,12 @@ export function tambahPelanggan({ nama, no_wa = "", bonLama = 0 }) {
   });
 }
 
+// Pelanggan dari nama yang diketik di lembar Jual atau Belanja: pakai yang sudah ada, atau buat baru
+export async function siapkanPelanggan(nama) {
+  const ada = (await semuaAda(db.pelanggan)).find((p) => kunciNama(p.nama) === kunciNama(nama));
+  return ada ? { pelanggan: ada } : tambahPelanggan({ nama });
+}
+
 // ---------- Menghapus catatan ----------
 export function hapusCatatan(id) {
   return transaksi(async () => {

@@ -1,0 +1,75 @@
+.baris {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+}
+
+.nama {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  font-size: 15px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.nama small {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--teks-redup);
+}
+
+.redup {
+  color: var(--teks-redup);
+}
+
+.tombol {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: #f1f0eb;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.tambah {
+  background: var(--laci-latar);
+  color: var(--laci-teks);
+}
+
+.tambah:disabled {
+  background: #f1f0eb;
+  color: #b6b7b0;
+  cursor: not-allowed;
+}
+
+.jumlah {
+  width: 24px;
+  text-align: center;
+}
+
+.tautanDua {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin: -6px 0;
+}
+
+.lainnya {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.labelModal {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--teks-redup);
+}

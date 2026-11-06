@@ -242,17 +242,17 @@ export function bolehDihapus(c, semuaCatatan, namaPelanggan = () => "pelanggan")
   const stokSisa = semuaStok(sisa);
   for (const b of c.item || []) {
     if (b.barang_id && makinMinus(stokSisa.get(b.barang_id), stokKini.get(b.barang_id))) {
-      return { boleh: false, alasan: `Stok ${b.nama} akan jadi minus kalau catatan ini dihapus. Kalau jumlah di rak memang beda, pakai Koreksi stok.` };
+      return { boleh: false, jenis: "stok", alasan: `Stok ${b.nama} akan jadi minus kalau catatan ini dihapus. Kalau jumlah di rak memang beda, pakai Koreksi stok.` };
     }
   }
 
   if (c.pelanggan_id && makinMinus(semuaBon(sisa).get(c.pelanggan_id), semuaBon(semuaCatatan).get(c.pelanggan_id))) {
-    return { boleh: false, alasan: `Bon ${namaPelanggan(c.pelanggan_id)} akan jadi minus kalau catatan ini dihapus. Hapus dulu catatan Terima bon-nya.` };
+    return { boleh: false, jenis: "bon", alasan: `Bon ${namaPelanggan(c.pelanggan_id)} akan jadi minus kalau catatan ini dihapus. Hapus dulu catatan Terima bon-nya.` };
   }
 
   const laciSisa = isiTempat(sisa, "laci");
   if (makinMinus(laciSisa, isiTempat(semuaCatatan, "laci"))) {
-    return { boleh: false, alasan: `Tidak bisa dihapus, isi laci akan jadi ${formatRupiah(laciSisa)}. Pakai Hitung ulang kalau uangnya memang beda.` };
+    return { boleh: false, jenis: "laci", alasan: `Tidak bisa dihapus, isi laci akan jadi ${formatRupiah(laciSisa)}. Pakai Hitung ulang kalau uangnya memang beda.` };
   }
   return { boleh: true };
 }

@@ -2,7 +2,7 @@ import { beforeEach, afterEach, describe, test, expect, vi } from "vitest";
 import { catatan, HARI_INI, WAKTU_SEKARANG } from "./fixture.js";
 import { db, aturMeta } from "../src/data/db.js";
 import { isiTempat, semuaBon, semuaStok, tanggalCatatan } from "../src/data/hitung.js";
-import { bangunRingkasan, isiAkhirHari, isiSekarang, tandaiBerubah } from "../src/data/ringkasan.js";
+import { bacaIsi, bangunRingkasan, isiAkhirHari, isiSekarang, tandaiBerubah } from "../src/data/ringkasan.js";
 import { geserTanggal } from "../src/data/tanggal.js";
 
 // Hitung dari nol, sebagai pembanding. Angka nol dibuang supaya bentuknya bisa dibandingkan.
@@ -79,6 +79,11 @@ describe("dengan database", () => {
 
   test("isi sekarang sama dengan menghitung dari nol", async () => {
     expect(rapikan(await isiSekarang())).toEqual(dariNol(catatan, HARI_INI));
+  });
+
+  test("bacaIsi memberi hasil yang sama tanpa menulis apa pun", async () => {
+    expect(rapikan(await bacaIsi())).toEqual(dariNol(catatan, HARI_INI));
+    expect(await db.meta.count()).toBe(0);
   });
 
   test("hari ini tidak ikut disimpan, kemarin disimpan", async () => {

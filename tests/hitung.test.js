@@ -123,7 +123,7 @@ describe("bolehDihapus", () => {
     const keluar = { id: "k", waktu: 2, dari: "laci", ke: "biaya", nominal: 130000 };
     const pribadi = { id: "p", waktu: 2, dari: "pemilik", ke: "laci", nominal: 30000 };
     const daftar = [awal, pribadi, keluar];
-    expect(bolehDihapus(pribadi, daftar)).toEqual({ boleh: false, alasan: "Tidak bisa dihapus, isi laci akan jadi −Rp 30.000. Pakai Hitung ulang kalau uangnya memang beda." });
+    expect(bolehDihapus(pribadi, daftar)).toEqual({ boleh: false, jenis: "laci", alasan: "Tidak bisa dihapus, isi laci akan jadi −Rp 30.000. Pakai Hitung ulang kalau uangnya memang beda." });
     expect(bolehDihapus(keluar, daftar).boleh).toBe(true);
   });
 

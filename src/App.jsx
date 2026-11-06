@@ -3,6 +3,7 @@ import { lazy, Suspense, useEffect } from "react";
 import { Routes, Route, useLocation } from "react-router";
 import { AnimatePresence, m } from "motion/react";
 import MenuBawah from "./komponen/MenuBawah.jsx";
+import { isiSekarang } from "./data/ringkasan.js";
 
 // Setiap layar dimuat saat dibutuhkan
 const Beranda = lazy(() => import("./layar/Beranda/Beranda.jsx"));
@@ -22,6 +23,11 @@ const TANPA_MENU = ["/masuk", "/mulai", "/privasi"];
 
 export default function App() {
   const lokasi = useLocation();
+
+  // Simpan ringkasan hari-hari yang sudah lewat, supaya layar lain tidak perlu menghitung ulang
+  useEffect(() => {
+    isiSekarang().catch((e) => console.warn("Ringkasan gagal disimpan:", e));
+  }, []);
 
   // Layar baru selalu mulai dari atas
   useEffect(() => {
