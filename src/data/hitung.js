@@ -95,6 +95,26 @@ export function hitungArusUtang(catatan) {
   return { baru, dibayar };
 }
 
+// Belanja c akan dihapus. Belanja mengubah modal barang, jadi efek itu perlu dibatalkan juga.
+// Setiap belanja menyimpan modal sebelumnya (modal_lama), sehingga membentuk rantai:
+// - Ada belanja yang lebih baru: modal barang tetap, belanja itu mewarisi modal_lama dari c.
+// - c belanja terbaru dan modal belum diubah tangan: modal kembali ke modal_lama.
+// Belanja lama yang belum menyimpan modal_lama tidak bisa dikembalikan.
+export function aturUlangModal(c, catatan, modalSekarang) {
+  const b = c.barang[0];
+  if (b.modal_lama === undefined || b.modal_lama === null) return {};
+  const lebihBaru = catatan
+    .filter((x) => masihAda(x) && x.id !== c.id && x.jenis === "keluar" && x.untuk === "belanja" && x.barang[0]?.barang_id === b.barang_id && x.created_at > c.created_at)
+    .sort((x, y) => x.created_at - y.created_at);
+  const berikut = lebihBaru[0];
+  if (berikut) {
+    // Kalau modal sempat diubah tangan di antara keduanya, modal_lama belanja berikut sudah benar
+    if (berikut.barang[0].modal_lama !== b.harga) return {};
+    return { belanjaBerikut: { ...berikut, barang: [{ ...berikut.barang[0], modal_lama: b.modal_lama }] } };
+  }
+  return modalSekarang === b.harga ? { modal: b.modal_lama } : {};
+}
+
 export function dalamRentang(catatan, dari, sampai) {
   return catatan.filter((c) => masihAda(c) && c.tanggal >= dari && c.tanggal <= sampai);
 }

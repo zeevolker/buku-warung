@@ -24,6 +24,7 @@ let klien = null;
 let sedangSinkron = false;
 let ulangiLagi = false;
 let timerJadwal = null;
+let janjiSinkron = null; // sinkron yang sedang berjalan, supaya keluar akun bisa menunggunya
 
 export async function sinkronSekarang() {
   if (!klien || !status.email) return;
@@ -36,6 +37,11 @@ export async function sinkronSekarang() {
     return;
   }
   sedangSinkron = true;
+  janjiSinkron = jalankanSinkron();
+  return janjiSinkron;
+}
+
+async function jalankanSinkron() {
   kabariStatus({ keadaan: "menyinkron" });
   try {
     await sinkronSekali(remoteSupabase(klien));
@@ -79,14 +85,19 @@ async function masukSesi(session) {
 }
 
 // Keluar akun: kirim yang tersisa, lalu kosongkan data di HP ini (aman untuk HP bersama).
+// Ditolak kalau masih ada catatan yang belum terkirim, karena catatan itu akan hilang selamanya.
 export async function keluarAkun() {
+  await janjiSinkron; // tunggu sinkron yang sedang berjalan, lalu kirim yang masih tersisa
   await sinkronSekarang();
+  const belum = await jumlahBelumTerkirim();
+  if (belum) return { galat: `Ada ${belum} catatan yang belum terkirim, jadi belum bisa keluar supaya tidak hilang. Periksa internet lalu coba lagi.` };
   // Pakai ambilKlien(), bukan variabel klien, supaya tetap bisa keluar walau akun belum selesai disiapkan
   const k = await ambilKlien();
   if (k) await k.auth.signOut();
   await kosongkanSemua();
   simpanNamaLokal("");
   kabariStatus({ keadaan: "tamu", email: null, belum: 0, terakhir: null });
+  return {};
 }
 
 export { jumlahBelumTerkirim };

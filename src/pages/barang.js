@@ -70,14 +70,18 @@ const bukaBaru = () => isiLembar(null);
 const bukaUbah = (b) => isiLembar(b);
 
 async function simpan() {
-  const stok = $("b-stok").value === "" ? 0 : Math.floor(Number($("b-stok").value));
-  if (stok < 0) return ($("b-galat").textContent = "Stok tidak boleh minus.");
+  const isianStok = $("b-stok").value.trim();
+  // Saat mengubah barang, stok dikoreksi hanya kalau kolomnya memang diganti. Kolom yang dikosongkan
+  // atau dibiarkan tidak mengubah stok, jadi harga tetap bisa diubah walau stoknya sedang minus.
+  const koreksi = sedangDiubah && isianStok !== "" && isianStok !== String(sedangDiubah.stok);
+  const stok = isianStok === "" ? 0 : Math.floor(Number(isianStok));
+  if ((!sedangDiubah || koreksi) && stok < 0) return ($("b-galat").textContent = "Stok tidak boleh minus.");
   const isi = { nama: $("b-nama").value, harga_jual: ambilAngka($("b-jual")), harga_beli: ambilAngka($("b-beli")) };
 
   const hasil = await aman(async () => {
     if (!sedangDiubah) return simpanBarang({ ...isi, stokAwal: stok });
     const h = await simpanBarang({ ...isi, id: sedangDiubah.id });
-    if (h.galat) return h;
+    if (h.galat || !koreksi) return h;
     return koreksiStok(sedangDiubah.id, stok);
   });
   if (hasil.galat) return ($("b-galat").textContent = hasil.galat);

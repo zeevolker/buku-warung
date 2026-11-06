@@ -239,6 +239,7 @@ function tentukanJenis({ ada, adaPelanggan, adaBarang, adaNominal, adaKataBiaya,
     if (adaPelanggan || ada.has("terima")) return bayar;
     return adaKataLain ? biaya : bayar; // "bayar sampah 10 ribu" atau "bayar 10 ribu"
   }
+  if (ada.has("terima") && adaPelanggan) return bayar; // "terima 10 ribu dari Budi"
   if (ada.has("masuk")) return jual;
   // Hanya pembeli yang bisa "beli" sambil utang: warung sendiri selalu bayar saat belanja
   if (ada.has("beli") && (adaPelanggan || ada.has("utang") || ada.has("nanti"))) return jual;

@@ -8,7 +8,7 @@
 // Setiap fungsi mengembalikan { galat: "pesan" } kalau ditolak, atau data kalau berhasil.
 
 import { semua, ambil, simpan } from "./db.js";
-import { hitungStok, hitungUtang } from "./hitung.js";
+import { hitungStok, hitungUtang, aturUlangModal } from "./hitung.js";
 import { buatId, kunciNama, formatRupiah } from "../lib/format.js";
 import { hariIni } from "../lib/tanggal.js";
 
@@ -99,7 +99,7 @@ export async function catatKeluar({ nominal, untuk, barangId, jumlah, namaPelang
     if (!b || b.deleted) return tolak("Pilih barang yang dibeli.");
     if (!(jumlah > 0)) return tolak("Isi jumlah barang yang dibeli.");
     const hargaSatuan = Math.round(nominal / jumlah);
-    isi.barang = [{ barang_id: b.id, nama: b.nama, jumlah, harga: hargaSatuan }];
+    isi.barang = [{ barang_id: b.id, nama: b.nama, jumlah, harga: hargaSatuan, modal_lama: b.harga_beli || 0 }];
     // Harga beli (modal) barang diperbarui ke harga belanja terakhir, supaya untung tetap akurat
     if (b.harga_beli !== hargaSatuan) perubahan.push({ tabel: "barang", baris: ubah(b, { harga_beli: hargaSatuan }) });
   } else if (untuk === "pinjaman") {
@@ -129,21 +129,34 @@ export async function catatBayar({ pelangganId, nominal }) {
 }
 
 // ---------- Menghapus catatan ----------
-// Ditolak kalau hasilnya tidak masuk akal: stok jadi minus, atau utang jadi minus
-// (misalnya menghapus utang yang sudah dibayar).
+// Ditolak kalau hasilnya tidak masuk akal: stok atau utang jadi minus (misalnya menghapus utang
+// yang sudah dibayar). Kalau angkanya sudah minus (dua HP menjual barang yang sama saat offline),
+// penghapusan yang justru mengurangi minusnya tetap boleh.
+const makinMinus = (baru = 0, lama = 0) => baru < 0 && baru < lama;
+
 export async function hapusCatatan(id) {
   const c = await ambil("catatan", id);
   if (!c || c.deleted) return {};
-  const sisa = (await semua("catatan")).filter((x) => x.id !== id);
+  const catatan = await semua("catatan");
+  const sisa = catatan.filter((x) => x.id !== id);
 
+  const stokKini = hitungStok(catatan);
   const stok = hitungStok(sisa);
   for (const b of c.barang || []) {
-    if (b.barang_id && (stok.get(b.barang_id) || 0) < 0) return tolak(`Stok ${b.nama} akan jadi minus. Hapus dulu penjualan ${b.nama} yang lebih baru.`);
+    if (b.barang_id && makinMinus(stok.get(b.barang_id), stokKini.get(b.barang_id))) return tolak(`Stok ${b.nama} akan jadi minus. Hapus dulu penjualan ${b.nama} yang lebih baru.`);
   }
-  if (c.pelanggan_id && (hitungUtang(sisa).get(c.pelanggan_id) || 0) < 0) {
+  if (c.pelanggan_id && makinMinus(hitungUtang(sisa).get(c.pelanggan_id), hitungUtang(catatan).get(c.pelanggan_id))) {
     return tolak("Utang ini sudah dibayar. Hapus dulu catatan bayarnya.");
   }
-  await simpan([{ tabel: "catatan", baris: ubah(c, { deleted: true }) }]);
+
+  const perubahan = [{ tabel: "catatan", baris: ubah(c, { deleted: true }) }];
+  if (c.jenis === "keluar" && c.untuk === "belanja" && c.barang?.[0]) {
+    const barang = await ambil("barang", c.barang[0].barang_id);
+    const { modal, belanjaBerikut } = aturUlangModal(c, catatan, barang?.harga_beli);
+    if (belanjaBerikut) perubahan.push({ tabel: "catatan", baris: ubah(belanjaBerikut, {}) });
+    if (modal !== undefined && barang && !barang.deleted) perubahan.push({ tabel: "barang", baris: ubah(barang, { harga_beli: modal }) });
+  }
+  await simpan(perubahan);
   return {};
 }
 
@@ -201,6 +214,8 @@ export async function ubahPelanggan(id, { nama, telepon }) {
   if (!p || p.deleted) return tolak("Pelanggan tidak ditemukan.");
   nama = (nama ?? p.nama).trim();
   if (!nama) return tolak("Nama tidak boleh kosong.");
+  const lain = (await semua("pelanggan")).find((x) => x.id !== id && kunciNama(x.nama) === kunciNama(nama));
+  if (lain) return tolak(`${lain.nama} sudah ada.`);
   await simpan([{ tabel: "pelanggan", baris: ubah(p, { nama, telepon: (telepon ?? p.telepon).trim() }) }]);
   return {};
 }

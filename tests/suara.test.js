@@ -155,6 +155,13 @@ test("nyicil, cicil, lunas, dan nama + bayar: terima bayar", () => {
   }
 });
 
+test("terima uang dari pelanggan: terima bayar, bukan penjualan", () => {
+  const h = urai("terima 10 ribu dari Budi");
+  assert.equal(h.jenis, "bayar");
+  assert.equal(h.pelanggan_id, "budi");
+  assert.equal(h.nominal, 10000);
+});
+
 test("bayar tanpa nama: terima bayar dengan pelanggan kosong", () => {
   const h = urai("bayar utang 20 ribu");
   assert.equal(h.jenis, "bayar");
