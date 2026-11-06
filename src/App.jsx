@@ -72,7 +72,13 @@ export default function App() {
       .catch((e) => console.error(e))
       .finally(() => {
         setSiap(true);
-        mulaiAkun().catch((e) => console.warn("Gagal menyiapkan akun:", e));
+        // Pembersihan menunggu akun siap, supaya tahu data ini milik akun atau tamu
+        mulaiAkun()
+          .then(async () => {
+            const { bersihkanBilaPerlu } = await import("./data/bersihkan.js");
+            await bersihkanBilaPerlu();
+          })
+          .catch((e) => console.warn("Gagal menyiapkan akun:", e));
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

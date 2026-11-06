@@ -113,8 +113,17 @@ export async function tarik(remote) {
   return diterima;
 }
 
+const LAMA_TIDAK_SINKRON = 30 * 24 * 60 * 60 * 1000;
+
 // Satu putaran: kirim dulu, baru tarik. Saat pertama kali, catatan v3 di cloud ikut dipindahkan.
 export async function sinkronSekali(remote) {
+  // Sebelum kirim: pelanggan yang sudah dibersihkan di server harus dikirim ulang lebih dulu
+  // kalau masih dipakai catatan yang belum terkirim, karena server menolak catatan tanpa pelanggannya.
+  const terakhir = await ambilMeta("sinkron_terakhir");
+  if (terakhir && Date.now() - terakhir > LAMA_TIDAK_SINKRON) {
+    const { sinkronPenuh } = await import("./bersihkan.js");
+    await sinkronPenuh(remote);
+  }
   const terkirim = await dorong(remote);
   const diterima = await tarik(remote);
   if (!(await ambilMeta("migrasi_cloud"))) {
