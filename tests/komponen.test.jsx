@@ -57,7 +57,7 @@ test("Lembar: terbuka, tertutup dengan Esc, fokus kembali ke tombol asal", async
 const bukaDi = (alamat) => render(<MemoryRouter initialEntries={[alamat]}>{dalamGerak(<App />)}</MemoryRouter>);
 
 test("rute: setiap layar terbuka lewat lazy, menu bawah sesuai", async () => {
-  const daftar = [["/", "Buku Warung", true], ["/laporan", "Laporan", true], ["/barang", "Barang", true], ["/pelanggan", "Pelanggan", true], ["/pelanggan/x", "Detail pelanggan", true], ["/riwayat", "Semua riwayat", true], ["/catatan", "Catatan", true], ["/akun", "Akun", true], ["/masuk", "Masuk", false], ["/mulai", "Selamat datang", false], ["/privasi", "Kebijakan Privasi", false]];
+  const daftar = [["/", "Buku Warung", true], ["/laporan", "Laporan", true], ["/barang", "Barang", true], ["/pelanggan", "Pelanggan", true], ["/pelanggan/x", "Pelanggan", true], ["/riwayat", "Semua riwayat", true], ["/catatan", "Catatan", true], ["/akun", "Akun", true], ["/masuk", "Masuk", false], ["/mulai", "Selamat datang", false], ["/privasi", "Kebijakan Privasi", false]];
   for (const [alamat, judul, adaMenu] of daftar) {
     const { unmount } = bukaDi(alamat);
     await screen.findByRole("heading", { name: judul }, { timeout: 3000 });

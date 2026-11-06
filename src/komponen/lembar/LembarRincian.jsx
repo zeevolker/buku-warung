@@ -82,7 +82,7 @@ function IsiRincian({ catatan, onTutup, onTersimpan, onHitungUlang }) {
               className={bersama.tautanTolak}
               onClick={() => {
                 onTutup();
-                buka("/barang");
+                buka("/barang", { state: { koreksi: izin.barang_id } });
               }}
             >
               Pakai Koreksi stok

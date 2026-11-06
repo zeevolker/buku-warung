@@ -5,6 +5,7 @@ import Geser from "../Geser.jsx";
 import Rute from "../Rute.jsx";
 import InputRupiah from "../InputRupiah.jsx";
 import PilihPelanggan from "./PilihPelanggan.jsx";
+import KotakPribadi from "./KotakPribadi.jsx";
 import { useBarang, useIsi, usePelanggan } from "../../data/pakai.js";
 import { belanja, siapkanPelanggan } from "../../data/aksi.js";
 import { formatRupiah, ribuan } from "../../data/format.js";
@@ -87,22 +88,7 @@ function IsiBelanja({ onTutup, onTersimpan }) {
 
       <InputRupiah ref={kolomTotal} label="Total" besar nilai={total} onUbah={ubahTotal} />
 
-      {melebihi && !setujuPribadi && (
-        <div className={bersama.kotakKuning}>
-          <div>
-            <strong>Laci cuma {formatRupiah(laci)}</strong>
-            Sisanya {formatRupiah(kekurangan)} pakai uang pribadi?
-          </div>
-          <div className={bersama.duaTombol}>
-            <button type="button" className={bersama.tombolYa} onClick={() => setSetujuPribadi(true)}>
-              Ya, pakai
-            </button>
-            <button type="button" className={bersama.tombolUbah} onClick={() => kolomTotal.current?.focus()}>
-              Ubah jumlah
-            </button>
-          </div>
-        </div>
-      )}
+      {melebihi && !setujuPribadi && <KotakPribadi laci={laci} kekurangan={kekurangan} onYa={() => setSetujuPribadi(true)} onUbah={() => kolomTotal.current?.focus()} />}
 
       <p className={bersama.galat} role="alert">
         {galat}

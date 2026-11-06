@@ -1,0 +1,16 @@
+.kelompok {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lagi {
+  min-height: 48px;
+  border: none;
+  border-radius: 18px;
+  background: var(--kartu);
+  box-shadow: var(--bayangan);
+  color: var(--laci-teks);
+  font-size: 14px;
+  font-weight: 700;
+}

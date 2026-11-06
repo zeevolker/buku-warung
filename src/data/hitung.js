@@ -242,7 +242,7 @@ export function bolehDihapus(c, semuaCatatan, namaPelanggan = () => "pelanggan")
   const stokSisa = semuaStok(sisa);
   for (const b of c.item || []) {
     if (b.barang_id && makinMinus(stokSisa.get(b.barang_id), stokKini.get(b.barang_id))) {
-      return { boleh: false, jenis: "stok", alasan: `Stok ${b.nama} akan jadi minus kalau catatan ini dihapus. Kalau jumlah di rak memang beda, pakai Koreksi stok.` };
+      return { boleh: false, jenis: "stok", barang_id: b.barang_id, alasan: `Stok ${b.nama} akan jadi minus kalau catatan ini dihapus. Kalau jumlah di rak memang beda, pakai Koreksi stok.` };
     }
   }
 

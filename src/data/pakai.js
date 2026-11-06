@@ -66,7 +66,17 @@ export function useKeseringanJual(tanggal) {
   );
 }
 
-export const usePengingatBelum = () =>
-  useLiveQuery(async () => (await semuaAda(db.pengingat)).filter((p) => !p.selesai).length, [], 0);
+export const usePengingat = () => useLiveQuery(() => semuaAda(db.pengingat), [], []);
+export const useDaftarMemo = () => useLiveQuery(() => semuaAda(db.memo), [], []);
+
+// Waktu sekarang yang diperbarui tiap menit, untuk menandai pengingat yang sudah waktunya
+export function useSekarang() {
+  const [sekarang, setSekarang] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setSekarang(Date.now()), 60_000);
+    return () => clearInterval(timer);
+  }, []);
+  return sekarang;
+}
 
 export const useNamaWarung = () => useLiveQuery(() => ambilMeta("nama_warung"), [], null);

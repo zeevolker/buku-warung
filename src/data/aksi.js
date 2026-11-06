@@ -174,6 +174,30 @@ export function tambahBarang({ nama, harga_jual = 0, harga_beli = 0, stok = 0, b
   });
 }
 
+// Mengubah nama, harga, dan batas. Stok tidak diubah di sini, tapi lewat koreksiStok.
+export function ubahBarang(id, { nama, harga_jual = 0, harga_beli = 0, batas_hampir_habis = BATAS_HAMPIR_HABIS }) {
+  return transaksi(async () => {
+    const b = await db.barang.get(id);
+    if (!b || b.deleted) return tolak("Barang tidak ditemukan.");
+    nama = (nama || "").trim();
+    if (!nama) return tolak("Tulis nama barangnya.");
+    if (!(harga_beli > 0)) return tolak("Isi harga belinya dulu.");
+    const ada = await semuaAda(db.barang);
+    if (ada.some((x) => x.id !== id && kunciNama(x.nama) === kunciNama(nama))) return tolak(`"${nama}" sudah ada di daftar.`);
+    await db.barang.put(barisDiubah(b, { nama, harga_jual, harga_beli, batas_hampir_habis }));
+    return {};
+  });
+}
+
+// Catatan lamanya tetap ada, karena barangnya memang pernah terjual
+export function hapusBarang(id) {
+  return transaksi(async () => {
+    const b = await db.barang.get(id);
+    if (b && !b.deleted) await db.barang.put(barisDiubah(b, { deleted: true }));
+    return {};
+  });
+}
+
 // Pengguna mengisi jumlah yang sebenarnya di rak. Barang berkurang menjadi biaya
 // (nilai = jumlah × harga beli). Barang lebih banyak dari catatan dianggap tambahan dari pemilik.
 export function koreksiStok(barangId, jumlahSebenarnya, alasan = "") {
@@ -204,6 +228,31 @@ export function tambahPelanggan({ nama, no_wa = "", bonLama = 0 }) {
   });
 }
 
+export function ubahPelanggan(id, { nama, no_wa = "" }) {
+  return transaksi(async () => {
+    const p = await db.pelanggan.get(id);
+    if (!p || p.deleted) return tolak("Pelanggan tidak ditemukan.");
+    nama = (nama || "").trim().replace(/\s+/g, " ");
+    if (!nama) return tolak("Tulis nama pelanggannya.");
+    const ada = await semuaAda(db.pelanggan);
+    if (ada.some((x) => x.id !== id && kunciNama(x.nama) === kunciNama(nama))) return tolak(`${nama} sudah ada.`);
+    await db.pelanggan.put(barisDiubah(p, { nama, no_wa: no_wa.trim() }));
+    return {};
+  });
+}
+
+// Hanya kalau bonnya sudah lunas. Catatannya tetap ada.
+export function hapusPelanggan(id) {
+  return transaksi(async () => {
+    const p = await db.pelanggan.get(id);
+    if (!p || p.deleted) return {};
+    const bon = isiTempat(await catatanAda(), "bon", id);
+    if (bon > 0) return tolak(`${p.nama} masih punya bon ${formatRupiah(bon)}.`);
+    await db.pelanggan.put(barisDiubah(p, { deleted: true }));
+    return {};
+  });
+}
+
 // Pelanggan dari nama yang diketik di lembar Jual atau Belanja: pakai yang sudah ada, atau buat baru
 export async function siapkanPelanggan(nama) {
   const ada = (await semuaAda(db.pelanggan)).find((p) => kunciNama(p.nama) === kunciNama(nama));
@@ -230,4 +279,45 @@ export function hapusCatatan(id) {
     await tandaiBerubah(c.waktu);
     return {};
   });
+}
+
+// ---------- Pengingat dan catatan bebas ----------
+// Berdiri sendiri: tidak memengaruhi laci, stok, bon, atau laporan.
+
+export async function tambahPengingat({ teks, waktu_ingat = null }) {
+  teks = (teks || "").trim();
+  if (!teks) return tolak("Tulis pengingatnya dulu.");
+  const pengingat = barisBaru({ teks, keterangan: "", waktu_ingat, selesai: false });
+  await db.pengingat.add(pengingat);
+  return { pengingat };
+}
+
+export async function tandaiPengingat(id, selesai) {
+  const p = await db.pengingat.get(id);
+  if (p) await db.pengingat.put(barisDiubah(p, { selesai }));
+}
+
+export async function hapusPengingat(id) {
+  const p = await db.pengingat.get(id);
+  if (p) await db.pengingat.put(barisDiubah(p, { deleted: true }));
+}
+
+// Tanpa id berarti catatan baru
+export async function simpanMemo({ id, judul = "", isi = "", warna = "putih" }) {
+  judul = judul.trim();
+  isi = isi.trim();
+  if (!judul && !isi) return tolak("Tulis catatannya dulu.");
+  if (id) {
+    const lama = await db.memo.get(id);
+    if (!lama) return tolak("Catatan tidak ditemukan.");
+    await db.memo.put(barisDiubah(lama, { judul, isi, warna }));
+    return {};
+  }
+  await db.memo.add(barisBaru({ judul, isi, warna }));
+  return {};
+}
+
+export async function hapusMemo(id) {
+  const m = await db.memo.get(id);
+  if (m) await db.memo.put(barisDiubah(m, { deleted: true }));
 }

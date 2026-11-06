@@ -1,5 +1,5 @@
 // Beranda.jsx: layar utama. Isi laci, tombol mencatat, bon, dan catatan hari ini.
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router";
 import { AnimatePresence, m } from "motion/react";
 import AngkaHitung from "../../komponen/AngkaHitung.jsx";
@@ -9,14 +9,14 @@ import LembarTerimaBon from "../../komponen/lembar/LembarTerimaBon.jsx";
 import LembarLaci from "../../komponen/lembar/LembarLaci.jsx";
 import LembarHitungUlang from "../../komponen/lembar/LembarHitungUlang.jsx";
 import LembarRincian from "../../komponen/lembar/LembarRincian.jsx";
-import { useCatatanHari, useIsi, useNamaWarung, usePelanggan, usePengingatBelum, useTanggalHariIni } from "../../data/pakai.js";
+import BarisCatatan from "../../komponen/BarisCatatan.jsx";
+import PesanSingkat, { usePesan } from "../../komponen/PesanSingkat.jsx";
+import { useCatatanHari, useIsi, useNamaWarung, usePelanggan, usePengingat, useSekarang, useTanggalHariIni } from "../../data/pakai.js";
 import { arusLaci } from "../../data/hitung.js";
-import { uraiCatatan } from "../../data/uraian.js";
 import { formatRupiah } from "../../data/format.js";
 import gaya from "./Beranda.module.css";
 
 const JUMLAH_DAFTAR = 4;
-const LAMA_PESAN = 2500;
 
 function ikonGaris(isi, warna) {
   return (
@@ -26,31 +26,21 @@ function ikonGaris(isi, warna) {
   );
 }
 
-const IKON_TANDA = {
-  masuk: ikonGaris(<path d="M12 19V5M6 11l6-6 6 6" />, "#3c7a57"),
-  keluar: ikonGaris(<path d="M12 5v14M6 13l6 6 6-6" />, "#b5583a"),
-  netral: ikonGaris(<circle cx="12" cy="12" r="6" />, "#7d5a12"),
-};
-
 export default function Beranda() {
   const tanggal = useTanggalHariIni();
   const isi = useIsi();
   const pelanggan = usePelanggan();
   const hariIni = useCatatanHari(tanggal);
   const namaWarung = useNamaWarung() || "Buku Warung";
-  const pengingat = usePengingatBelum();
+  const daftarPengingat = usePengingat();
+  const sekarang = useSekarang();
+  const belumSelesai = daftarPengingat.filter((p) => !p.selesai);
+  const pengingat = belumSelesai.length;
+  const sudahWaktunya = belumSelesai.filter((p) => p.waktu_ingat && p.waktu_ingat <= sekarang).length;
 
   const [lembar, setLembar] = useState(null); // "jual" | "belanja" | "bon" | "laci" | "hitung"
   const [rincian, setRincian] = useState(null);
-  const [pesan, setPesan] = useState("");
-  const timerPesan = useRef(null);
-  useEffect(() => () => clearTimeout(timerPesan.current), []);
-
-  function tampilkanPesan(teks) {
-    setPesan(teks);
-    clearTimeout(timerPesan.current);
-    timerPesan.current = setTimeout(() => setPesan(""), LAMA_PESAN);
-  }
+  const { pesan, tampilkanPesan } = usePesan();
 
   const tutup = () => setLembar(null);
   const arus = arusLaci(hariIni);
@@ -139,6 +129,12 @@ export default function Beranda() {
         </button>
       </div>
 
+      {sudahWaktunya > 0 && (
+        <Link to="/catatan" className={gaya.stripPengingat}>
+          {sudahWaktunya} pengingat sudah waktunya
+        </Link>
+      )}
+
       {totalBon > 0 && (
         <Link to="/pelanggan" className={gaya.stripBon}>
           <span>Bon pelanggan</span>
@@ -154,18 +150,11 @@ export default function Beranda() {
           </div>
           <ul className={gaya.daftar}>
             <AnimatePresence initial={false}>
-              {hariIni.slice(0, JUMLAH_DAFTAR).map((c) => {
-                const u = uraiCatatan(c, namaDari(c.pelanggan_id));
-                return (
-                  <m.li key={c.id} layout initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
-                    <button type="button" className={gaya.baris} onClick={() => setRincian(c)}>
-                      <span className={`${gaya.ikonBaris} ${gaya[u.tanda]}`}>{IKON_TANDA[u.tanda]}</span>
-                      <span className={gaya.judulBaris}>{u.judul}</span>
-                      <strong className={gaya[`angka_${u.tanda}`]}>{u.angka}</strong>
-                    </button>
-                  </m.li>
-                );
-              })}
+              {hariIni.slice(0, JUMLAH_DAFTAR).map((c) => (
+                <m.li key={c.id} layout initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+                  <BarisCatatan catatan={c} nama={namaDari(c.pelanggan_id)} onBuka={setRincian} />
+                </m.li>
+              ))}
             </AnimatePresence>
           </ul>
         </section>
@@ -196,13 +185,7 @@ export default function Beranda() {
         }}
       />
 
-      <AnimatePresence>
-        {pesan && (
-          <m.p className={gaya.pesan} role="status" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}>
-            {pesan}
-          </m.p>
-        )}
-      </AnimatePresence>
+      <PesanSingkat pesan={pesan} />
     </div>
   );
 }

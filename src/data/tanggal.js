@@ -30,6 +30,17 @@ export function awalMinggu(teks) {
   return formatTanggal(d);
 }
 
+// "2026-11-05" -> "Kamis, 5 Nov"
+export const labelTanggal = (teks) => keDate(teks).toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "short" });
+// "2026-11-05" -> "5 Nov"
+export const labelTanggalPendek = (teks) => keDate(teks).toLocaleDateString("id-ID", { day: "numeric", month: "short" });
+// "2026-10-15" -> "Oktober 2026"
+export const labelBulan = (teks) => keDate(teks).toLocaleDateString("id-ID", { month: "long", year: "numeric" });
+// "2026-09-01" -> "Sep"
+export const namaBulanPendek = (teks) => keDate(teks).toLocaleDateString("id-ID", { month: "short" });
+// Milidetik -> "09.30"
+export const jamDariMs = (ms) => new Date(ms).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+
 export const awalBulan = (teks) => teks.slice(0, 8) + "01";
 
 export function akhirBulan(teks) {

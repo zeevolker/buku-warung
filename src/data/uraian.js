@@ -2,7 +2,7 @@
 
 import { arahStok, rincianUntung, tanggalCatatan } from "./hitung.js";
 import { ribuan } from "./format.js";
-import { hariIni } from "./tanggal.js";
+import { hariIni, jamDariMs, labelTanggal, labelTanggalPendek } from "./tanggal.js";
 
 // "Minyak goreng ×2", atau "Indomie, Teh botol" kalau lebih dari satu barang
 function namaBarang(c) {
@@ -58,4 +58,76 @@ export function labelWaktu(c, kini = hariIni()) {
   const jam = waktu.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
   if (tanggalCatatan(c) === kini) return `Hari ini, ${jam}`;
   return `${waktu.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "short" })}, ${jam}`;
+}
+
+// ---------- Semua riwayat ----------
+
+// filter = "semua" | "jual" | "belanja" | "bon" | "laci"
+const COCOK_FILTER = {
+  semua: () => true,
+  jual: (c) => c.dari === "pembeli",
+  belanja: (c) => c.ke === "agen" || c.ke === "biaya",
+  bon: (c) => c.dari === "bon" || c.ke === "bon",
+  laci: (c) => (c.dari === "pemilik" && c.ke === "laci") || c.ke === "pemilik" || c.dari === "selisih" || c.ke === "selisih",
+};
+
+// Catatan yang cocok, terbaru di atas. namaPelanggan = fungsi id -> nama.
+export function saringRiwayat(catatan, { filter = "semua", cari = "" }, namaPelanggan = () => "pelanggan") {
+  const kata = cari.trim().toLowerCase();
+  return catatan
+    .filter((c) => !c.deleted && COCOK_FILTER[filter](c))
+    .filter((c) => {
+      if (!kata) return true;
+      const nama = c.pelanggan_id ? namaPelanggan(c.pelanggan_id) : "";
+      return `${uraiCatatan(c, nama).judul} ${nama} ${c.keterangan || ""}`.toLowerCase().includes(kata);
+    })
+    .sort((a, b) => b.waktu - a.waktu);
+}
+
+// Dikelompokkan per tanggal: [{ tanggal, label, jumlah, catatan }]
+// catatanSemua dipisah supaya jumlahnya tetap benar walau yang tampil baru sebagian.
+export function kelompokPerTanggal(catatanTampil, catatanSemua = catatanTampil) {
+  const jumlah = new Map();
+  for (const c of catatanSemua) jumlah.set(tanggalCatatan(c), (jumlah.get(tanggalCatatan(c)) || 0) + 1);
+  const kelompok = new Map();
+  for (const c of catatanTampil) {
+    const t = tanggalCatatan(c);
+    if (!kelompok.has(t)) kelompok.set(t, { tanggal: t, label: labelTanggal(t), jumlah: jumlah.get(t), catatan: [] });
+    kelompok.get(t).catatan.push(c);
+  }
+  return [...kelompok.values()];
+}
+
+// ---------- Pengingat bon lewat WhatsApp ----------
+
+// Hanya catatan sejak bon terakhir kali lunas, supaya rinciannya menjumlah tepat ke sisa bon
+export function rincianBon(catatan, pelangganId) {
+  const urut = catatan.filter((c) => !c.deleted && c.pelanggan_id === pelangganId && (c.ke === "bon" || c.dari === "bon")).sort((a, b) => a.waktu - b.waktu);
+  let sisa = 0;
+  let mulai = 0;
+  urut.forEach((c, i) => {
+    sisa += c.ke === "bon" ? c.nominal : -c.nominal;
+    if (sisa === 0) mulai = i + 1;
+  });
+  return urut.slice(mulai);
+}
+
+function namaBarisBon(c) {
+  if (c.dari === "bon") return "Bayar";
+  if (c.dari === "pemilik") return "Bon lama";
+  if (c.dari === "laci") return "Pinjam uang";
+  return (c.item || []).map((b) => b.nama).join(", ") || c.keterangan || "Belanja";
+}
+
+export function pesanBon({ namaWarung, nama, bon, rincian }) {
+  const baris = rincian.map((c) => {
+    const nominal = c.dari === "bon" ? `−Rp ${ribuan(c.nominal)}` : `Rp ${ribuan(c.nominal)}`;
+    return `${labelTanggalPendek(tanggalCatatan(c))}  ${namaBarisBon(c)}  ${nominal}`;
+  });
+  return [`Halo ${nama}, ini dari ${namaWarung}.`, `Bon kamu sekarang *Rp ${ribuan(bon)}*:`, "", ...baris, "", "Terima kasih."].join("\n");
+}
+
+// Sub-judul baris: "09.30" untuk hari ini, atau "2 Nov"
+export function labelTanggalAtauJam(c, kini = hariIni()) {
+  return tanggalCatatan(c) === kini ? jamDariMs(c.waktu) : labelTanggalPendek(tanggalCatatan(c));
 }

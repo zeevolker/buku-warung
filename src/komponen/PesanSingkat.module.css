@@ -1,0 +1,16 @@
+.pesan {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: calc(var(--tinggi-menu) + 28px + env(safe-area-inset-bottom));
+  z-index: 15;
+  max-width: calc(var(--lebar-layar) - 32px);
+  margin: 0 auto;
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: var(--teks);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+}

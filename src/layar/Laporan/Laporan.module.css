@@ -1,0 +1,309 @@
+.unduh {
+  flex: none;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: var(--sudut-kapsul);
+  background: var(--kartu);
+  box-shadow: var(--bayangan);
+  color: var(--laci-teks);
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.kartuUntung {
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.kartuGrafik {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.barisUntung {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--teks-redup);
+}
+
+.labelUntung {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--teks-redup);
+}
+
+.angkaUntung,
+.angkaRugi {
+  font-size: 26px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.angkaUntung { color: #3c7a57; }
+.angkaRugi { color: var(--keluar-teks); }
+
+.angkaBesar { font-size: 30px; }
+
+.baris {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--luar-teks);
+}
+
+.baris > :first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.baris strong {
+  color: var(--teks);
+}
+
+.catatanKecil {
+  font-size: 12px;
+  color: var(--teks-redup);
+}
+
+.batangSusun {
+  height: 10px;
+  display: flex;
+  gap: 3px;
+  overflow: hidden;
+  border-radius: 5px;
+}
+
+.batangSusun span {
+  border-radius: 5px;
+}
+
+.kartuLaci {
+  padding: 14px 20px;
+  border-radius: var(--sudut);
+  background: var(--laci-latar);
+  color: var(--laci-teks);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.kartuLaci strong {
+  color: #24452f;
+}
+
+.judulBagian {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.judulBagian h2 {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.judulBagian a {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--laci-teks);
+}
+
+.barisJudul {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.barisJudul > span:not(.kolom):not(.kapsul) {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--laci-teks);
+}
+
+.kolom {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.kapsul {
+  flex: none;
+  padding: 3px 10px;
+  border-radius: var(--sudut-kapsul);
+  background: var(--laci-latar);
+  color: var(--laci-teks);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.awalAkhir {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.awalAkhir span {
+  display: flex;
+  flex-direction: column;
+}
+
+.awalAkhir small {
+  font-size: 12px;
+  color: var(--teks-redup);
+}
+
+.awalAkhir strong {
+  font-size: 15px;
+}
+
+.kanan {
+  align-items: flex-end;
+}
+
+.kotakMasuk,
+.kotakKeluar {
+  padding: 12px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+}
+
+.kotakMasuk {
+  background: var(--laci-latar);
+  color: var(--laci-teks);
+}
+
+.kotakMasuk strong {
+  font-size: 14px;
+  color: #24452f;
+}
+
+.kotakKeluar {
+  background: var(--keluar-latar);
+  color: #a14d31;
+}
+
+.kotakKeluar strong {
+  font-size: 14px;
+  color: #7e3a24;
+}
+
+.kartuBon {
+  min-height: 48px;
+  padding: 16px 20px;
+  border-radius: var(--sudut);
+  background: var(--bon-latar);
+  color: var(--bon-teks);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.pindahBulan {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pindahBulan strong {
+  flex: 1;
+  text-align: center;
+  font-size: 15px;
+}
+
+.pindahBulan button {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: var(--kartu);
+  box-shadow: var(--bayangan);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.pindahBulan button:disabled {
+  color: #b6b7b0;
+  cursor: not-allowed;
+}
+
+.teksUntung { color: #3c7a57; font-size: 13px; font-weight: 700; }
+.teksKeluar { color: var(--keluar-teks) !important; }
+.teksBon { color: var(--bon-teks) !important; }
+
+/* Lembar Unduh */
+.opsi {
+  width: 100%;
+  min-height: 72px;
+  padding: 16px;
+  border: none;
+  border-radius: 22px;
+  background: var(--kartu);
+  box-shadow: var(--bayangan);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+}
+
+.opsi:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.ikonOpsi {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.teksOpsi {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.teksOpsi strong {
+  font-size: 16px;
+}
+
+.teksOpsi span {
+  font-size: 13px;
+  color: var(--teks-redup);
+}
+
+.subjudul {
+  font-size: 14px;
+  color: var(--teks-redup);
+}
