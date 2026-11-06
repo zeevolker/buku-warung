@@ -47,6 +47,7 @@ isi tempat = total yang masuk KE tempat itu − total yang keluar DARI tempat it
 ## 3. Aturan yang sudah diputuskan
 
 - **Isi laci all time**, tidak reset tiap hari. Yang mulai dari nol tiap hari hanya baris "Hari ini +… · −…" dan Laporan Hari.
+- **Kapsul "Hari ini" hanya menghitung uang dari kegiatan warung** (`arusWarung` di `hitung.js`). Masuk: Pembeli → Laci dan Bon → Laci. Keluar: Laci → Agen, Laci → Biaya, Laci → Bon (pinjaman). Tidak dihitung: Pemilik → Laci, Laci → Pemilik, dan semua yang melibatkan Selisih. Isi laci, daftar catatan, dan Laporan tetap memakai semua catatan.
 - **Uang awal dicatat sekali** saat pertama pakai (langkah 3 tutorial). Laci kosong karena belanja itu wajar, tidak perlu uang awal lagi.
 - **Isi laci tidak boleh minus.** Kalau belanja melebihi isi laci, aplikasi bertanya "Laci cuma Rp X. Sisanya Rp Y pakai uang pribadi?" lalu membuat dua catatan.
 - **Beda dengan uang fisik** → Hitung ulang, selisihnya dicatat.

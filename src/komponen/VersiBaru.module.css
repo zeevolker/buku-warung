@@ -1,0 +1,31 @@
+.pita {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  top: calc(12px + env(safe-area-inset-top));
+  z-index: 40;
+  max-width: calc(var(--lebar-layar) - 32px);
+  margin: 0 auto;
+  padding: 6px 6px 6px 16px;
+  border-radius: 16px;
+  background: var(--teks);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pita button {
+  flex: none;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 12px;
+  background: var(--kartu);
+  color: var(--teks);
+  font-size: 13px;
+  font-weight: 700;
+}

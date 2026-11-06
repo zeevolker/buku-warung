@@ -1,0 +1,32 @@
+.isi {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.isi h2 {
+  margin-top: 10px;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.isi ul {
+  margin: 0;
+  padding-left: 1.25em;
+}
+
+.isi li {
+  margin-bottom: 6px;
+}
+
+.isi a {
+  color: var(--laci-teks);
+  font-weight: 600;
+}
+
+.tanggal {
+  font-size: 13px;
+  color: var(--teks-redup);
+}

@@ -2,7 +2,7 @@ import { describe, test, expect } from "vitest";
 import { catatan, HARI_INI } from "./fixture.js";
 import {
   isiTempat, stokBarang, semuaBon, untung, rincianUntung, ringkasanHari, ringkasanMinggu, ringkasanBulan,
-  bolehDihapus, catatanBelanja, hargaBeliSetelahHapus, arahStok, palingLaku,
+  arusLaci, arusWarung, bolehDihapus, catatanBelanja, hargaBeliSetelahHapus, arahStok, palingLaku,
 } from "../src/data/hitung.js";
 
 const cari = (keterangan) => catatan.find((c) => c.keterangan === keterangan);
@@ -184,6 +184,50 @@ describe("jualan tanpa modal", () => {
   test("Lainnya tidak ikut peringkat paling laku", () => {
     const c = jual(5000, [{ barang_id: null, nama: "Gorengan", jumlah: 50, harga: 100, modal: 50 }]);
     expect(palingLaku([c])).toBeNull();
+  });
+});
+
+describe("arusWarung: kapsul Hari ini", () => {
+  const WAKTU = new Date(2026, 10, 5, 9, 0).getTime();
+  const c = (dari, ke, nominal, lain = {}) => ({ dari, ke, nominal, waktu: WAKTU, ...lain });
+
+  test("masuk: pembeli → laci dan bon → laci", () => {
+    expect(arusWarung([c("pembeli", "laci", 20000), c("bon", "laci", 5000)])).toEqual({ masuk: 25000, keluar: 0 });
+  });
+
+  test("keluar: laci → agen, biaya, dan bon (pinjaman)", () => {
+    expect(arusWarung([c("laci", "agen", 50000), c("laci", "biaya", 10000), c("laci", "bon", 3000)])).toEqual({ masuk: 0, keluar: 63000 });
+  });
+
+  test("uang pemilik dan selisih tidak dihitung, ke arah mana pun", () => {
+    const daftar = [c("pemilik", "laci", 100000), c("laci", "pemilik", 40000), c("selisih", "laci", 2000), c("laci", "selisih", 6000)];
+    expect(arusWarung(daftar)).toEqual({ masuk: 0, keluar: 0 });
+  });
+
+  test("yang tidak menyentuh laci tidak dihitung: jual bon, stok", () => {
+    expect(arusWarung([c("pembeli", "bon", 28000), c("pemilik", "stok", 9000), c("stok", "biaya", 1000), c("pemilik", "bon", 7000)])).toEqual({ masuk: 0, keluar: 0 });
+  });
+
+  test("hari pertama: uang awal bukan pemasukan, isi laci tetap memakainya", () => {
+    const daftar = [c("pemilik", "laci", 350000), c("pembeli", "laci", 28500)];
+    expect(arusWarung(daftar)).toEqual({ masuk: 28500, keluar: 0 });
+    expect(isiTempat(daftar, "laci")).toBe(378500);
+  });
+
+  test("belanja melebihi laci: keluar sebesar belanjanya, uang pribadi tidak dihitung masuk", () => {
+    const daftar = [c("pemilik", "laci", 100000), ...catatanBelanja(150000, 100000).map((x) => ({ ...x, waktu: WAKTU }))];
+    expect(arusWarung(daftar)).toEqual({ masuk: 0, keluar: 150000 });
+    expect(isiTempat(daftar, "laci")).toBe(0);
+  });
+
+  test("laporan tetap memakai semua arus laci", () => {
+    const daftar = [c("pemilik", "laci", 100000), c("laci", "pemilik", 40000), c("pembeli", "laci", 20000)];
+    expect(arusLaci(daftar)).toEqual({ masuk: 120000, keluar: 40000 });
+  });
+
+  test("catatan terhapus dan hari lain tidak dihitung", () => {
+    const daftar = [c("pembeli", "laci", 20000, { deleted: true }), c("pembeli", "laci", 7000), c("pembeli", "laci", 9000, { waktu: new Date(2026, 10, 4, 9, 0).getTime() })];
+    expect(arusWarung(daftar, { dari: HARI_INI, sampai: HARI_INI })).toEqual({ masuk: 7000, keluar: 0 });
   });
 });
 

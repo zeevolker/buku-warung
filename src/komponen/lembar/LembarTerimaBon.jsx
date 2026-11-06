@@ -9,11 +9,11 @@ import { formatRupiah, ribuan } from "../../data/format.js";
 import bersama from "./bersama.module.css";
 import gaya from "./LembarTerimaBon.module.css";
 
-function IsiTerimaBon({ onTutup, onTersimpan, pelangganAwal }) {
+function IsiTerimaBon({ onTutup, onTersimpan, pelangganAwal, nominalAwal }) {
   const pelanggan = usePelanggan();
   const isi = useIsi();
   const [pelangganId, setPelangganId] = useState(pelangganAwal || null);
-  const [nominal, setNominal] = useState(null);
+  const [nominal, setNominal] = useState(nominalAwal || null);
   const [galat, setGalat] = useState("");
 
   const bon = (id) => isi?.bon?.[id] || 0;
@@ -72,10 +72,10 @@ function IsiTerimaBon({ onTutup, onTersimpan, pelangganAwal }) {
   );
 }
 
-export default function LembarTerimaBon({ terbuka, onTutup, onTersimpan, pelangganAwal }) {
+export default function LembarTerimaBon({ terbuka, onTutup, onTersimpan, pelangganAwal, nominalAwal }) {
   return (
     <Lembar terbuka={terbuka} onTutup={onTutup} judul="Terima bon">
-      <IsiTerimaBon onTutup={onTutup} onTersimpan={onTersimpan} pelangganAwal={pelangganAwal} />
+      <IsiTerimaBon onTutup={onTutup} onTersimpan={onTersimpan} pelangganAwal={pelangganAwal} nominalAwal={nominalAwal} />
     </Lembar>
   );
 }

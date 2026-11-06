@@ -1,5 +1,5 @@
-import { beforeAll, beforeEach, describe, test, expect, vi } from "vitest";
-import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
+import { afterEach, beforeAll, beforeEach, describe, test, expect } from "vitest";
+import { act, render, screen, fireEvent, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { LazyMotion, domMax, MotionGlobalConfig } from "motion/react";
 import Beranda from "../src/layar/Beranda/Beranda.jsx";
@@ -47,7 +47,17 @@ describe("Beranda", () => {
     buka();
     await laciTampil("Rp 100.000");
     expect((await screen.findByText("Bon pelanggan")).closest("a").textContent).toContain("Rp 28.000");
-    expect(await screen.findByText("+Rp 100.000")).toBeTruthy();
+    // Uang awal dan jual bon bukan uang masuk dari kegiatan warung
+    expect(await screen.findByText("Belum ada uang masuk atau keluar hari ini")).toBeTruthy();
+    expect(screen.queryByText("+Rp 100.000")).toBeNull();
+  });
+
+  test("kapsul Hari ini hanya menghitung kegiatan warung", async () => {
+    await jual({ lainnya: 28000 });
+    buka();
+    await laciTampil("Rp 128.000");
+    expect(await screen.findByText("+Rp 28.000")).toBeTruthy();
+    expect(screen.queryByText("+Rp 128.000")).toBeNull();
   });
 
   test("pengguna baru: tampilan kosong dengan ajakan tambah barang", async () => {
@@ -60,7 +70,10 @@ describe("Beranda", () => {
   });
 
   test("daftar hari ini hanya 4 terakhir, terbaru di atas", async () => {
-    for (const n of [1000, 2000, 3000, 4000, 5000]) await jual({ lainnya: n, keterangan: `Jualan ${n}` });
+    for (const n of [1000, 2000, 3000, 4000, 5000]) {
+      await jual({ lainnya: n, keterangan: `Jualan ${n}` });
+      await new Promise((r) => setTimeout(r, 3)); // supaya waktunya tidak ada yang sama
+    }
     buka();
     await screen.findByText("Jualan 5000");
     expect(screen.queryByText("Jualan 1000")).toBeNull();
@@ -231,6 +244,161 @@ describe("alur Belanja", () => {
     await lembarTertutup();
     expect(isiTempat(await catatan(), "bon", budi.id)).toBe(30000);
     expect(await screen.findByText("Budi pinjam uang")).toBeTruthy();
+  });
+});
+
+describe("catat dengan suara", () => {
+  // Pengenal suara tiruan: tes yang menentukan apa yang "terdengar"
+  let sesi;
+  beforeEach(() => {
+    globalThis.SpeechRecognition = class {
+      start() {
+        sesi = this;
+      }
+      stop() {
+        this.onend();
+      }
+      abort() {
+        this.dibatalkan = true;
+      }
+    };
+  });
+  afterEach(() => {
+    delete globalThis.SpeechRecognition;
+  });
+
+  const ucapkan = async (teks) => {
+    await tampilkanLembar("Catat dengan suara", "Mendengarkan…");
+    act(() => sesi.onresult({ results: [[{ transcript: teks }]] }));
+    fireEvent.click(screen.getByRole("button", { name: "Selesai" }));
+  };
+
+  test("tombol tidak ada kalau browser tidak mendukung", async () => {
+    delete globalThis.SpeechRecognition;
+    buka();
+    await screen.findByRole("button", { name: "Jual" });
+    expect(screen.queryByRole("button", { name: "Catat dengan suara" })).toBeNull();
+  });
+
+  test("bahasa Indonesia, dan teks tampil selagi berbicara", async () => {
+    buka();
+    await tampilkanLembar("Catat dengan suara", "Mendengarkan…");
+    expect(sesi.lang).toBe("id-ID");
+    expect(sesi.interimResults).toBe(true);
+    act(() => sesi.onresult({ results: [[{ transcript: "jual dua" }]] }));
+    expect(screen.getByText("“jual dua”")).toBeTruthy();
+  });
+
+  test("jual: lembar terisi, tidak ada yang tersimpan sebelum Simpan", async () => {
+    buka();
+    await laciTampil("Rp 100.000");
+    await ucapkan("jual dua kopi");
+    const lembar = await screen.findByRole("dialog", { name: "Jual" });
+    expect(await within(lembar).findByText("Rp 4.000")).toBeTruthy();
+    expect(screen.getByText("Periksa dulu, lalu Simpan")).toBeTruthy();
+    expect(await catatan()).toHaveLength(2);
+    fireEvent.click(within(lembar).getByRole("button", { name: "Simpan" }));
+    await lembarTertutup();
+    expect(await catatan()).toHaveLength(3);
+  });
+
+  test("jual bon ke pelanggan yang dikenal", async () => {
+    buka();
+    await screen.findByText("Belum ada catatan hari ini");
+    await ucapkan("Budi ngebon kopi");
+    const lembar = await screen.findByRole("dialog", { name: "Jual" });
+    expect(await within(lembar).findByText("Bon: Budi")).toBeTruthy();
+    expect(within(lembar).getByRole("button", { name: "Bon" }).getAttribute("aria-pressed")).toBe("true");
+  });
+
+  test("jumlah melebihi stok: dibatasi dan diberi tahu", async () => {
+    buka();
+    await screen.findByText("Belum ada catatan hari ini");
+    await ucapkan("jual sembilan kopi");
+    const lembar = await screen.findByRole("dialog", { name: "Jual" });
+    expect(await within(lembar).findByText("Stok Kopi tinggal 5.")).toBeTruthy();
+    expect(within(lembar).getByText("Rp 10.000")).toBeTruthy();
+  });
+
+  test("jualan tanpa barang masuk Lainnya", async () => {
+    buka();
+    await screen.findByText("Belum ada catatan hari ini");
+    await ucapkan("uang masuk 10 ribu");
+    const lembar = await screen.findByRole("dialog", { name: "Jual" });
+    expect((await within(lembar).findByRole("textbox", { name: "Nominal jualan lainnya" })).value).toBe("Rp 10.000");
+  });
+
+  test("belanja, biaya, pinjaman membuka lembar Belanja terisi", async () => {
+    buka();
+    await screen.findByText("Belum ada catatan hari ini");
+    await ucapkan("belanja kopi 5 10 ribu");
+    let lembar = await screen.findByRole("dialog", { name: "Belanja" });
+    await within(lembar).findByRole("combobox", { name: "Barang" });
+    await waitFor(() => expect(within(lembar).getByRole("combobox", { name: "Barang" }).value).toBe(kopi.id));
+    expect(within(lembar).getByRole("spinbutton", { name: "Jumlah" }).value).toBe("5");
+    expect(within(lembar).getByRole("textbox", { name: "Total" }).value).toBe("Rp 10.000");
+    fireEvent.keyDown(lembar, { key: "Escape" });
+    await lembarTertutup();
+
+    await ucapkan("bayar listrik 20 ribu");
+    lembar = await screen.findByRole("dialog", { name: "Belanja" });
+    expect((await within(lembar).findByRole("textbox", { name: "Keterangan" })).value).toBe("listrik");
+    expect(within(lembar).getByRole("button", { name: "Biaya" }).getAttribute("aria-pressed")).toBe("true");
+    expect(await catatan()).toHaveLength(2);
+  });
+
+  test("terima bon: pelanggan dan nominal terisi", async () => {
+    await jual({ lainnya: 50000, bayar: "bon", pelangganId: budi.id });
+    buka();
+    await screen.findByText("Bon pelanggan");
+    await ucapkan("Budi bayar 20 ribu");
+    const lembar = await screen.findByRole("dialog", { name: "Terima bon" });
+    expect((await within(lembar).findByRole("button", { name: /Budi/ })).getAttribute("aria-pressed")).toBe("true");
+    expect(within(lembar).getByRole("textbox", { name: "Dibayar" }).value).toBe("Rp 20.000");
+    expect(within(lembar).getByText("Sisa 30.000")).toBeTruthy();
+  });
+
+  test("tidak dimengerti: Belum paham, lalu Ketik manual atau Coba lagi", async () => {
+    buka();
+    await screen.findByText("Belum ada catatan hari ini");
+    await ucapkan("eh yang biru tadi berapa ya");
+    const gagal = await screen.findByRole("dialog", { name: "Belum paham" });
+    expect(within(gagal).getByText("“eh yang biru tadi berapa ya”")).toBeTruthy();
+    fireEvent.click(within(gagal).getByRole("button", { name: "Coba lagi" }));
+    expect(await screen.findByRole("dialog", { name: "Mendengarkan…" })).toBeTruthy();
+    act(() => sesi.onresult({ results: [[{ transcript: "halo" }]] }));
+    fireEvent.click(screen.getByRole("button", { name: "Selesai" }));
+    const kedua = await screen.findByRole("dialog", { name: "Belum paham" });
+    fireEvent.click(within(kedua).getByRole("button", { name: "Ketik manual" }));
+    expect(await screen.findByRole("dialog", { name: "Jual" })).toBeTruthy();
+  });
+
+  test("galat: pesan ramah untuk izin ditolak, tidak terdengar, dan tanpa internet", async () => {
+    buka();
+    await screen.findByRole("button", { name: "Catat dengan suara" });
+    const kasus = [
+      ["not-allowed", /Izin mikrofon ditolak/],
+      ["service-not-allowed", /nyalakan Siri atau Dikte/],
+      ["no-speech", /Suara belum terdengar/],
+      ["network", /butuh internet/],
+    ];
+    for (const [kode, pesan] of kasus) {
+      await tampilkanLembar("Catat dengan suara", "Mendengarkan…");
+      act(() => sesi.onerror({ error: kode }));
+      expect(await screen.findByText(pesan)).toBeTruthy();
+      await lembarTertutup();
+    }
+  });
+
+  test("menutup lembar membatalkan rekaman tanpa pesan galat", async () => {
+    buka();
+    await tampilkanLembar("Catat dengan suara", "Mendengarkan…");
+    const lembar = screen.getByRole("dialog", { name: "Mendengarkan…" });
+    const dipakai = sesi;
+    fireEvent.keyDown(lembar, { key: "Escape" });
+    await lembarTertutup();
+    expect(dipakai.dibatalkan).toBe(true);
+    expect(screen.queryByRole("status")).toBeNull();
   });
 });
 

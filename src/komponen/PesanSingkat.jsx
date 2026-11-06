@@ -10,10 +10,10 @@ export function usePesan() {
   const [pesan, setPesan] = useState("");
   const timer = useRef(null);
   useEffect(() => () => clearTimeout(timer.current), []);
-  function tampilkanPesan(teks) {
+  function tampilkanPesan(teks, lama = LAMA_PESAN) {
     setPesan(teks);
     clearTimeout(timer.current);
-    timer.current = setTimeout(() => setPesan(""), LAMA_PESAN);
+    timer.current = setTimeout(() => setPesan(""), lama);
   }
   return { pesan, tampilkanPesan };
 }

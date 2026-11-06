@@ -1,5 +1,5 @@
 // Masuk.jsx: masuk dan daftar dengan email, lupa kata sandi, dan membuat kata sandi baru.
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { useLiveQuery } from "dexie-react-hooks";
 import KerangkaLayar from "../../komponen/KerangkaLayar.jsx";
@@ -52,7 +52,10 @@ export default function Masuk() {
   const [galat, setGalat] = useState("");
   const [info, setInfo] = useState("");
 
-  const tujuan = mulaiSelesai ? "/akun" : "/mulai";
+  // Selesai membuat kata sandi baru langsung ke Beranda, bukan ke Akun
+  const dariPulihkan = useRef(false);
+  if (akun.pulihkanSandi) dariPulihkan.current = true;
+  const tujuan = dariPulihkan.current ? "/" : mulaiSelesai ? "/akun" : "/mulai";
 
   // Sudah berhasil masuk: lanjut
   useEffect(() => {

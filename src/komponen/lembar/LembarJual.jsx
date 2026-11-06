@@ -1,5 +1,5 @@
 // LembarJual.jsx: pilih barang, tunai atau bon, lalu Simpan.
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Lembar from "../Lembar.jsx";
 import Geser from "../Geser.jsx";
 import Rute from "../Rute.jsx";
@@ -13,7 +13,7 @@ import gaya from "./LembarJual.module.css";
 
 const JUMLAH_DAFTAR = 5;
 
-function IsiJual({ onTutup, onTersimpan }) {
+function IsiJual({ onTutup, onTersimpan, awal }) {
   const tanggal = useTanggalHariIni();
   const barang = useBarang();
   const pelanggan = usePelanggan();
@@ -23,16 +23,43 @@ function IsiJual({ onTutup, onTersimpan }) {
   const [jumlah, setJumlah] = useState({}); // id barang -> jumlah
   const [tambahan, setTambahan] = useState([]); // barang yang dipilih lewat "+ Barang lain"
   const [cari, setCari] = useState(null); // null berarti kotak cari tertutup
-  const [lainnyaBuka, setLainnyaBuka] = useState(false);
-  const [lainnya, setLainnya] = useState(null);
+  const nominalAwal = !awal?.item?.length && awal?.nominal ? awal.nominal : null;
+  const [lainnyaBuka, setLainnyaBuka] = useState(Boolean(nominalAwal || awal?.keterangan));
+  const [lainnya, setLainnya] = useState(nominalAwal);
   const [modalLainnya, setModalLainnya] = useState(null);
-  const [keterangan, setKeterangan] = useState("");
-  const [bayar, setBayar] = useState("tunai");
-  const [pelangganId, setPelangganId] = useState(null);
+  const [keterangan, setKeterangan] = useState(awal?.keterangan || "");
+  const [bayar, setBayar] = useState(awal?.bayar || "tunai");
+  const [pelangganId, setPelangganId] = useState(awal?.pelanggan_id || null);
   const [namaBaru, setNamaBaru] = useState("");
   const [galat, setGalat] = useState("");
 
   const stok = (id) => isi?.stok?.[id] || 0;
+
+  // Dari suara: barang yang disebut langsung terpilih, setelah stok dan harganya dimuat.
+  // Yang tidak bisa dijual diberi tahu. Tetap pengguna yang menekan Simpan.
+  const sudahDiisi = useRef(false);
+  useEffect(() => {
+    if (!awal?.item?.length || sudahDiisi.current || !isi || !barang.length) return;
+    sudahDiisi.current = true;
+    const pilihan = {};
+    const catatan = [];
+    let total = 0;
+    for (const { barang_id, jumlah: n } of awal.item) {
+      const b = barang.find((x) => x.id === barang_id);
+      if (!b) continue;
+      const ada = isi.stok[b.id] || 0;
+      if (!b.harga_jual) catatan.push(`Harga jual ${b.nama} belum diisi.`);
+      else if (ada <= 0) catatan.push(`Stok ${b.nama} habis.`);
+      else {
+        pilihan[b.id] = Math.min(n, ada);
+        total += pilihan[b.id] * b.harga_jual;
+        if (n > ada) catatan.push(`Stok ${b.nama} tinggal ${ada}.`);
+      }
+    }
+    if (awal.nominal && awal.nominal !== total) catatan.push(`Total mengikuti harga barang, bukan ${formatRupiah(awal.nominal)} yang disebut.`);
+    setJumlah(pilihan);
+    setGalat(catatan.join(" "));
+  }, [awal, isi, barang]);
   const bisaDijual = (b) => b.harga_jual > 0 && stok(b.id) > 0;
   const ubah = (id, selisih) => setJumlah((j) => ({ ...j, [id]: Math.max(0, (j[id] || 0) + selisih) }));
 
@@ -171,10 +198,11 @@ function IsiJual({ onTutup, onTersimpan }) {
   );
 }
 
-export default function LembarJual({ terbuka, onTutup, onTersimpan }) {
+// awal = isian dari suara (boleh kosong)
+export default function LembarJual({ terbuka, onTutup, onTersimpan, awal }) {
   return (
     <Lembar terbuka={terbuka} onTutup={onTutup} judul="Jual">
-      <IsiJual onTutup={onTutup} onTersimpan={onTersimpan} />
+      <IsiJual onTutup={onTutup} onTersimpan={onTersimpan} awal={awal} />
     </Lembar>
   );
 }

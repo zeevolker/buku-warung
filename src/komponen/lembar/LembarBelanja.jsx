@@ -19,21 +19,27 @@ const JENIS = [
 const TUJUAN = { stok: "agen", biaya: "biaya", pinjaman: "bon" };
 const PILIHAN_BARANG_BARU = "barang-baru";
 
-function IsiBelanja({ onTutup, onTersimpan, barangAwal, onBarangBaru }) {
+function IsiBelanja({ onTutup, onTersimpan, barangAwal, onBarangBaru, awal }) {
   const barang = useBarang();
   const pelanggan = usePelanggan();
   const isi = useIsi();
   const kolomTotal = useRef(null);
 
-  const [jenis, setJenis] = useState("stok");
-  const [barangId, setBarangId] = useState(barangAwal || "");
-  const [jumlah, setJumlah] = useState("");
-  const [keterangan, setKeterangan] = useState("");
-  const [pelangganId, setPelangganId] = useState(null);
+  const [jenis, setJenis] = useState(awal?.jenis || "stok");
+  const [barangId, setBarangId] = useState(barangAwal || awal?.item?.[0]?.barang_id || "");
+  const [jumlah, setJumlah] = useState(awal?.item?.[0] ? String(awal.item[0].jumlah) : "");
+  // Kolom keterangan hanya ada untuk biaya; pada lainnya, kata yang tidak dikenali diberi tahu
+  const [keterangan, setKeterangan] = useState(awal?.jenis === "biaya" ? awal.keterangan : "");
+  const [pelangganId, setPelangganId] = useState(awal?.pelanggan_id || null);
   const [namaBaru, setNamaBaru] = useState("");
-  const [total, setTotal] = useState(null);
+  const [total, setTotal] = useState(awal?.nominal || null);
   const [setujuPribadi, setSetujuPribadi] = useState(false);
-  const [galat, setGalat] = useState("");
+  const [galat, setGalat] = useState(() => {
+    const catatan = [];
+    if (awal?.jenis !== "biaya" && awal?.keterangan) catatan.push(`Belum dikenali: "${awal.keterangan}".`);
+    if (awal?.item?.length > 1) catatan.push("Satu catatan belanja hanya untuk satu barang. Catat barang lainnya terpisah.");
+    return catatan.join(" ");
+  });
 
   const laci = Math.max(0, isi?.laci || 0);
   const kekurangan = (total || 0) - laci;
@@ -139,10 +145,11 @@ function IsiBelanja({ onTutup, onTersimpan, barangAwal, onBarangBaru }) {
 }
 
 // barangAwal = id barang yang langsung terpilih; onBarangBaru = dipanggil saat memilih "+ Barang baru"
-export default function LembarBelanja({ terbuka, onTutup, onTersimpan, barangAwal, onBarangBaru }) {
+// awal = isian dari suara (boleh kosong)
+export default function LembarBelanja({ terbuka, onTutup, onTersimpan, barangAwal, onBarangBaru, awal }) {
   return (
     <Lembar terbuka={terbuka} onTutup={onTutup} judul="Belanja">
-      <IsiBelanja onTutup={onTutup} onTersimpan={onTersimpan} barangAwal={barangAwal} onBarangBaru={onBarangBaru} />
+      <IsiBelanja onTutup={onTutup} onTersimpan={onTersimpan} barangAwal={barangAwal} onBarangBaru={onBarangBaru} awal={awal} />
     </Lembar>
   );
 }

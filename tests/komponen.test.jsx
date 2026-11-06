@@ -58,7 +58,7 @@ test("Lembar: terbuka, tertutup dengan Esc, fokus kembali ke tombol asal", async
   expect(document.body.style.overflow).toBe("hidden");
   fireEvent.keyDown(dialog, { key: "Escape" });
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
-  expect(document.activeElement).toBe(tombol);
+  await waitFor(() => expect(document.activeElement).toBe(tombol));
   expect(document.body.style.overflow).toBe("");
 });
 

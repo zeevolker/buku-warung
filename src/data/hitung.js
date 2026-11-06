@@ -114,6 +114,21 @@ export function arusLaci(catatan, rentang) {
   return { masuk, keluar };
 }
 
+// Kapsul "Hari ini": hanya uang dari kegiatan warung. Uang pemilik dan selisih tidak dihitung,
+// supaya uang awal atau Hitung ulang tidak terbaca seperti pemasukan atau pengeluaran.
+const MASUK_WARUNG = ["pembeli", "bon"];
+const KELUAR_WARUNG = ["agen", "biaya", "bon"];
+
+export function arusWarung(catatan, rentang) {
+  let masuk = 0;
+  let keluar = 0;
+  for (const c of dalamRentang(catatan, rentang)) {
+    if (c.ke === "laci" && MASUK_WARUNG.includes(c.dari)) masuk += c.nominal;
+    if (c.dari === "laci" && KELUAR_WARUNG.includes(c.ke)) keluar += c.nominal;
+  }
+  return { masuk, keluar };
+}
+
 // Hasil Hitung ulang: positif berarti uang fisik lebih banyak dari catatan
 export function selisihLaci(catatan, rentang) {
   let selisih = 0;

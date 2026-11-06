@@ -3,7 +3,8 @@
   left: 16px;
   right: 16px;
   bottom: calc(var(--tinggi-menu) + 28px + env(safe-area-inset-bottom));
-  z-index: 15;
+  z-index: 25; /* di atas lembar, tapi tidak menghalangi tombol di bawahnya */
+  pointer-events: none;
   max-width: calc(var(--lebar-layar) - 32px);
   margin: 0 auto;
   padding: 12px 16px;

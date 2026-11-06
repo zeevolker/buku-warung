@@ -3,3 +3,6 @@ dist/
 .env.local
 .env.*.local
 *.log
+dist-e2e/
+test-results/
+playwright-report/

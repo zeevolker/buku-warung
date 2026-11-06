@@ -1,29 +1,47 @@
 // Beranda.jsx: layar utama. Isi laci, tombol mencatat, bon, dan catatan hari ini.
-import { useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import { AnimatePresence, m } from "motion/react";
 import AngkaHitung from "../../komponen/AngkaHitung.jsx";
-import LembarJual from "../../komponen/lembar/LembarJual.jsx";
-import LembarBelanja from "../../komponen/lembar/LembarBelanja.jsx";
-import LembarTerimaBon from "../../komponen/lembar/LembarTerimaBon.jsx";
-import LembarLaci from "../../komponen/lembar/LembarLaci.jsx";
-import LembarHitungUlang from "../../komponen/lembar/LembarHitungUlang.jsx";
-import LembarRincian from "../../komponen/lembar/LembarRincian.jsx";
-import LembarBarang from "../Barang/LembarBarang.jsx";
-import Panduan from "./Panduan.jsx";
+import { usePengenalSuara, useSuaraTersedia } from "../../komponen/lembar/pengenalSuara.js";
 import PitaStatus from "./PitaStatus.jsx";
-import LembarAjakan from "./LembarAjakan.jsx";
 import { aturMeta } from "../../data/db.js";
 import { useAkun } from "../../data/akun.js";
 import { supabaseAktif } from "../../data/supabase.js";
 import BarisCatatan from "../../komponen/BarisCatatan.jsx";
 import PesanSingkat, { usePesan } from "../../komponen/PesanSingkat.jsx";
-import { useCatatanHari, useIsi, useJumlahCatatan, useMeta, useNamaWarung, usePelanggan, usePengingat, useSekarang, useTanggalHariIni } from "../../data/pakai.js";
-import { arusLaci } from "../../data/hitung.js";
+import { useBarang, useCatatanHari, useIsi, useJumlahCatatan, useMeta, useNamaWarung, usePelanggan, usePengingat, useSekarang, useTanggalHariIni } from "../../data/pakai.js";
+import { arusWarung } from "../../data/hitung.js";
 import { formatRupiah } from "../../data/format.js";
 import gaya from "./Beranda.module.css";
 
+// Lembar tidak ikut dimuat di layar pertama. Tiga yang paling sering dipakai disiapkan
+// sesudah layar tampil, supaya tetap terasa langsung saat ditekan.
+const muatJual = () => import("../../komponen/lembar/LembarJual.jsx");
+const muatBelanja = () => import("../../komponen/lembar/LembarBelanja.jsx");
+const muatTerimaBon = () => import("../../komponen/lembar/LembarTerimaBon.jsx");
+const muatParser = () => import("../../data/suara.js");
+const LembarJual = lazy(muatJual);
+const LembarBelanja = lazy(muatBelanja);
+const LembarTerimaBon = lazy(muatTerimaBon);
+const LembarLaci = lazy(() => import("../../komponen/lembar/LembarLaci.jsx"));
+const LembarHitungUlang = lazy(() => import("../../komponen/lembar/LembarHitungUlang.jsx"));
+const LembarRincian = lazy(() => import("../../komponen/lembar/LembarRincian.jsx"));
+const LembarBarang = lazy(() => import("../Barang/LembarBarang.jsx"));
+const LembarSuara = lazy(() => import("../../komponen/lembar/LembarSuara.jsx"));
+const LembarAjakan = lazy(() => import("./LembarAjakan.jsx"));
+const Panduan = lazy(() => import("./Panduan.jsx"));
+const JEDA_SIAPKAN = 1500;
+
+// Dipasang saat pertama kali dibuka, lalu tetap terpasang supaya animasi tutupnya berjalan
+function Malas({ aktif, children }) {
+  const pernah = useRef(false);
+  if (aktif) pernah.current = true;
+  return pernah.current ? <Suspense fallback={null}>{children}</Suspense> : null;
+}
+
 const JUMLAH_DAFTAR = 4;
+const LAMA_PESAN_SUARA = 8000; // pesannya berisi petunjuk, jadi perlu waktu untuk dibaca
 const AJAKAN_PERTAMA = 10; // ajakan simpan ke cloud muncul setelah sekian catatan
 const AJAKAN_BERIKUTNYA = 20; // "Nanti saja": muncul lagi setelah sekian catatan lagi
 const WARNA_TITIK = { sinkron: "#5aa77c", menyinkron: "#5aa77c", offline: "#d9a93e", gagal: "#b5583a", tamu: "#a3a59e" };
@@ -49,8 +67,12 @@ export default function Beranda() {
   const pengingat = belumSelesai.length;
   const sudahWaktunya = belumSelesai.filter((p) => p.waktu_ingat && p.waktu_ingat <= sekarang).length;
 
-  const [lembar, setLembar] = useState(null); // "jual" | "belanja" | "barangBaru" | "bon" | "laci" | "hitung"
+  const [lembar, setLembar] = useState(null); // "jual" | "belanja" | "barangBaru" | "bon" | "laci" | "hitung" | "suara"
   const [barangAwal, setBarangAwal] = useState(null); // barang yang langsung terpilih di lembar Belanja
+  const [isianSuara, setIsianSuara] = useState(null); // isian lembar dari hasil suara
+  const [belumPaham, setBelumPaham] = useState(null); // ucapan yang tidak dimengerti
+  const barang = useBarang();
+  const suaraTersedia = useSuaraTersedia();
   const [rincian, setRincian] = useState(null);
   const { pesan, tampilkanPesan } = usePesan();
   const akun = useAkun();
@@ -65,7 +87,54 @@ export default function Beranda() {
   const tampilAjakan = !akun.email && supabaseAktif() && bebas && !cocokkanLaci && jumlahCatatan >= (ajakanBerikut || AJAKAN_PERTAMA);
 
   const tutup = () => setLembar(null);
-  const arus = arusLaci(hariIni);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      for (const muat of [muatJual, muatBelanja, muatTerimaBon]) muat().catch(() => {});
+    }, JEDA_SIAPKAN);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Hasil suara hanya membuka lembar yang sesuai dalam keadaan terisi. Tidak pernah menyimpan sendiri.
+  async function prosesUcapan(teks) {
+    const { uraikanKalimat } = await muatParser();
+    const hasil = uraikanKalimat(teks, { barang, pelanggan });
+    if (!hasil.jenis) return setBelumPaham(teks);
+    setBarangAwal(null);
+    if (hasil.jenis === "jual") {
+      setIsianSuara(hasil);
+      setLembar("jual");
+    } else if (hasil.jenis === "terimaBon") {
+      setIsianSuara(hasil);
+      setLembar("bon");
+    } else {
+      setIsianSuara({ ...hasil, jenis: hasil.jenis === "belanja" ? "stok" : hasil.jenis });
+      setLembar("belanja");
+    }
+    tampilkanPesan("Periksa dulu, lalu Simpan");
+  }
+
+  const pengenal = usePengenalSuara({
+    onSelesai: prosesUcapan,
+    onGalat: (pesanGalat) => {
+      setLembar(null);
+      tampilkanPesan(pesanGalat, LAMA_PESAN_SUARA);
+    },
+  });
+
+  function bukaSuara() {
+    setBelumPaham(null);
+    pengenal.mulai(); // harus langsung dari tombol yang ditekan
+    muatParser();
+    setLembar("suara");
+  }
+
+  function bukaManual(nama) {
+    setIsianSuara(null);
+    setBarangAwal(null);
+    setLembar(nama);
+  }
+  const arus = arusWarung(hariIni);
   const totalBon = Object.values(isi?.bon || {}).reduce((n, b) => n + Math.max(0, b), 0);
   const namaDari = (id) => pelanggan.find((p) => p.id === id)?.nama;
 
@@ -92,11 +161,13 @@ export default function Beranda() {
         <span className={gaya.labelLaci}>Isi laci</span>
         <strong className={gaya.angkaLaci}>{isi ? <AngkaHitung nilai={isi.laci} /> : " "}</strong>
         <span className={gaya.hariIni}>
-          {hariIni.length ? (
+          {arus.masuk > 0 || arus.keluar > 0 ? (
             <>
               Hari ini {arus.masuk > 0 && <span className={gaya.kapsulMasuk}>+{formatRupiah(arus.masuk)}</span>}
               {arus.keluar > 0 && <span className={gaya.kapsulKeluar}>−{formatRupiah(arus.keluar)}</span>}
             </>
+          ) : hariIni.length ? (
+            "Belum ada uang masuk atau keluar hari ini"
           ) : (
             "Belum ada catatan hari ini"
           )}
@@ -104,26 +175,24 @@ export default function Beranda() {
       </section>
 
       <div className={gaya.barisJual}>
-        <m.button type="button" data-panduan="jual" className={gaya.tombolJual} whileTap={{ scale: 0.98 }} onClick={() => setLembar("jual")}>
+        <m.button type="button" data-panduan="jual" className={gaya.tombolJual} whileTap={{ scale: 0.98 }} onClick={() => bukaManual("jual")}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true">
             <path d="M12 5v14M5 12h14" />
           </svg>
           Jual
         </m.button>
-        {/* Catat dengan suara dikerjakan di Tahap 5 */}
-        <button type="button" className={gaya.tombolSuara} aria-label="Catat dengan suara, belum tersedia" disabled>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <rect x="9" y="3" width="6" height="11" rx="3" />
-            <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
-          </svg>
-        </button>
+        {suaraTersedia && (
+          <button type="button" className={gaya.tombolSuara} aria-label="Catat dengan suara" onClick={bukaSuara}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect x="9" y="3" width="6" height="11" rx="3" />
+              <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
+            </svg>
+          </button>
+        )}
       </div>
 
       <div className={gaya.tigaTombol}>
-        <button type="button" data-panduan="belanja" className={gaya.petak} onClick={() => {
-            setBarangAwal(null);
-            setLembar("belanja");
-          }}>
+        <button type="button" data-panduan="belanja" className={gaya.petak} onClick={() => bukaManual("belanja")}>
           <span className={gaya.ikonPetak} style={{ background: "var(--keluar-latar)" }}>
             {ikonGaris(
               <>
@@ -135,7 +204,7 @@ export default function Beranda() {
           </span>
           Belanja
         </button>
-        <button type="button" data-panduan="bon" className={gaya.petak} onClick={() => setLembar("bon")}>
+        <button type="button" data-panduan="bon" className={gaya.petak} onClick={() => bukaManual("bon")}>
           <span className={gaya.ikonPetak} style={{ background: "var(--bon-latar)" }}>
             {ikonGaris(<path d="M5 12l5 5L19 7" />, "#7d5a12")}
           </span>
@@ -196,34 +265,71 @@ export default function Beranda() {
         </div>
       )}
 
-      <LembarJual terbuka={lembar === "jual"} onTutup={tutup} onTersimpan={tampilkanPesan} />
-      <LembarBelanja terbuka={lembar === "belanja"} barangAwal={barangAwal} onTutup={tutup} onTersimpan={tampilkanPesan} onBarangBaru={() => setLembar("barangBaru")} />
-      <LembarBarang
-        terbuka={lembar === "barangBaru"}
-        asalAwal="dibeli"
-        onTutup={tutup}
-        onTersimpan={tampilkanPesan}
-        onTambahStok={(id) => {
-          setBarangAwal(id);
-          setLembar("belanja");
-        }}
-      />
-      <LembarTerimaBon terbuka={lembar === "bon"} onTutup={tutup} onTersimpan={tampilkanPesan} />
-      <LembarLaci terbuka={lembar === "laci"} onTutup={tutup} onTersimpan={tampilkanPesan} onHitungUlang={() => setLembar("hitung")} />
-      <LembarHitungUlang terbuka={lembar === "hitung"} onTutup={tutup} onTersimpan={tampilkanPesan} />
-      <LembarRincian
-        catatan={rincian}
-        onTutup={() => setRincian(null)}
-        onTersimpan={tampilkanPesan}
-        onHitungUlang={() => {
-          setRincian(null);
-          setLembar("hitung");
-        }}
-      />
+      <Malas aktif={lembar === "suara"}>
+        <LembarSuara
+          terbuka={lembar === "suara"}
+          teks={pengenal.teks}
+          belumPaham={belumPaham}
+          onSelesai={pengenal.berhenti}
+          onBatal={() => {
+            pengenal.batal();
+            tutup();
+          }}
+          onKetik={() => bukaManual("jual")}
+          onCobaLagi={bukaSuara}
+        />
+      </Malas>
+      <Malas aktif={lembar === "jual"}>
+        <LembarJual terbuka={lembar === "jual"} awal={isianSuara} onTutup={tutup} onTersimpan={tampilkanPesan} />
+      </Malas>
+      <Malas aktif={lembar === "belanja"}>
+        <LembarBelanja terbuka={lembar === "belanja"} awal={isianSuara} barangAwal={barangAwal} onTutup={tutup} onTersimpan={tampilkanPesan} onBarangBaru={() => setLembar("barangBaru")} />
+      </Malas>
+      <Malas aktif={lembar === "barangBaru"}>
+        <LembarBarang
+          terbuka={lembar === "barangBaru"}
+          asalAwal="dibeli"
+          onTutup={tutup}
+          onTersimpan={tampilkanPesan}
+          onTambahStok={(id) => {
+            setIsianSuara(null);
+            setBarangAwal(id);
+            setLembar("belanja");
+          }}
+        />
+      </Malas>
+      <Malas aktif={lembar === "bon"}>
+        <LembarTerimaBon terbuka={lembar === "bon"} pelangganAwal={isianSuara?.pelanggan_id} nominalAwal={isianSuara?.nominal} onTutup={tutup} onTersimpan={tampilkanPesan} />
+      </Malas>
+      <Malas aktif={lembar === "laci"}>
+        <LembarLaci terbuka={lembar === "laci"} onTutup={tutup} onTersimpan={tampilkanPesan} onHitungUlang={() => setLembar("hitung")} />
+      </Malas>
+      <Malas aktif={lembar === "hitung"}>
+        <LembarHitungUlang terbuka={lembar === "hitung"} onTutup={tutup} onTersimpan={tampilkanPesan} />
+      </Malas>
+      <Malas aktif={Boolean(rincian)}>
+        <LembarRincian
+          catatan={rincian}
+          onTutup={() => setRincian(null)}
+          onTersimpan={tampilkanPesan}
+          onHitungUlang={() => {
+            setRincian(null);
+            setLembar("hitung");
+          }}
+        />
+      </Malas>
 
-      <LembarHitungUlang terbuka={tampilCocokkan} judul="Cocokkan isi laci" onTutup={() => aturMeta("cocokkan_laci", 0)} onTersimpan={tampilkanPesan} />
-      <LembarAjakan terbuka={tampilAjakan} jumlah={jumlahCatatan} onNanti={() => aturMeta("ajakan_berikut", jumlahCatatan + AJAKAN_BERIKUTNYA)} />
-      {Boolean(tutorial) && <Panduan onSelesai={() => aturMeta("tutorial", 0)} />}
+      <Malas aktif={Boolean(tampilCocokkan)}>
+        <LembarHitungUlang terbuka={tampilCocokkan} judul="Cocokkan isi laci" onTutup={() => aturMeta("cocokkan_laci", 0)} onTersimpan={tampilkanPesan} />
+      </Malas>
+      <Malas aktif={Boolean(tampilAjakan)}>
+        <LembarAjakan terbuka={tampilAjakan} jumlah={jumlahCatatan} onNanti={() => aturMeta("ajakan_berikut", jumlahCatatan + AJAKAN_BERIKUTNYA)} />
+      </Malas>
+      {Boolean(tutorial) && (
+        <Suspense fallback={null}>
+          <Panduan onSelesai={() => aturMeta("tutorial", 0)} />
+        </Suspense>
+      )}
       <PesanSingkat pesan={pesan} />
     </div>
   );

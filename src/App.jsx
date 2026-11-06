@@ -3,6 +3,7 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import { Routes, Route, useLocation, useNavigate } from "react-router";
 import { AnimatePresence, m } from "motion/react";
 import MenuBawah from "./komponen/MenuBawah.jsx";
+import VersiBaru from "./komponen/VersiBaru.jsx";
 import { isiSekarang } from "./data/ringkasan.js";
 import { ambilMeta, aturMeta, db } from "./data/db.js";
 import { mulaiAkun, useAkun } from "./data/akun.js";
@@ -134,6 +135,7 @@ export default function App() {
         </m.main>
       </AnimatePresence>
       {!TANPA_MENU.includes(lokasi.pathname) && <MenuBawah />}
+      <VersiBaru />
     </>
   );
 }
