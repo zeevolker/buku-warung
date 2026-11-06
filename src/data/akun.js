@@ -200,11 +200,9 @@ async function siapkanAkun() {
   if (!supabaseAktif()) return;
 
   klien = await ambilKlien();
-  const {
-    data: { session },
-  } = await klien.auth.getSession();
-  if (session) await masukSesi(session);
 
+  // Harus sebelum getSession: saat dibuka dari tautan lupa kata sandi, PASSWORD_RECOVERY
+  // hanya dikirim sekali, tepat setelah sesi siap. Yang mendengarkan belakangan melewatkannya.
   klien.auth.onAuthStateChange((peristiwa, sesi) => {
     // Dijalankan sesudah callback selesai: Supabase menyarankan tidak memanggil
     // fungsi Supabase lain langsung di dalam callback ini (bisa saling menunggu).
@@ -214,6 +212,11 @@ async function siapkanAkun() {
       if (peristiwa === "PASSWORD_RECOVERY") kabariStatus({ pulihkanSandi: true });
     }, 0);
   });
+
+  const {
+    data: { session },
+  } = await klien.auth.getSession();
+  if (session) await masukSesi(session);
 
   // Kapan sinkron berjalan: setelah simpan (di atas), saat sinyal kembali,
   // saat aplikasi dibuka lagi, dan tiap satu menit.
