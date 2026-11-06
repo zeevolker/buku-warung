@@ -6,12 +6,14 @@
 -- bw_sebelum_tulis memaksa user_id dan mengisi server_updated_at, foreign key komposit.
 
 -- ---------- Kolom baru ----------
+-- Sengaja boleh kosong (null): HP yang masih memakai v3 mengirim baris tanpa kolom ini bersama
+-- baris yang memilikinya, dan kolom yang hilang dikirim sebagai null. Kalau dilarang, sinkron v3 gagal.
 
 alter table public.barang
-  add column batas_hampir_habis integer not null default 5 check (batas_hampir_habis >= 0);
+  add column batas_hampir_habis integer default 5 check (batas_hampir_habis >= 0);
 
 alter table public.pelanggan
-  add column no_wa text not null default '';
+  add column no_wa text default '';
 
 -- Nomor yang sudah ada ikut pindah. Trigger memperbarui server_updated_at, jadi HP akan menariknya.
 update public.pelanggan set no_wa = telepon where coalesce(telepon, '') <> '';
