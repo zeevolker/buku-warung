@@ -52,6 +52,12 @@ isi tempat = total yang masuk KE tempat itu − total yang keluar DARI tempat it
 - **Beda dengan uang fisik** → Hitung ulang, selisihnya dicatat.
 - **Harga beli berubah: pakai harga terakhir.** Setiap catatan jual menyimpan modal saat itu (snapshot), jadi untung di catatan lama tidak berubah. Belanja stok memperbarui harga beli barang. Sisa stok lama ikut dihitung harga baru: diterima sebagai risiko pedagang (realistis).
 - **Label untung:** "Hasil jualan", "Modal barang yang terjual", "Biaya warung".
+- **Menghapus catatan ditolak kalau stok, bon, atau isi laci jadi minus.** Pesan untuk laci: "Tidak bisa dihapus, isi laci akan jadi −Rp X. Pakai Hitung ulang kalau uangnya memang beda." Angka yang sudah minus (misalnya dua HP mencatat saat offline) tetap boleh diperbaiki; yang ditolak hanya penghapusan yang membuatnya makin minus.
+- **Harga beli wajib diisi saat menambah barang.** Barang lama yang harga belinya kosong tetap bisa dijual; modalnya dicatat tidak diketahui (`null`).
+- **Jualan Lainnya punya kolom "modal" opsional.** Kalau diisi, disimpan sebagai item tanpa `barang_id` (stok tidak berubah, tidak ikut peringkat paling laku). Kalau kosong, dihitung untung penuh, dan fungsi laporan mengembalikan `jualanTanpaModal` supaya bisa ditampilkan sebagai "termasuk Rp X jualan tanpa modal".
+- **Item belanja menyimpan harga beli sebelumnya di kolom `modal`,** supaya harga beli barang bisa kembali saat belanjanya dihapus.
+- **Koreksi stok ke atas** (barang di rak lebih banyak dari catatan) dicatat Pemilik → Stok.
+- **Tambahan teknis yang disetujui:** `@vitejs/plugin-react`, `@testing-library/dom`, `fake-indexeddb`, dan `404.html` (salinan `index.html`, supaya alamat layar bisa dibuka langsung di GitHub Pages).
 
 ## 4. Layar (lihat mockup)
 

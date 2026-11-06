@@ -6,6 +6,7 @@
 // dan tanpa database. Catatan yang sudah dihapus (deleted) selalu diabaikan.
 
 import { tanggalDariMs, geserTanggal, awalMinggu, awalBulan, akhirBulan, geserBulan, hariIni } from "./tanggal.js";
+import { formatRupiah } from "./format.js";
 
 const masihAda = (c) => !c.deleted;
 
@@ -75,19 +76,28 @@ export function semuaStok(catatan) {
 
 // ---------- Untung ----------
 
+const adaModal = (b) => b.modal !== null && b.modal !== undefined;
+
 // Untung = hasil jualan − modal barang yang terjual − biaya
+// jualanTanpaModal = bagian hasil jualan yang modalnya tidak diketahui, jadi dihitung untung penuh.
+// Layar menampilkannya sebagai "termasuk Rp X jualan tanpa modal".
 export function rincianUntung(catatan, rentang) {
   let hasil = 0;
   let modal = 0;
   let biaya = 0;
+  let jualanTanpaModal = 0;
   for (const c of dalamRentang(catatan, rentang)) {
     if (c.dari === "pembeli") {
       hasil += c.nominal;
-      for (const b of c.item || []) modal += b.jumlah * (b.modal || 0);
+      jualanTanpaModal += c.nominal;
+      for (const b of (c.item || []).filter(adaModal)) {
+        modal += b.jumlah * b.modal;
+        jualanTanpaModal -= b.jumlah * b.harga;
+      }
     }
     if (c.ke === "biaya") biaya += c.nominal;
   }
-  return { hasil, modal, biaya, untung: hasil - modal - biaya };
+  return { hasil, modal, biaya, untung: hasil - modal - biaya, jualanTanpaModal };
 }
 
 export const untung = (catatan, rentang) => rincianUntung(catatan, rentang).untung;
@@ -125,12 +135,12 @@ function penjualanBarang(catatan, rentang) {
   const hasil = new Map();
   for (const c of dalamRentang(catatan, rentang)) {
     if (c.dari !== "pembeli") continue;
-    for (const b of c.item || []) {
-      const kunci = b.barang_id || b.nama;
-      const baris = hasil.get(kunci) || { barang_id: b.barang_id, nama: b.nama, jumlah: 0, untung: 0 };
+    // Jualan Lainnya tidak punya barang_id, jadi tidak ikut peringkat barang
+    for (const b of (c.item || []).filter((x) => x.barang_id)) {
+      const baris = hasil.get(b.barang_id) || { barang_id: b.barang_id, nama: b.nama, jumlah: 0, untung: 0 };
       baris.jumlah += b.jumlah;
       baris.untung += b.jumlah * (b.harga - (b.modal || 0));
-      hasil.set(kunci, baris);
+      hasil.set(b.barang_id, baris);
     }
   }
   return [...hasil.values()];
@@ -223,6 +233,7 @@ export function ringkasanBulan(catatan, tanggal, kini = hariIni()) {
 // yang ditolak hanya penghapusan yang membuatnya minus atau makin minus.
 const makinMinus = (baru = 0, lama = 0) => baru < 0 && baru < lama;
 
+// Ditolak kalau stok barang, bon pelanggan, atau isi laci jadi minus.
 // namaPelanggan = fungsi id -> nama, untuk kalimat alasannya
 export function bolehDihapus(c, semuaCatatan, namaPelanggan = () => "pelanggan") {
   const sisa = semuaCatatan.filter((x) => x.id !== c.id);
@@ -237,6 +248,11 @@ export function bolehDihapus(c, semuaCatatan, namaPelanggan = () => "pelanggan")
 
   if (c.pelanggan_id && makinMinus(semuaBon(sisa).get(c.pelanggan_id), semuaBon(semuaCatatan).get(c.pelanggan_id))) {
     return { boleh: false, alasan: `Bon ${namaPelanggan(c.pelanggan_id)} akan jadi minus kalau catatan ini dihapus. Hapus dulu catatan Terima bon-nya.` };
+  }
+
+  const laciSisa = isiTempat(sisa, "laci");
+  if (makinMinus(laciSisa, isiTempat(semuaCatatan, "laci"))) {
+    return { boleh: false, alasan: `Tidak bisa dihapus, isi laci akan jadi ${formatRupiah(laciSisa)}. Pakai Hitung ulang kalau uangnya memang beda.` };
   }
   return { boleh: true };
 }

@@ -33,8 +33,9 @@ const hanyaSatu = async (isi) => ({ catatan: (await tulisCatatan([isi]))[0] });
 
 // ---------- Jual ----------
 // pilihan = [{ barang_id, jumlah }]; lainnya = nominal jualan tanpa stok (gorengan, pulsa)
+// modalLainnya = modal jualan Lainnya, boleh kosong. Kalau kosong, dihitung untung penuh.
 // bayar = "tunai" | "bon"
-export function jual({ pilihan = [], lainnya = 0, keterangan = "", bayar = "tunai", pelangganId = null }) {
+export function jual({ pilihan = [], lainnya = 0, modalLainnya = null, keterangan = "", bayar = "tunai", pelangganId = null }) {
   return transaksi(async () => {
     const stok = semuaStok(await catatanAda());
     const item = [];
@@ -44,10 +45,18 @@ export function jual({ pilihan = [], lainnya = 0, keterangan = "", bayar = "tuna
       if (!b.harga_jual) return tolak(`Harga jual ${b.nama} belum diisi.`);
       const ada = stok.get(b.id) || 0;
       if (p.jumlah > ada) return tolak(`Stok ${b.nama} tinggal ${ada}.`);
-      item.push({ barang_id: b.id, nama: b.nama, jumlah: p.jumlah, harga: b.harga_jual, modal: b.harga_beli || 0 });
+      // null berarti modalnya tidak diketahui (barang lama yang harga belinya belum diisi)
+      item.push({ barang_id: b.id, nama: b.nama, jumlah: p.jumlah, harga: b.harga_jual, modal: b.harga_beli || null });
     }
     const nominal = item.reduce((n, b) => n + b.harga * b.jumlah, 0) + (lainnya || 0);
     if (nominal <= 0) return tolak("Pilih barang atau isi nominal dulu.");
+
+    // Lainnya yang modalnya diisi disimpan sebagai item tanpa barang_id: stok tidak berubah
+    const adaModalLainnya = modalLainnya !== null && modalLainnya !== undefined && modalLainnya !== "";
+    if (adaModalLainnya && !(modalLainnya >= 0)) return tolak("Modal tidak boleh minus.");
+    if (adaModalLainnya && lainnya > 0) {
+      item.push({ barang_id: null, nama: keterangan.trim() || "Lainnya", jumlah: 1, harga: lainnya, modal: modalLainnya });
+    }
 
     if (bayar === "bon") {
       const p = pelangganId && (await db.pelanggan.get(pelangganId));
@@ -145,7 +154,7 @@ export function tambahBarang({ nama, harga_jual = 0, harga_beli = 0, stok = 0, b
     if (!nama) return tolak("Tulis nama barangnya.");
     const ada = await semuaAda(db.barang);
     if (ada.some((b) => kunciNama(b.nama) === kunciNama(nama))) return tolak(`"${nama}" sudah ada di daftar.`);
-    if (asal === "dibeli" && stok > 0 && !harga_beli) return tolak("Isi harga belinya dulu.");
+    if (!(harga_beli > 0)) return tolak("Isi harga belinya dulu.");
 
     const barang = barisBaru({ nama, harga_jual, harga_beli, batas_hampir_habis });
     if (!(stok > 0)) {

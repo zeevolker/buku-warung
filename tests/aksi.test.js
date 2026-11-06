@@ -1,6 +1,6 @@
 import { beforeEach, describe, test, expect } from "vitest";
 import { db, semuaAda } from "../src/data/db.js";
-import { isiTempat, stokBarang, untung } from "../src/data/hitung.js";
+import { isiTempat, stokBarang, untung, rincianUntung } from "../src/data/hitung.js";
 import {
   jual, belanja, terimaBon, uangAwal, ambilPribadi, hitungUlangLaci, tambahBarang, koreksiStok, tambahPelanggan, hapusCatatan,
 } from "../src/data/aksi.js";
@@ -44,9 +44,35 @@ describe("rute setiap kejadian (rancangan bagian 2)", () => {
     expect(await stok(kopi.id)).toBe(9);
   });
 
-  test("jualan tanpa stok (Lainnya)", async () => {
+  test("jualan tanpa stok (Lainnya), modal kosong: untung penuh", async () => {
     const { catatan: c } = await jual({ lainnya: 5000, keterangan: " gorengan " });
     expect(c).toMatchObject({ nominal: 5000, keterangan: "gorengan", item: [] });
+    expect(rincianUntung([c])).toMatchObject({ untung: 5000, jualanTanpaModal: 5000 });
+  });
+
+  test("Lainnya dengan modal: untung berkurang, stok tidak berubah", async () => {
+    const { catatan: c } = await jual({ lainnya: 5000, modalLainnya: 3000, keterangan: "gorengan" });
+    expect(c.item).toEqual([{ barang_id: null, nama: "gorengan", jumlah: 1, harga: 5000, modal: 3000 }]);
+    expect(rincianUntung([c])).toMatchObject({ untung: 2000, jualanTanpaModal: 0 });
+    expect(await stok(kopi.id)).toBe(10);
+    expect(await laci()).toBe(105000);
+  });
+
+  test("modal Lainnya: kolom kosong, nol, minus, dan campur barang", async () => {
+    expect((await jual({ lainnya: 1000, modalLainnya: "" })).catatan.item).toEqual([]);
+    expect((await jual({ lainnya: 1000, modalLainnya: 0 })).catatan.item[0].modal).toBe(0);
+    expect((await jual({ lainnya: 1000, modalLainnya: -1 })).galat).toContain("minus");
+    const { catatan: c } = await jual({ pilihan: [{ barang_id: kopi.id, jumlah: 1 }], lainnya: 1000, modalLainnya: 400 });
+    expect(c.nominal).toBe(3000);
+    expect(rincianUntung([c])).toMatchObject({ modal: 1900, untung: 1100, jualanTanpaModal: 0 });
+  });
+
+  test("barang lama tanpa harga beli: modal tidak diketahui", async () => {
+    await db.barang.put({ id: "lama", nama: "Lama", harga_jual: 2000, harga_beli: 0, deleted: false });
+    await db.catatan.put({ id: "s", waktu: 1, dari: "pemilik", ke: "stok", nominal: 0, deleted: false, item: [{ barang_id: "lama", jumlah: 5 }] });
+    const { catatan: c } = await jual({ pilihan: [{ barang_id: "lama", jumlah: 1 }] });
+    expect(c.item[0].modal).toBeNull();
+    expect(rincianUntung([c]).jualanTanpaModal).toBe(2000);
   });
 
   test("terima bon: bon → laci", async () => {
@@ -151,7 +177,7 @@ describe("belanja melebihi laci", () => {
 describe("yang ditolak", () => {
   test("jual melebihi stok atau tanpa harga", async () => {
     expect((await jual({ pilihan: [{ barang_id: kopi.id, jumlah: 11 }] })).galat).toBe("Stok Kopi tinggal 10.");
-    const { barang } = await tambahBarang({ nama: "Teh" });
+    const { barang } = await tambahBarang({ nama: "Teh", harga_beli: 1000 });
     expect((await jual({ pilihan: [{ barang_id: barang.id, jumlah: 1 }] })).galat).toContain("Harga jual");
     expect((await jual({})).galat).toBeTruthy();
   });
@@ -164,6 +190,14 @@ describe("yang ditolak", () => {
   test("terima bon melebihi sisa", async () => {
     await jual({ lainnya: 5000, bayar: "bon", pelangganId: budi.id });
     expect((await terimaBon({ pelangganId: budi.id, nominal: 6000 })).galat).toBe("Bon Budi tinggal Rp 5.000.");
+  });
+
+  test("harga beli wajib saat menambah barang, tidak ada yang tersimpan", async () => {
+    const jumlah = await db.barang.count();
+    for (const isi of [{ nama: "Teh" }, { nama: "Teh", harga_beli: 0 }, { nama: "Teh", stok: 5, asal: "rak" }, { nama: "Teh", stok: 5, asal: "dibeli" }]) {
+      expect((await tambahBarang(isi)).galat, JSON.stringify(isi)).toBe("Isi harga belinya dulu.");
+    }
+    expect(await db.barang.count()).toBe(jumlah);
   });
 
   test("nama ganda", async () => {
@@ -190,6 +224,24 @@ describe("hapusCatatan", () => {
     await jual({ pilihan: [{ barang_id: kopi.id, jumlah: 15 }] });
     expect((await hapusCatatan(masuk.id)).galat).toContain("Stok Kopi");
     expect((await db.catatan.get(masuk.id)).deleted).toBe(false);
+  });
+
+  test("ditolak kalau laci jadi minus, catatannya tetap ada", async () => {
+    await ambilPribadi(100000);
+    const { catatan: c } = await jual({ lainnya: 20000 });
+    await belanja({ jenis: "biaya", total: 15000 });
+    const hasil = await hapusCatatan(c.id);
+    expect(hasil.galat).toBe("Tidak bisa dihapus, isi laci akan jadi −Rp 15.000. Pakai Hitung ulang kalau uangnya memang beda.");
+    expect((await db.catatan.get(c.id)).deleted).toBe(false);
+    expect(await laci()).toBe(5000);
+  });
+
+  test("belanja melebihi laci: uang pribadinya tidak bisa dihapus sebelum belanjanya", async () => {
+    const { catatan: [pribadi, keluar] } = await belanja({ jenis: "biaya", total: 150000, pakaiPribadi: true });
+    expect((await hapusCatatan(pribadi.id)).galat).toContain("isi laci akan jadi −Rp 50.000");
+    expect((await hapusCatatan(keluar.id)).galat).toBeUndefined();
+    expect((await hapusCatatan(pribadi.id)).galat).toBeUndefined();
+    expect(await laci()).toBe(100000);
   });
 
   test("ditolak kalau bon jadi minus", async () => {
