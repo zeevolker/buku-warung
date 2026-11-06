@@ -9,6 +9,7 @@ import LembarTerimaBon from "../../komponen/lembar/LembarTerimaBon.jsx";
 import LembarLaci from "../../komponen/lembar/LembarLaci.jsx";
 import LembarHitungUlang from "../../komponen/lembar/LembarHitungUlang.jsx";
 import LembarRincian from "../../komponen/lembar/LembarRincian.jsx";
+import LembarBarang from "../Barang/LembarBarang.jsx";
 import BarisCatatan from "../../komponen/BarisCatatan.jsx";
 import PesanSingkat, { usePesan } from "../../komponen/PesanSingkat.jsx";
 import { useCatatanHari, useIsi, useNamaWarung, usePelanggan, usePengingat, useSekarang, useTanggalHariIni } from "../../data/pakai.js";
@@ -38,7 +39,8 @@ export default function Beranda() {
   const pengingat = belumSelesai.length;
   const sudahWaktunya = belumSelesai.filter((p) => p.waktu_ingat && p.waktu_ingat <= sekarang).length;
 
-  const [lembar, setLembar] = useState(null); // "jual" | "belanja" | "bon" | "laci" | "hitung"
+  const [lembar, setLembar] = useState(null); // "jual" | "belanja" | "barangBaru" | "bon" | "laci" | "hitung"
+  const [barangAwal, setBarangAwal] = useState(null); // barang yang langsung terpilih di lembar Belanja
   const [rincian, setRincian] = useState(null);
   const { pesan, tampilkanPesan } = usePesan();
 
@@ -97,7 +99,10 @@ export default function Beranda() {
       </div>
 
       <div className={gaya.tigaTombol}>
-        <button type="button" className={gaya.petak} onClick={() => setLembar("belanja")}>
+        <button type="button" className={gaya.petak} onClick={() => {
+            setBarangAwal(null);
+            setLembar("belanja");
+          }}>
           <span className={gaya.ikonPetak} style={{ background: "var(--keluar-latar)" }}>
             {ikonGaris(
               <>
@@ -171,7 +176,17 @@ export default function Beranda() {
       )}
 
       <LembarJual terbuka={lembar === "jual"} onTutup={tutup} onTersimpan={tampilkanPesan} />
-      <LembarBelanja terbuka={lembar === "belanja"} onTutup={tutup} onTersimpan={tampilkanPesan} />
+      <LembarBelanja terbuka={lembar === "belanja"} barangAwal={barangAwal} onTutup={tutup} onTersimpan={tampilkanPesan} onBarangBaru={() => setLembar("barangBaru")} />
+      <LembarBarang
+        terbuka={lembar === "barangBaru"}
+        asalAwal="dibeli"
+        onTutup={tutup}
+        onTersimpan={tampilkanPesan}
+        onTambahStok={(id) => {
+          setBarangAwal(id);
+          setLembar("belanja");
+        }}
+      />
       <LembarTerimaBon terbuka={lembar === "bon"} onTutup={tutup} onTersimpan={tampilkanPesan} />
       <LembarLaci terbuka={lembar === "laci"} onTutup={tutup} onTersimpan={tampilkanPesan} onHitungUlang={() => setLembar("hitung")} />
       <LembarHitungUlang terbuka={lembar === "hitung"} onTutup={tutup} onTersimpan={tampilkanPesan} />

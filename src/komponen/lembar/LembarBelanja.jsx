@@ -17,15 +17,16 @@ const JENIS = [
   { nilai: "pinjaman", label: "Pinjaman" },
 ];
 const TUJUAN = { stok: "agen", biaya: "biaya", pinjaman: "bon" };
+const PILIHAN_BARANG_BARU = "barang-baru";
 
-function IsiBelanja({ onTutup, onTersimpan }) {
+function IsiBelanja({ onTutup, onTersimpan, barangAwal, onBarangBaru }) {
   const barang = useBarang();
   const pelanggan = usePelanggan();
   const isi = useIsi();
   const kolomTotal = useRef(null);
 
   const [jenis, setJenis] = useState("stok");
-  const [barangId, setBarangId] = useState("");
+  const [barangId, setBarangId] = useState(barangAwal || "");
   const [jumlah, setJumlah] = useState("");
   const [keterangan, setKeterangan] = useState("");
   const [pelangganId, setPelangganId] = useState(null);
@@ -40,6 +41,15 @@ function IsiBelanja({ onTutup, onTersimpan }) {
   const barangPilihan = barang.find((b) => b.id === barangId);
   const namaPilihan = pelanggan.find((p) => p.id === pelangganId)?.nama || namaBaru.trim();
   const urutBarang = [...barang].sort((a, b) => a.nama.localeCompare(b.nama));
+  // Harga per unit dihitung sama seperti saat disimpan (lihat belanja di aksi.js)
+  const jumlahBulat = Number.isInteger(Number(jumlah)) && Number(jumlah) > 0 ? Number(jumlah) : 0;
+  const hargaPerUnit = jenis === "stok" && barangPilihan && jumlahBulat && total > 0 ? Math.round(total / jumlahBulat) : null;
+  const hargaLama = barangPilihan?.harga_beli || 0;
+
+  function pilihBarang(nilai) {
+    if (nilai === PILIHAN_BARANG_BARU) return onBarangBaru();
+    setBarangId(nilai);
+  }
 
   function ubahTotal(n) {
     setTotal(n);
@@ -70,8 +80,9 @@ function IsiBelanja({ onTutup, onTersimpan }) {
 
       {jenis === "stok" && (
         <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 2fr) minmax(0, 1fr)", gap: 10 }}>
-          <select className={bersama.input} aria-label="Barang" value={barangId} onChange={(e) => setBarangId(e.target.value)}>
+          <select className={bersama.input} aria-label="Barang" value={barangId} onChange={(e) => pilihBarang(e.target.value)}>
             <option value="">Pilih barang</option>
+            {onBarangBaru && <option value={PILIHAN_BARANG_BARU}>+ Barang baru</option>}
             {urutBarang.map((b) => (
               <option key={b.id} value={b.id}>
                 {b.nama}
@@ -87,6 +98,12 @@ function IsiBelanja({ onTutup, onTersimpan }) {
       {jenis === "pinjaman" && <PilihPelanggan daftar={pelanggan} terpilih={pelangganId} onPilih={setPelangganId} namaBaru={namaBaru} onNamaBaru={setNamaBaru} />}
 
       <InputRupiah ref={kolomTotal} label="Total" besar nilai={total} onUbah={ubahTotal} />
+
+      {hargaPerUnit !== null && (
+        <p className={bersama.hargaPerUnit}>
+          {formatRupiah(hargaPerUnit)} per unit{hargaLama > 0 && hargaLama !== hargaPerUnit ? `, sebelumnya ${formatRupiah(hargaLama)}` : ""}
+        </p>
+      )}
 
       {melebihi && !setujuPribadi && <KotakPribadi laci={laci} kekurangan={kekurangan} onYa={() => setSetujuPribadi(true)} onUbah={() => kolomTotal.current?.focus()} />}
 
@@ -121,10 +138,11 @@ function IsiBelanja({ onTutup, onTersimpan }) {
   );
 }
 
-export default function LembarBelanja({ terbuka, onTutup, onTersimpan }) {
+// barangAwal = id barang yang langsung terpilih; onBarangBaru = dipanggil saat memilih "+ Barang baru"
+export default function LembarBelanja({ terbuka, onTutup, onTersimpan, barangAwal, onBarangBaru }) {
   return (
     <Lembar terbuka={terbuka} onTutup={onTutup} judul="Belanja">
-      <IsiBelanja onTutup={onTutup} onTersimpan={onTersimpan} />
+      <IsiBelanja onTutup={onTutup} onTersimpan={onTersimpan} barangAwal={barangAwal} onBarangBaru={onBarangBaru} />
     </Lembar>
   );
 }

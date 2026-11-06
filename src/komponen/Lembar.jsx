@@ -10,6 +10,9 @@ import gaya from "./Lembar.module.css";
 const JARAK_TUTUP = 100;
 const LAJU_TUTUP = 500;
 
+// Berapa lembar yang sedang tampil. Halaman di belakang baru bisa bergulir lagi saat semuanya tertutup.
+let jumlahTerbuka = 0;
+
 function IsiLembar({ onTutup, judul, children }) {
   const kotak = useRef(null);
   const kendaliTarik = useDragControls();
@@ -19,10 +22,11 @@ function IsiLembar({ onTutup, judul, children }) {
     const fokusAsal = document.activeElement;
     kotak.current?.focus();
     // Halaman di belakang tidak ikut bergulir
-    const luapanAsal = document.body.style.overflow;
+    jumlahTerbuka += 1;
     document.body.style.overflow = "hidden";
     return () => {
-      document.body.style.overflow = luapanAsal;
+      jumlahTerbuka -= 1;
+      if (jumlahTerbuka === 0) document.body.style.overflow = "";
       fokusAsal?.focus?.();
     };
   }, []);

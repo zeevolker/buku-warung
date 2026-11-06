@@ -54,6 +54,29 @@ test("Lembar: terbuka, tertutup dengan Esc, fokus kembali ke tombol asal", async
   expect(document.body.style.overflow).toBe("");
 });
 
+test("Lembar: dua lembar bertukar tidak mengunci gulir halaman", async () => {
+  function DuaLembar() {
+    const [buka, setBuka] = useState("a");
+    return dalamGerak(
+      <>
+        <button onClick={() => setBuka("b")}>Ke B</button>
+        <button onClick={() => setBuka(null)}>Tutup</button>
+        <Lembar terbuka={buka === "a"} onTutup={() => {}} judul="A" />
+        <Lembar terbuka={buka === "b"} onTutup={() => {}} judul="B" />
+      </>
+    );
+  }
+  render(<DuaLembar />);
+  expect(document.body.style.overflow).toBe("hidden");
+  fireEvent.click(screen.getByText("Ke B"));
+  await screen.findByRole("dialog", { name: "B" });
+  await waitFor(() => expect(screen.queryByRole("dialog", { name: "A" })).toBeNull());
+  expect(document.body.style.overflow).toBe("hidden");
+  fireEvent.click(screen.getByText("Tutup"));
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  await waitFor(() => expect(document.body.style.overflow).toBe(""));
+});
+
 const bukaDi = (alamat) => render(<MemoryRouter initialEntries={[alamat]}>{dalamGerak(<App />)}</MemoryRouter>);
 
 test("rute: setiap layar terbuka lewat lazy, menu bawah sesuai", async () => {

@@ -33,6 +33,13 @@
   text-align: right;
 }
 
+.hargaPerUnit {
+  margin-top: -6px;
+  font-size: 13px;
+  color: var(--teks-redup);
+  text-align: center;
+}
+
 .simpan {
   width: 100%;
   min-height: 54px;

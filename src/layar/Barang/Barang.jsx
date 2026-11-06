@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import KerangkaLayar from "../../komponen/KerangkaLayar.jsx";
 import PesanSingkat, { usePesan } from "../../komponen/PesanSingkat.jsx";
+import LembarBelanja from "../../komponen/lembar/LembarBelanja.jsx";
 import { useBarang, useIsi } from "../../data/pakai.js";
 import { ribuan } from "../../data/format.js";
 import LembarBarang from "./LembarBarang.jsx";
@@ -21,7 +22,8 @@ export default function Barang() {
 
   const [cari, setCari] = useState("");
   const [hanyaHampirHabis, setHanyaHampirHabis] = useState(false);
-  const [lembar, setLembar] = useState(null); // { baru: true } atau { barang }
+  const [lembar, setLembar] = useState(null); // { baru: true, asal } atau { barang }
+  const [belanja, setBelanja] = useState(null); // { barangAwal }, lembar Belanja yang terbuka
   const [koreksi, setKoreksi] = useState(null); // id barang
 
   // Dibuka dari lembar Rincian lewat "Pakai Koreksi stok"
@@ -43,6 +45,11 @@ export default function Barang() {
 
   const barangKoreksi = barang.find((b) => b.id === koreksi);
   const barangUbah = lembar?.barang && barang.find((b) => b.id === lembar.barang);
+
+  function bukaBelanja(id) {
+    setLembar(null);
+    setBelanja({ barangAwal: id });
+  }
 
   return (
     <KerangkaLayar
@@ -94,11 +101,23 @@ export default function Barang() {
         terbuka={Boolean(lembar?.baru || barangUbah)}
         barang={barangUbah}
         stok={barangUbah ? stok(barangUbah.id) : 0}
+        asalAwal={lembar?.asal}
+        onTambahStok={bukaBelanja}
         onTutup={() => setLembar(null)}
         onTersimpan={tampilkanPesan}
         onKoreksi={(id) => {
           setLembar(null);
           setKoreksi(id);
+        }}
+      />
+      <LembarBelanja
+        terbuka={Boolean(belanja)}
+        barangAwal={belanja?.barangAwal}
+        onTutup={() => setBelanja(null)}
+        onTersimpan={tampilkanPesan}
+        onBarangBaru={() => {
+          setBelanja(null);
+          setLembar({ baru: true, asal: "dibeli" });
         }}
       />
       <LembarKoreksi barang={barangKoreksi} stok={barangKoreksi ? stok(barangKoreksi.id) : 0} onTutup={() => setKoreksi(null)} onTersimpan={tampilkanPesan} />

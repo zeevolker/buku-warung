@@ -249,7 +249,7 @@ describe("Barang", () => {
     const { barang } = await tambahBarang({ nama: "Indomie", harga_jual: 3500, harga_beli: 3000, stok: 22 });
     buka(<Barang />);
     fireEvent.click(await screen.findByRole("button", { name: /Indomie/ }));
-    fireEvent.click(await screen.findByRole("button", { name: "Jumlah di rak beda? Koreksi stok" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Jumlah di rak beda (rusak/hilang)? Koreksi stok" }));
     const lembar = await screen.findByRole("dialog", { name: "Koreksi stok" });
     fireEvent.change(within(lembar).getByRole("spinbutton", { name: "Jumlah di rak sebenarnya" }), { target: { value: "20" } });
     expect(within(lembar).getByText("−Rp 6.000")).toBeTruthy();
@@ -259,6 +259,70 @@ describe("Barang", () => {
     await lembarTertutup();
     expect(stokBarang(await catatan(), barang.id)).toBe(20);
     expect((await catatan()).find((c) => c.dari === "stok")).toMatchObject({ ke: "biaya", nominal: 6000, keterangan: "Hilang" });
+  });
+
+  test("alur 1: Ubah barang → + Tambah stok membuka Belanja dengan barang terpilih", async () => {
+    const { barang } = await tambahBarang({ nama: "Bensin", harga_jual: 12000, harga_beli: 9500, stok: 3 });
+    buka(<Barang />);
+    fireEvent.click(await screen.findByRole("button", { name: /Bensin/ }));
+    fireEvent.click(await screen.findByRole("button", { name: "+ Tambah stok" }));
+    const lembar = await screen.findByRole("dialog", { name: "Belanja" });
+    await waitFor(() => expect(within(lembar).getByRole("combobox", { name: "Barang" }).value).toBe(barang.id));
+    expect(screen.queryByRole("dialog", { name: "Ubah barang" })).toBeNull();
+
+    fireEvent.change(within(lembar).getByRole("spinbutton", { name: "Jumlah" }), { target: { value: "5" } });
+    fireEvent.change(within(lembar).getByRole("textbox", { name: "Total" }), { target: { value: "50000" } });
+    expect(within(lembar).getByText("Rp 10.000 per unit, sebelumnya Rp 9.500")).toBeTruthy();
+    fireEvent.click(within(lembar).getByRole("button", { name: "Simpan" }));
+    await lembarTertutup();
+    expect(stokBarang(await catatan(), barang.id)).toBe(8);
+    expect((await db.barang.get(barang.id)).harga_beli).toBe(10000);
+    await waitFor(() => expect(document.body.style.overflow).toBe(""));
+  });
+
+  test("alur 2: nama sudah ada menawarkan tambah stok, tanpa membuat barang baru", async () => {
+    const { barang } = await tambahBarang({ nama: "Bensin", harga_jual: 12000, harga_beli: 9500, stok: 3 });
+    buka(<Barang />);
+    klik("+ Tambah");
+    const lembar = await screen.findByRole("dialog", { name: "Tambah barang" });
+    const nama = await within(lembar).findByRole("textbox", { name: "Nama" });
+    fireEvent.change(nama, { target: { value: "bensin " } });
+    expect(await within(lembar).findByText("Bensin sudah ada. Mau tambah stoknya?")).toBeTruthy();
+    expect(within(lembar).getByRole("button", { name: "Simpan" }).disabled).toBe(true);
+
+    fireEvent.change(nama, { target: { value: "Bensin Super" } });
+    expect(within(lembar).queryByText(/sudah ada/)).toBeNull();
+    expect(within(lembar).getByRole("button", { name: "Simpan" }).disabled).toBe(false);
+    fireEvent.change(nama, { target: { value: "BENSIN" } });
+
+    fireEvent.click(await within(lembar).findByRole("button", { name: "Tambah stok" }));
+    const belanja = await screen.findByRole("dialog", { name: "Belanja" });
+    await waitFor(() => expect(within(belanja).getByRole("combobox", { name: "Barang" }).value).toBe(barang.id));
+    expect(await db.barang.count()).toBe(1);
+  });
+
+  test("Belanja: + Barang baru membuka Tambah barang dengan Baru dibeli terpilih", async () => {
+    buka(<Barang />);
+    await tambahBarang({ nama: "Bensin", harga_jual: 12000, harga_beli: 9500, stok: 3 });
+    fireEvent.click(await screen.findByRole("button", { name: /Bensin/ }));
+    fireEvent.click(await screen.findByRole("button", { name: "+ Tambah stok" }));
+    const belanja = await screen.findByRole("dialog", { name: "Belanja" });
+    fireEvent.change(await within(belanja).findByRole("combobox", { name: "Barang" }), { target: { value: "barang-baru" } });
+    const tambah = await screen.findByRole("dialog", { name: "Tambah barang" });
+    expect((await within(tambah).findByRole("button", { name: "Baru dibeli" })).getAttribute("aria-pressed")).toBe("true");
+  });
+
+  test("Belanja: harga per unit, tanpa harga sebelumnya kalau sama", async () => {
+    await tambahBarang({ nama: "Bensin", harga_jual: 12000, harga_beli: 10000, stok: 3 });
+    buka(<Barang />);
+    fireEvent.click(await screen.findByRole("button", { name: /Bensin/ }));
+    fireEvent.click(await screen.findByRole("button", { name: "+ Tambah stok" }));
+    const lembar = await screen.findByRole("dialog", { name: "Belanja" });
+    const total = await within(lembar).findByRole("textbox", { name: "Total" });
+    fireEvent.change(total, { target: { value: "50000" } });
+    expect(within(lembar).queryByText(/per unit/)).toBeNull();
+    fireEvent.change(within(lembar).getByRole("spinbutton", { name: "Jumlah" }), { target: { value: "5" } });
+    expect(within(lembar).getByText("Rp 10.000 per unit")).toBeTruthy();
   });
 
   test("koreksi dari lembar Rincian langsung membuka barangnya", async () => {

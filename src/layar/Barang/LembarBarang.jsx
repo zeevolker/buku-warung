@@ -5,23 +5,25 @@ import Geser from "../../komponen/Geser.jsx";
 import Rute from "../../komponen/Rute.jsx";
 import InputRupiah from "../../komponen/InputRupiah.jsx";
 import KotakPribadi from "../../komponen/lembar/KotakPribadi.jsx";
-import { useIsi } from "../../data/pakai.js";
+import { useBarang, useIsi } from "../../data/pakai.js";
 import { tambahBarang, ubahBarang, hapusBarang } from "../../data/aksi.js";
+import { kunciNama } from "../../data/format.js";
 import bersama from "../../komponen/lembar/bersama.module.css";
 import umum from "../../komponen/umum.module.css";
 import gaya from "./Barang.module.css";
 
 const BATAS_BAWAAN = 5;
 
-function IsiBarang({ barang, stok, onTutup, onTersimpan, onKoreksi }) {
+function IsiBarang({ barang, stok, asalAwal, onTutup, onTersimpan, onKoreksi, onTambahStok }) {
   const isi = useIsi();
+  const semuaBarang = useBarang();
   const kolomStok = useRef(null);
   const [nama, setNama] = useState(barang?.nama || "");
   const [hargaJual, setHargaJual] = useState(barang?.harga_jual || null);
   const [hargaBeli, setHargaBeli] = useState(barang?.harga_beli || null);
   const [stokAwal, setStokAwal] = useState("");
   const [batas, setBatas] = useState(String(barang?.batas_hampir_habis ?? BATAS_BAWAAN));
-  const [asal, setAsal] = useState("rak");
+  const [asal, setAsal] = useState(asalAwal || "rak");
   const [setujuPribadi, setSetujuPribadi] = useState(false);
   const [siapHapus, setSiapHapus] = useState(false);
   const [galat, setGalat] = useState("");
@@ -31,6 +33,8 @@ function IsiBarang({ barang, stok, onTutup, onTersimpan, onKoreksi }) {
   const laci = Math.max(0, isi?.laci || 0);
   const kekurangan = asal === "dibeli" ? nominal - laci : 0;
   const melebihi = !barang && kekurangan > 0;
+  // Menambah barang yang namanya sudah ada: tawarkan tambah stok, bukan sekadar menolak
+  const sudahAda = !barang && nama.trim() ? semuaBarang.find((b) => kunciNama(b.nama) === kunciNama(nama)) : null;
 
   async function simpan() {
     setGalat("");
@@ -57,6 +61,14 @@ function IsiBarang({ barang, stok, onTutup, onTersimpan, onKoreksi }) {
         Nama
         <input className={bersama.input} autoComplete="off" value={nama} onChange={(e) => setNama(e.target.value)} />
       </label>
+      {sudahAda && (
+        <div className={bersama.kotakKuning}>
+          <strong>{sudahAda.nama} sudah ada. Mau tambah stoknya?</strong>
+          <button type="button" className={bersama.tombolYa} onClick={() => onTambahStok(sudahAda.id)}>
+            Tambah stok
+          </button>
+        </div>
+      )}
       <div className={umum.duaKolom}>
         <label className={umum.bidang}>
           Harga jual
@@ -86,9 +98,14 @@ function IsiBarang({ barang, stok, onTutup, onTersimpan, onKoreksi }) {
       </div>
 
       {barang ? (
-        <button type="button" className={bersama.tautan} onClick={() => onKoreksi(barang.id)}>
-          Jumlah di rak beda? Koreksi stok
-        </button>
+        <>
+          <button type="button" className={bersama.simpan} onClick={() => onTambahStok(barang.id)}>
+            + Tambah stok
+          </button>
+          <button type="button" className={bersama.tautan} onClick={() => onKoreksi(barang.id)}>
+            Jumlah di rak beda (rusak/hilang)? Koreksi stok
+          </button>
+        </>
       ) : (
         <div className={umum.bidang}>
           <span>Barangnya dari mana?</span>
@@ -118,7 +135,7 @@ function IsiBarang({ barang, stok, onTutup, onTersimpan, onKoreksi }) {
         </div>
       )}
 
-      <button type="button" className={bersama.simpan} disabled={melebihi && !setujuPribadi} onClick={simpan}>
+      <button type="button" className={bersama.simpan} disabled={Boolean(sudahAda) || (melebihi && !setujuPribadi)} onClick={simpan}>
         Simpan
       </button>
       {barang && (
@@ -130,10 +147,11 @@ function IsiBarang({ barang, stok, onTutup, onTersimpan, onKoreksi }) {
   );
 }
 
-export default function LembarBarang({ terbuka, barang, stok, onTutup, onTersimpan, onKoreksi }) {
+// asalAwal = pilihan "Barangnya dari mana?" yang langsung terpilih: "rak" atau "dibeli"
+export default function LembarBarang({ terbuka, barang, stok, asalAwal, onTutup, onTersimpan, onKoreksi, onTambahStok }) {
   return (
     <Lembar terbuka={terbuka} onTutup={onTutup} judul={barang ? "Ubah barang" : "Tambah barang"}>
-      <IsiBarang key={barang?.id || "baru"} barang={barang} stok={stok} onTutup={onTutup} onTersimpan={onTersimpan} onKoreksi={onKoreksi} />
+      <IsiBarang key={barang?.id || "baru"} barang={barang} stok={stok} asalAwal={asalAwal} onTutup={onTutup} onTersimpan={onTersimpan} onKoreksi={onKoreksi} onTambahStok={onTambahStok} />
     </Lembar>
   );
 }
