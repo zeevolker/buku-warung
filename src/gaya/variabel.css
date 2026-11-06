@@ -1,0 +1,34 @@
+/* variabel.css: semua warna, sudut, bayangan, dan font (rancangan bagian 6) */
+:root {
+  --font: "Plus Jakarta Sans", system-ui, sans-serif;
+
+  --latar: #f6f5f1;
+  --teks: #2b2d2a;
+  --teks-redup: #6e706a;
+  --kartu: #ffffff;
+  --utama: #4f7d65;
+
+  /* Tempat: latar dan teks */
+  --laci-latar: #e4f0e8;
+  --laci-teks: #3c6b52;
+  --bon-latar: #fbecc8;
+  --bon-teks: #6b4c0e;
+  --stok-latar: #e6ebf2;
+  --stok-teks: #3d5170;
+  --keluar-latar: #f8e7df;
+  --keluar-teks: #b5583a;
+  --luar-latar: #efeee9;
+  --luar-teks: #5d5e58;
+
+  --sudut-kecil: 20px;
+  --sudut: 24px;
+  --sudut-besar: 30px;
+  --sudut-kapsul: 999px;
+
+  --bayangan: 0 1px 3px rgba(40, 50, 40, 0.06);
+  --bayangan-menu: 0 4px 20px rgba(40, 50, 40, 0.08);
+  --bayangan-lembar: 0 -8px 30px rgba(40, 50, 40, 0.12);
+
+  --tinggi-menu: 62px;
+  --lebar-layar: 480px;
+}

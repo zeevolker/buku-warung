@@ -1,0 +1,16 @@
+.chip {
+  display: inline-block;
+  max-width: 100%;
+  padding: 4px 12px;
+  border-radius: var(--sudut-kapsul);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.laci { background: var(--laci-latar); color: var(--laci-teks); }
+.bon { background: var(--bon-latar); color: var(--bon-teks); }
+.stok { background: var(--stok-latar); color: var(--stok-teks); }
+.luar { background: var(--luar-latar); color: var(--luar-teks); }

@@ -152,7 +152,11 @@ async function keluar() {
     $("pesan-keluar").textContent = `Ada ${belum} catatan yang belum terkirim. Sambungkan internet dulu supaya tidak hilang.`;
     return;
   }
-  await keluarAkun();
+  const hasil = await keluarAkun();
+  if (hasil.galat) {
+    $("pesan-keluar").textContent = hasil.galat;
+    return;
+  }
   location.href = "index.html";
 }
 

@@ -1,0 +1,16 @@
+.layar {
+  max-width: var(--lebar-layar);
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0 auto;
+  /* Jarak bawah supaya isi tidak tertutup menu mengambang */
+  padding: 24px 22px calc(var(--tinggi-menu) + 40px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.judul {
+  font-size: 22px;
+  font-weight: 800;
+}

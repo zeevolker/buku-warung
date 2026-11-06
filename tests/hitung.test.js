@@ -1,61 +1,176 @@
-import { test } from "node:test";
-import assert from "node:assert/strict";
-import { hitungUang, hitungStok, hitungUtang, hitungUntung, hitungArusUtang, dalamRentang } from "../src/data/hitung.js";
+import { describe, test, expect } from "vitest";
+import { catatan, HARI_INI } from "./fixture.js";
+import {
+  isiTempat, stokBarang, semuaBon, untung, rincianUntung, ringkasanHari, ringkasanMinggu, ringkasanBulan,
+  bolehDihapus, catatanBelanja, hargaBeliSetelahHapus, arahStok,
+} from "../src/data/hitung.js";
 
-// Satu hari di warung, dalam bentuk catatan
-const hari = [
-  { jenis: "stok", tanggal: "2026-10-30", nominal: 0, barang: [{ barang_id: "telur", jumlah: 40 }] },
-  { jenis: "jual", dibayar: "sekarang", tanggal: "2026-10-30", nominal: 36000, barang: [{ barang_id: "minyak", jumlah: 2, harga: 18000, modal: 15500 }] },
-  { jenis: "jual", dibayar: "nanti", pelanggan_id: "sari", tanggal: "2026-10-30", nominal: 17000, barang: [{ barang_id: "gula", jumlah: 1, harga: 17000, modal: 15000 }] },
-  { jenis: "jual", dibayar: "sekarang", tanggal: "2026-10-30", nominal: 5000, barang: [], keterangan: "gorengan" },
-  { jenis: "keluar", untuk: "belanja", tanggal: "2026-10-30", nominal: 48000, barang: [{ barang_id: "telur", jumlah: 30, harga: 1600 }] },
-  { jenis: "keluar", untuk: "pinjaman", pelanggan_id: "budi", tanggal: "2026-10-30", nominal: 20000, barang: [] },
-  { jenis: "keluar", untuk: "biaya", tanggal: "2026-10-30", nominal: 3000, barang: [] },
-  { jenis: "bayar", pelanggan_id: "budi", tanggal: "2026-10-30", nominal: 5000, barang: [] },
-  { jenis: "jual", dibayar: "sekarang", tanggal: "2026-10-30", nominal: 99000, barang: [], deleted: true },
-];
+const cari = (keterangan) => catatan.find((c) => c.keterangan === keterangan);
 
-test("uang di laci: jual tunai + bayar - semua uang keluar", () => {
-  assert.deepEqual(hitungUang(hari), { masuk: 36000 + 5000 + 5000, keluar: 48000 + 20000 + 3000, selisih: 46000 - 71000 });
+describe("angka rancangan bagian 7", () => {
+  test("isi laci dan bon", () => {
+    expect(isiTempat(catatan, "laci")).toBe(1146000);
+    expect(isiTempat(catatan, "bon")).toBe(265000);
+    expect(isiTempat(catatan, "bon", "sari")).toBe(120000);
+    expect(isiTempat(catatan, "bon", "budi")).toBe(53000);
+    expect(isiTempat(catatan, "bon", "dedi")).toBe(52000);
+    expect(isiTempat(catatan, "bon", "rina")).toBe(40000);
+  });
+
+  test("laporan hari", () => {
+    const h = ringkasanHari(catatan, HARI_INI);
+    expect(h).toMatchObject({ untung: 56000, hasil: 412000, modal: 336000, biaya: 20000, laciPagi: 827000, laciAkhir: 1146000, masuk: 404000, keluar: 85000 });
+    expect(h.terakhir[0].keterangan).toBe("Bayar plastik");
+    expect(h.terakhir).toHaveLength(7);
+  });
+
+  test("laporan minggu", () => {
+    const m = ringkasanMinggu(catatan, HARI_INI, HARI_INI);
+    expect(m).toMatchObject({ untung: 224000, hasil: 1613000, modal: 1329000, biaya: 60000, laciAwal: 956000, laciAkhir: 1146000, masuk: 1600000, keluar: 1410000, bonAwal: 252000, bonAkhir: 265000 });
+    expect(m.perHari.map((h) => h.untung)).toEqual([58000, 61000, 49000, 56000, null, null, null]);
+    expect(m.terbaik.nama).toBe("Sel");
+  });
+
+  test("laporan bulan Oktober", () => {
+    const b = ringkasanBulan(catatan, "2026-10-15", HARI_INI);
+    expect(b).toMatchObject({ untung: 2050000, biaya: 820000, diambilPribadi: 1200000, selisihLaci: -12000, bonAwal: 190000, bonAkhir: 252000, untungBulanLalu: 1814000, persenDariBulanLalu: 13 });
+    expect(b.perMinggu.map((m) => [m.label, m.untung])).toEqual([["1–7", 431000], ["8–14", 492000], ["15–21", 522000], ["22–31", 605000]]);
+    expect(b.terbaik.label).toBe("22–31");
+    expect(b.palingLaku).toMatchObject({ nama: "Indomie", jumlah: 312 });
+    expect(b.palingUntung).toMatchObject({ nama: "Rokok Surya", untung: 288000 });
+  });
+
+  test("minggu bulan berjalan yang belum terjadi kosong", () => {
+    const b = ringkasanBulan(catatan, HARI_INI, HARI_INI);
+    expect(b.perMinggu.map((m) => m.untung)).toEqual([224000, null, null, null]);
+    expect(b.perMinggu[3].label).toBe("22–30");
+  });
 });
 
-test("kasbon barang tidak menambah uang, tapi menambah utang", () => {
-  const utang = hitungUtang(hari);
-  assert.equal(utang.get("sari"), 17000);
-  assert.equal(utang.get("budi"), 15000); // pinjam 20.000, bayar 5.000
+describe("stok", () => {
+  test("arah setiap kejadian di rancangan bagian 2", () => {
+    expect(arahStok({ dari: "pembeli", ke: "laci" })).toBe(-1);
+    expect(arahStok({ dari: "pembeli", ke: "bon" })).toBe(-1);
+    expect(arahStok({ dari: "laci", ke: "agen" })).toBe(1);
+    expect(arahStok({ dari: "pemilik", ke: "stok" })).toBe(1);
+    expect(arahStok({ dari: "stok", ke: "biaya" })).toBe(-1);
+    expect(arahStok({ dari: "bon", ke: "laci" })).toBe(0);
+    expect(arahStok({ dari: "laci", ke: "bon" })).toBe(0);
+  });
+
+  test("stok dari fixture", () => {
+    expect(stokBarang(catatan, "indomie")).toBe(87);
+    expect(stokBarang(catatan, "rokok")).toBe(29);
+    expect(stokBarang(catatan, "gula")).toBe(74);
+    expect(stokBarang(catatan, "tidak-ada")).toBe(0);
+  });
 });
 
-test("stok: jual mengurangi, belanja dan koreksi menambah", () => {
-  const stok = hitungStok(hari);
-  assert.equal(stok.get("telur"), 70);
-  assert.equal(stok.get("minyak"), -2); // tanpa stok awal, berarti minus: aksi.js yang mencegahnya
-  assert.equal(stok.get("gula"), -1);
+describe("rumus", () => {
+  test("catatan yang dihapus tidak dihitung", () => {
+    const c = { id: "x", waktu: 1, dari: "pembeli", ke: "laci", nominal: 5000, item: [{ barang_id: "a", jumlah: 1, harga: 5000, modal: 4000 }] };
+    expect(isiTempat([c], "laci")).toBe(5000);
+    expect(isiTempat([{ ...c, deleted: true }], "laci")).toBe(0);
+    expect(stokBarang([{ ...c, deleted: true }], "a")).toBe(0);
+    expect(untung([{ ...c, deleted: true }])).toBe(0);
+  });
+
+  test("koreksi stok masuk biaya, uang pemilik dan pinjaman bukan untung", () => {
+    const daftar = [
+      { id: "1", waktu: 1, dari: "stok", ke: "biaya", nominal: 3000, item: [{ barang_id: "a", jumlah: 1, harga: 3000, modal: 3000 }] },
+      { id: "2", waktu: 2, dari: "pemilik", ke: "laci", nominal: 100000 },
+      { id: "3", waktu: 3, dari: "laci", ke: "bon", pelanggan_id: "b", nominal: 20000 },
+      { id: "4", waktu: 4, dari: "laci", ke: "selisih", nominal: 500 },
+    ];
+    expect(rincianUntung(daftar)).toEqual({ hasil: 0, modal: 0, biaya: 3000, untung: -3000 });
+  });
+
+  test("menghapus catatan otomatis membatalkan akibatnya", () => {
+    const sisa = catatan.filter((c) => c.keterangan !== "Bayar plastik");
+    expect(isiTempat(sisa, "laci")).toBe(1166000);
+    expect(untung(sisa, { dari: HARI_INI, sampai: HARI_INI })).toBe(76000);
+  });
 });
 
-test("untung hanya dari barang yang modalnya diketahui", () => {
-  assert.equal(hitungUntung(hari), 2 * 2500 + 2000);
+describe("bolehDihapus", () => {
+  const nama = (id) => ({ b: "Budi" })[id];
+  const stokAwal = { id: "s", waktu: 1, dari: "pemilik", ke: "stok", nominal: 0, item: [{ barang_id: "kopi", nama: "Kopi", jumlah: 2 }] };
+  const jual = (id, waktu) => ({ id, waktu, dari: "pembeli", ke: "laci", nominal: 2000, item: [{ barang_id: "kopi", nama: "Kopi", jumlah: 1, harga: 2000, modal: 1500 }] });
+
+  test("stok jadi minus: ditolak dengan alasan", () => {
+    const daftar = [stokAwal, jual("j", 2)];
+    const hasil = bolehDihapus(stokAwal, daftar);
+    expect(hasil.boleh).toBe(false);
+    expect(hasil.alasan).toContain("Stok Kopi");
+    expect(hasil.alasan).toContain("Koreksi stok");
+  });
+
+  test("bon jadi minus: ditolak dengan nama pelanggan", () => {
+    const kasbon = { id: "k", waktu: 1, dari: "pembeli", ke: "bon", pelanggan_id: "b", nominal: 10000 };
+    const bayar = { id: "y", waktu: 2, dari: "bon", ke: "laci", pelanggan_id: "b", nominal: 10000 };
+    const hasil = bolehDihapus(kasbon, [kasbon, bayar], nama);
+    expect(hasil.boleh).toBe(false);
+    expect(hasil.alasan).toContain("Bon Budi");
+    expect(bolehDihapus(bayar, [kasbon, bayar], nama).boleh).toBe(true);
+  });
+
+  test("hapus jualan biasa boleh", () => {
+    expect(bolehDihapus(jual("j", 2), [stokAwal, jual("j", 2)]).boleh).toBe(true);
+  });
+
+  test("stok yang sudah minus tetap boleh dikurangi minusnya", () => {
+    const daftar = [stokAwal, jual("1", 2), jual("2", 3), jual("3", 4), jual("4", 5)];
+    expect(stokBarang(daftar, "kopi")).toBe(-2);
+    expect(bolehDihapus(jual("1", 2), daftar).boleh).toBe(true);
+    expect(bolehDihapus(stokAwal, daftar).boleh).toBe(false);
+  });
 });
 
-test("arus utang dalam periode", () => {
-  assert.deepEqual(hitungArusUtang(hari), { baru: 37000, dibayar: 5000 });
+describe("catatanBelanja", () => {
+  test("cukup: satu catatan", () => {
+    expect(catatanBelanja(50000, 80000)).toEqual([{ dari: "laci", ke: "agen", nominal: 50000 }]);
+    expect(catatanBelanja(80000, 80000)).toHaveLength(1);
+  });
+
+  test("melebihi laci: pemilik → laci dulu, lalu laci → agen", () => {
+    const [masuk, keluar] = catatanBelanja(100000, 30000);
+    expect(masuk).toMatchObject({ dari: "pemilik", ke: "laci", nominal: 70000 });
+    expect(keluar).toEqual({ dari: "laci", ke: "agen", nominal: 100000 });
+    expect(30000 + masuk.nominal - keluar.nominal).toBe(0);
+  });
+
+  test("laci yang sudah minus tidak menambah kekurangan yang keliru", () => {
+    expect(catatanBelanja(100000, -5000)[0].nominal).toBe(100000);
+  });
 });
 
-test("menghapus satu catatan otomatis membatalkan semua efeknya", () => {
-  const tanpaBelanja = hari.filter((c) => c.untuk !== "belanja");
-  assert.equal(hitungStok(tanpaBelanja).get("telur"), 40);
-  assert.equal(hitungUang(tanpaBelanja).keluar, 23000);
+describe("harga beli setelah belanja dihapus", () => {
+  const belanja = (id, waktu, harga, modal) => ({ id, waktu, dari: "laci", ke: "agen", nominal: harga, item: [{ barang_id: "g", jumlah: 1, harga, modal }] });
+
+  test("belanja terbaru: kembali ke harga sebelumnya", () => {
+    const a = belanja("a", 1, 50000, 15000);
+    expect(hargaBeliSetelahHapus(a, [a], 50000)).toEqual({ hargaBeli: 15000 });
+  });
+
+  test("harga beli sudah diubah tangan: tidak disentuh", () => {
+    const a = belanja("a", 1, 16000, 15000);
+    expect(hargaBeliSetelahHapus(a, [a], 17000)).toEqual({});
+  });
+
+  test("belanja lama: harga tetap, belanja berikut mewarisi", () => {
+    const a = belanja("a", 1, 20000, 15000);
+    const b = belanja("b", 2, 30000, 20000);
+    const { hargaBeli, belanjaBerikut } = hargaBeliSetelahHapus(a, [a, b], 30000);
+    expect(hargaBeli).toBeUndefined();
+    expect(belanjaBerikut.item[0].modal).toBe(15000);
+    expect(hargaBeliSetelahHapus(belanjaBerikut, [belanjaBerikut], 30000)).toEqual({ hargaBeli: 15000 });
+  });
+
+  test("bukan belanja: tidak ada efek", () => {
+    expect(hargaBeliSetelahHapus({ id: "j", waktu: 1, ke: "laci", item: [] }, [], 100)).toEqual({});
+  });
 });
 
-test("dua HP mencatat bersamaan saat offline: hasil gabungan tetap benar", () => {
-  const awal = { id: "a", jenis: "stok", barang: [{ barang_id: "telur", jumlah: 30 }] };
-  const hpA = [awal, { id: "b", jenis: "jual", dibayar: "sekarang", nominal: 8000, barang: [{ barang_id: "telur", jumlah: 4, harga: 2000 }] }];
-  const hpB = [awal, { id: "c", jenis: "jual", dibayar: "sekarang", nominal: 12000, barang: [{ barang_id: "telur", jumlah: 6, harga: 2000 }] }];
-  const gabung = [...new Map([...hpA, ...hpB].map((c) => [c.id, c])).values()];
-  assert.equal(hitungStok(gabung).get("telur"), 20);
-  assert.equal(hitungUang(gabung).masuk, 20000);
-});
-
-test("saring rentang tanggal", () => {
-  const c = [{ tanggal: "2026-10-01" }, { tanggal: "2026-10-15" }, { tanggal: "2026-11-01" }];
-  assert.equal(dalamRentang(c, "2026-10-01", "2026-10-31").length, 2);
+test("semuaBon mencakup semua pelanggan", () => {
+  expect([...semuaBon(catatan).values()].reduce((a, b) => a + b, 0)).toBe(265000);
 });

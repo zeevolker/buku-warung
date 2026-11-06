@@ -1,18 +1,23 @@
-import { fileURLToPath } from "node:url";
-import { defineConfig } from "vite";
+import { copyFile } from "node:fs/promises";
+import { resolve } from "node:path";
+import { defineConfig } from "vitest/config";
+import react from "@vitejs/plugin-react";
 
-const akar = (file) => fileURLToPath(new URL(file, import.meta.url));
-const halaman = ["index", "laporan", "barang", "pelanggan", "akun", "privasi"];
+// GitHub Pages tidak tahu rute React (misalnya /buku-warung/laporan), jadi membuka alamat itu
+// langsung akan menghasilkan 404.html. Isinya disamakan dengan index.html supaya aplikasi tetap terbuka.
+const salin404 = {
+  name: "salin-404",
+  apply: "build",
+  closeBundle: () => copyFile(resolve("dist/index.html"), resolve("dist/404.html")),
+};
 
 export default defineConfig({
   // Alamat GitHub Pages: https://zeevolker.github.io/buku-warung/
   base: process.env.BASE_PATH || "/buku-warung/",
-  build: {
-    target: "es2022", // dukung top-level await di halaman
-    // Daftar file hasil build, dibaca service worker untuk mode offline
-    manifest: "asset-manifest.json",
-    rollupOptions: {
-      input: Object.fromEntries(halaman.map((h) => [h, akar(`./${h}.html`)])),
-    },
+  plugins: [react(), salin404],
+  test: {
+    environment: "jsdom",
+    setupFiles: ["./tests/persiapan.js"],
+    include: ["tests/**/*.test.{js,jsx}"],
   },
 });

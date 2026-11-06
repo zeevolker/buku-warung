@@ -1,0 +1,19 @@
+.deret {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tombol {
+  min-height: 52px;
+  border: none;
+  border-radius: 22px;
+  background: var(--utama);
+  color: #fff;
+  font-weight: 700;
+}
+
+.teks {
+  margin-bottom: 16px;
+  color: var(--teks-redup);
+}

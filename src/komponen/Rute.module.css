@@ -1,0 +1,25 @@
+.rute {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tempat {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.panah {
+  flex: none;
+  display: flex;
+  color: #a3a59e;
+}
+
+.nominal {
+  flex: none;
+  font-size: 16px;
+  font-weight: 800;
+}
