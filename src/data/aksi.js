@@ -18,9 +18,22 @@ const transaksi = (fungsi) => db.transaction("rw", db.barang, db.pelanggan, db.c
 const catatanAda = () => semuaAda(db.catatan);
 const isiLaci = async () => isiTempat(await catatanAda(), "laci");
 
+// Catatan yang ditulis dalam milidetik yang sama digeser sedikit, supaya urutannya tidak pernah seri.
+// Geseran hanya untuk selisih kecil: kalau jam HP baru dimundurkan, waktu tetap mengikuti jam.
+const BATAS_GESER_MS = 1000;
+let waktuTerakhir = 0;
+
+function waktuBerikutnya(jumlah) {
+  const kini = Date.now();
+  const seri = kini <= waktuTerakhir && waktuTerakhir - kini < BATAS_GESER_MS;
+  const waktu = seri ? waktuTerakhir + 1 : kini;
+  waktuTerakhir = waktu + jumlah - 1;
+  return waktu;
+}
+
 // Tulis beberapa catatan berurutan. Waktunya dibedakan 1 milidetik supaya urutannya tetap.
 async function tulisCatatan(daftar) {
-  const waktu = Date.now();
+  const waktu = waktuBerikutnya(daftar.length);
   const baris = daftar.map((isi, i) =>
     barisBaru({ waktu: waktu + i, pelanggan_id: null, item: [], keterangan: "", ...isi })
   );
