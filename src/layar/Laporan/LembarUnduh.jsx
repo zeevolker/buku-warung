@@ -1,11 +1,14 @@
-// LembarUnduh.jsx: pilih Excel atau PDF. Filenya dibuat di HP, tanpa server.
+// LembarUnduh.jsx: pilih Excel atau PDF. Semuanya dibuat di HP, tanpa server.
+// PDF membuka halaman cetak, lalu disimpan lewat dialog cetak bawaan browser.
 import { useState } from "react";
+import { useNavigate } from "react-router";
 import Lembar from "../../komponen/Lembar.jsx";
-import { buatExcel, buatPdf, simpanFile } from "../../data/unduh.js";
+import { buatExcel, simpanFile } from "../../data/unduh.js";
 import bersama from "../../komponen/lembar/bersama.module.css";
 import gaya from "./Laporan.module.css";
 
-function IsiUnduh({ judul, namaPeriode, namaWarung, catatan, ringkasan, namaDari, onTutup }) {
+function IsiUnduh({ judul, namaPeriode, catatan, namaDari, alamatCetak, onTutup }) {
+  const pindah = useNavigate();
   const [proses, setProses] = useState(false);
   const [galat, setGalat] = useState("");
 
@@ -35,13 +38,13 @@ function IsiUnduh({ judul, namaPeriode, namaWarung, catatan, ringkasan, namaDari
           <span>Semua catatan dalam tabel</span>
         </span>
       </button>
-      <button type="button" className={gaya.opsi} disabled={proses} onClick={() => unduh(() => buatPdf({ namaWarung, judul, ringkasan }), "pdf")}>
+      <button type="button" className={gaya.opsi} disabled={proses} onClick={() => pindah(alamatCetak)}>
         <span className={gaya.ikonOpsi} style={{ background: "var(--keluar-latar)", color: "#a14d31" }}>
           PDF
         </span>
         <span className={gaya.teksOpsi}>
           <strong>PDF</strong>
-          <span>Ringkasan siap cetak</span>
+          <span>Laporan lengkap, simpan lewat dialog cetak</span>
         </span>
       </button>
       <p className={bersama.galat} role="alert">

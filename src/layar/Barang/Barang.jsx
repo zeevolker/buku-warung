@@ -6,12 +6,12 @@ import PesanSingkat, { usePesan } from "../../komponen/PesanSingkat.jsx";
 import LembarBelanja from "../../komponen/lembar/LembarBelanja.jsx";
 import { useBarang, useIsi } from "../../data/pakai.js";
 import { ribuan } from "../../data/format.js";
+import { hampirHabis } from "../../data/hitung.js";
 import LembarBarang from "./LembarBarang.jsx";
 import LembarKoreksi from "./LembarKoreksi.jsx";
 import umum from "../../komponen/umum.module.css";
 import gaya from "./Barang.module.css";
 
-const BATAS_BAWAAN = 5;
 
 export default function Barang() {
   const barang = useBarang();
@@ -35,13 +35,13 @@ export default function Barang() {
   }, [idKoreksiAwal, lokasi.pathname, pindah]);
 
   const stok = (id) => isi?.stok?.[id] || 0;
-  const hampirHabis = (b) => stok(b.id) <= (b.batas_hampir_habis ?? BATAS_BAWAAN);
-  const jumlahHampirHabis = barang.filter(hampirHabis).length;
+  const stokHampirHabis = (b) => hampirHabis(stok(b.id), b);
+  const jumlahHampirHabis = barang.filter(stokHampirHabis).length;
 
   const tampil = barang
-    .filter((b) => !hanyaHampirHabis || hampirHabis(b))
+    .filter((b) => !hanyaHampirHabis || stokHampirHabis(b))
     .filter((b) => b.nama.toLowerCase().includes(cari.trim().toLowerCase()))
-    .sort((a, b) => hampirHabis(b) - hampirHabis(a) || a.nama.localeCompare(b.nama));
+    .sort((a, b) => stokHampirHabis(b) - stokHampirHabis(a) || a.nama.localeCompare(b.nama));
 
   const barangKoreksi = barang.find((b) => b.id === koreksi);
   const barangUbah = lembar?.barang && barang.find((b) => b.id === lembar.barang);
@@ -86,7 +86,7 @@ export default function Barang() {
                   <strong>{b.nama}</strong>
                   <span>{b.harga_jual ? `Rp ${ribuan(b.harga_jual)}` : "Harga jual belum diisi"}</span>
                 </span>
-                <span className={hampirHabis(b) ? gaya.stokHampir : gaya.stok} aria-label={`Stok ${stok(b.id)}${hampirHabis(b) ? ", hampir habis" : ""}`}>
+                <span className={stokHampirHabis(b) ? gaya.stokHampir : gaya.stok} aria-label={`Stok ${stok(b.id)}${stokHampirHabis(b) ? ", hampir habis" : ""}`}>
                   {ribuan(stok(b.id))}
                 </span>
               </button>

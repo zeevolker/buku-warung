@@ -1,6 +1,6 @@
 // Laporan.jsx: rumus yang sama, beda rentang dan pertanyaan: Hari, Minggu, Bulan.
 import { useMemo, useState } from "react";
-import { Link } from "react-router";
+import { Link, useLocation } from "react-router";
 import KerangkaLayar from "../../komponen/KerangkaLayar.jsx";
 import Geser from "../../komponen/Geser.jsx";
 import GrafikBatang from "../../komponen/GrafikBatang.jsx";
@@ -8,7 +8,7 @@ import BarisCatatan from "../../komponen/BarisCatatan.jsx";
 import PesanSingkat, { usePesan } from "../../komponen/PesanSingkat.jsx";
 import LembarRincian from "../../komponen/lembar/LembarRincian.jsx";
 import LembarUnduh from "./LembarUnduh.jsx";
-import { useNamaWarung, usePelanggan, useSemuaCatatan, useTanggalHariIni } from "../../data/pakai.js";
+import { usePelanggan, useSemuaCatatan, useTanggalHariIni } from "../../data/pakai.js";
 import { ringkasanHari, ringkasanMinggu, ringkasanBulan, tanggalCatatan } from "../../data/hitung.js";
 import { awalBulan, geserBulan, jamDariMs, labelBulan, labelTanggalPendek, namaBulanPendek } from "../../data/tanggal.js";
 import { formatRupiah, ribuan } from "../../data/format.js";
@@ -230,11 +230,12 @@ export default function Laporan() {
   const kini = useTanggalHariIni();
   const catatan = useSemuaCatatan();
   const pelanggan = usePelanggan();
-  const namaWarung = useNamaWarung() || "Buku Warung";
   const { pesan, tampilkanPesan } = usePesan();
 
-  const [periode, setPeriode] = useState("hari");
-  const [bulan, setBulan] = useState(() => awalBulan(kini));
+  // Kembali dari halaman cetak: tetap di periode yang sama
+  const lokasi = useLocation();
+  const [periode, setPeriode] = useState(lokasi.state?.periode || "hari");
+  const [bulan, setBulan] = useState(() => awalBulan(lokasi.state?.bulan || kini));
   const [rincian, setRincian] = useState(null);
   const [unduh, setUnduh] = useState(false);
 
@@ -273,7 +274,7 @@ export default function Laporan() {
       {periode === "bulan" && <LayarBulan r={r} kini={kini} bulan={bulan} onGeser={(arah) => setBulan(geserBulan(bulan, arah))} />}
 
       <LembarRincian catatan={rincian} onTutup={() => setRincian(null)} onTersimpan={tampilkanPesan} />
-      <LembarUnduh terbuka={unduh} onTutup={() => setUnduh(false)} judul={judulPeriode} namaPeriode={namaPeriode} namaWarung={namaWarung} catatan={catatanPeriode} ringkasan={r} namaDari={namaDari} />
+      <LembarUnduh terbuka={unduh} onTutup={() => setUnduh(false)} judul={judulPeriode} namaPeriode={namaPeriode} catatan={catatanPeriode} namaDari={namaDari} alamatCetak={`/cetak/${periode}/${periode === "bulan" ? bulan : kini}`} />
       <PesanSingkat pesan={pesan} />
     </KerangkaLayar>
   );

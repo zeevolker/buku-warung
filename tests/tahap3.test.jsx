@@ -12,10 +12,9 @@ import Catatan from "../src/layar/Catatan/Catatan.jsx";
 import { db, semuaAda } from "../src/data/db.js";
 import { isiTempat, stokBarang } from "../src/data/hitung.js";
 import { uangAwal, tambahBarang, tambahPelanggan, jual, terimaBon, tambahPengingat, hapusPelanggan, ubahBarang } from "../src/data/aksi.js";
-import { buatExcel, barisExcel, barisPdf } from "../src/data/unduh.js";
+import { buatExcel, barisExcel } from "../src/data/unduh.js";
 import { saringRiwayat, kelompokPerTanggal, rincianBon, pesanBon } from "../src/data/uraian.js";
 import { nomorWhatsApp } from "../src/data/format.js";
-import { ringkasanBulan } from "../src/data/hitung.js";
 import * as contoh from "./fixture.js";
 
 beforeAll(() => {
@@ -145,16 +144,6 @@ describe("file unduhan", () => {
       { id: "3", waktu: 3000, dari: "pembeli", ke: "laci", nominal: 3, deleted: true },
     ]);
     expect(baris.slice(1).map((b) => b[7])).toEqual([1, 2]);
-  });
-
-  test("PDF: isi ringkasan memakai tanda minus biasa", () => {
-    const r = ringkasanBulan(contoh.catatan, "2026-10-15", contoh.HARI_INI);
-    const peta = Object.fromEntries(barisPdf(r).filter((b) => b.length));
-    expect(peta.Untung).toBe("Rp 2.050.000");
-    expect(peta["Biaya warung"]).toBe("-Rp 820.000");
-    expect(peta["Termasuk jualan tanpa modal"]).toBe("Rp 2.426.000");
-    expect(peta["Paling laku"]).toBe("Indomie (312)");
-    expect(JSON.stringify(barisPdf(r))).not.toContain("−");
   });
 });
 

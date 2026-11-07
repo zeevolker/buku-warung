@@ -13,7 +13,7 @@ const masihAda = (c) => !c.deleted;
 export const tanggalCatatan = (c) => tanggalDariMs(c.waktu);
 
 // rentang = { dari, sampai } berupa teks tanggal. Kalau kosong, semua catatan dipakai.
-function dalamRentang(catatan, rentang) {
+export function dalamRentang(catatan, rentang) {
   const ada = catatan.filter(masihAda);
   if (!rentang) return ada;
   return ada.filter((c) => {
@@ -22,7 +22,7 @@ function dalamRentang(catatan, rentang) {
   });
 }
 
-const sampaiTanggal = (catatan, tanggal) => dalamRentang(catatan, { sampai: tanggal });
+export const sampaiTanggal = (catatan, tanggal) => dalamRentang(catatan, { sampai: tanggal });
 
 // ---------- Isi tempat ----------
 
@@ -57,6 +57,10 @@ export function arahStok(c) {
   if (c.dari === "pembeli" || c.dari === "stok") return -1;
   return 0;
 }
+
+// Aturan "hampir habis", sama untuk layar Barang dan laporan
+export const BATAS_BAWAAN = 5;
+export const hampirHabis = (stok, barang) => stok <= (barang.batas_hampir_habis ?? BATAS_BAWAAN);
 
 export function stokBarang(catatan, barangId) {
   return semuaStok(catatan).get(barangId) || 0;
@@ -145,15 +149,16 @@ export function diambilPribadi(catatan, rentang) {
     .reduce((n, c) => n + c.nominal, 0);
 }
 
-// Barang yang terjual, dikelompokkan: [{ barang_id, nama, jumlah, untung }]
-function penjualanBarang(catatan, rentang) {
+// Barang yang terjual, dikelompokkan: [{ barang_id, nama, jumlah, jualan, untung }]
+export function penjualanBarang(catatan, rentang) {
   const hasil = new Map();
   for (const c of dalamRentang(catatan, rentang)) {
     if (c.dari !== "pembeli") continue;
     // Jualan Lainnya tidak punya barang_id, jadi tidak ikut peringkat barang
     for (const b of (c.item || []).filter((x) => x.barang_id)) {
-      const baris = hasil.get(b.barang_id) || { barang_id: b.barang_id, nama: b.nama, jumlah: 0, untung: 0 };
+      const baris = hasil.get(b.barang_id) || { barang_id: b.barang_id, nama: b.nama, jumlah: 0, jualan: 0, untung: 0 };
       baris.jumlah += b.jumlah;
+      baris.jualan += b.jumlah * b.harga;
       baris.untung += b.jumlah * (b.harga - (b.modal || 0));
       hasil.set(b.barang_id, baris);
     }
@@ -180,6 +185,9 @@ export function ringkasanHari(catatan, tanggal) {
   };
 }
 
+// Persen perubahan dari periode sebelumnya. Hanya berarti kalau periode sebelumnya positif.
+export const persenPerubahan = (kini, lalu) => (lalu > 0 ? Math.round(((kini - lalu) / lalu) * 100) : null);
+
 const NAMA_HARI = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"];
 
 // Hari yang belum terjadi punya untung null, supaya grafiknya kosong
@@ -188,7 +196,8 @@ export function ringkasanMinggu(catatan, tanggal, kini = hariIni()) {
   const sampai = geserTanggal(dari, 6);
   const perHari = NAMA_HARI.map((nama, i) => {
     const t = geserTanggal(dari, i);
-    return { tanggal: t, nama, untung: t > kini ? null : untung(catatan, { dari: t, sampai: t }) };
+    const hari = rincianUntung(catatan, { dari: t, sampai: t });
+    return { tanggal: t, nama, untung: t > kini ? null : hari.untung, hasil: t > kini ? null : hari.hasil };
   });
   return {
     dari,
@@ -229,14 +238,16 @@ export function ringkasanBulan(catatan, tanggal, kini = hariIni()) {
     sampai,
     ...rincian,
     untungBulanLalu: untungLalu,
-    // Persen hanya berarti kalau bulan lalu untung
-    persenDariBulanLalu: untungLalu > 0 ? Math.round(((rincian.untung - untungLalu) / untungLalu) * 100) : null,
+    persenDariBulanLalu: persenPerubahan(rincian.untung, untungLalu),
     perMinggu,
     terbaik: terbesar(perMinggu.filter((m) => m.untung !== null), (m) => m.untung),
     palingLaku: palingLaku(catatan, rentang),
     palingUntung: palingUntung(catatan, rentang),
     diambilPribadi: diambilPribadi(catatan, rentang),
     selisihLaci: selisihLaci(catatan, rentang),
+    ...arusLaci(catatan, rentang),
+    laciAwal: isiTempat(sampaiTanggal(catatan, geserTanggal(dari, -1)), "laci"),
+    laciAkhir: isiTempat(sampaiTanggal(catatan, sampai), "laci"),
     bonAwal: isiTempat(sampaiTanggal(catatan, geserTanggal(dari, -1)), "bon"),
     bonAkhir: isiTempat(sampaiTanggal(catatan, sampai), "bon"),
   };

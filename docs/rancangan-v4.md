@@ -76,7 +76,7 @@ isi tempat = total yang masuk KE tempat itu − total yang keluar DARI tempat it
   - Hari: untung hari ini, isi laci pagi → sekarang, catatan terakhir.
   - Minggu: untung + grafik per hari (terbaik ditandai), isi laci Senin pagi → sekarang dengan Masuk/Keluar, bon awal → sekarang.
   - Bulan: pindah bulan, untung vs bulan lalu (%), grafik per minggu, paling laku, paling untung, biaya, diambil pribadi, bon.
-  - Tombol **Unduh** → Excel (semua catatan, tabel) atau PDF (ringkasan). Dibuat di HP: SheetJS dan jsPDF, dimuat hanya saat tombol ditekan.
+  - Tombol **Unduh** → Excel (semua catatan, tabel) atau PDF (laporan lengkap). Excel dibuat di HP dengan SheetJS, dimuat hanya saat tombol ditekan. PDF dibuat dari halaman cetak React di rute `/cetak/:periode/:tanggal` (halaman A4) lalu dialog cetak bawaan browser ("Simpan sebagai PDF"), tanpa library PDF. Angkanya memakai fungsi yang sama dengan layar Laporan.
 - **Pertama kali:** (1) Selamat datang + login: Masuk dengan Google, Masuk dengan email, "Coba dulu tanpa akun"; (2) Nama warung; (3) Uang di laci sekarang; (4) Panduan 3 tombol dengan sorotan: Jual → Belanja → Terima bon. Tagline: "Sekali tekan, untung langsung kelihatan." Ikon: buku terbuka + koin kuning di kotak sage.
 
 ## 5. Catat dengan suara

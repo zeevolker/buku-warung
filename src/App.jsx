@@ -20,6 +20,7 @@ const Akun = lazy(() => import("./layar/Akun/Akun.jsx"));
 const Masuk = lazy(() => import("./layar/Masuk/Masuk.jsx"));
 const Mulai = lazy(() => import("./layar/Mulai/Mulai.jsx"));
 const Privasi = lazy(() => import("./layar/Privasi/Privasi.jsx"));
+const Cetak = lazy(() => import("./layar/Cetak/Cetak.jsx"));
 
 // Layar yang tampil tanpa menu bawah
 const TANPA_MENU = ["/masuk", "/mulai", "/privasi"];
@@ -135,12 +136,13 @@ export default function App() {
               <Route path="/masuk" element={<Masuk />} />
               <Route path="/mulai" element={<Mulai />} />
               <Route path="/privasi" element={<Privasi />} />
+              <Route path="/cetak/:periode/:tanggal" element={<Cetak />} />
               <Route path="*" element={<Beranda />} />
             </Routes>
           </Suspense>
         </m.main>
       </AnimatePresence>
-      {!TANPA_MENU.includes(lokasi.pathname) && <MenuBawah />}
+      {!TANPA_MENU.includes(lokasi.pathname) && !lokasi.pathname.startsWith("/cetak/") && <MenuBawah />}
       <VersiBaru />
     </>
   );
