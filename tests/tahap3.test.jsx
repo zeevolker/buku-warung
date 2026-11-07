@@ -538,7 +538,7 @@ describe("Catatan", () => {
     fireEvent.click(within(lembar).getByRole("button", { name: "Hapus catatan" }));
     fireEvent.click(within(lembar).getByRole("button", { name: "Tekan lagi untuk menghapus" }));
     await lembarTertutup();
-    expect(screen.queryByRole("button", { name: /Nomor agen/ })).toBeNull();
+    await waitFor(() => expect(screen.queryByRole("button", { name: /Nomor agen/ })).toBeNull());
     expect(await db.catatan.count()).toBe(0);
   });
 
