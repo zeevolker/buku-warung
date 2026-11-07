@@ -76,9 +76,9 @@ e2e/                  Alur utama di browser mode HP (Playwright)
 legacy/               Kode v3, acuan parser dan migrasi
 ```
 
-**Teknologi:** React, Vite, React Router, Motion (`LazyMotion`), Dexie, Supabase (PostgreSQL, Row Level Security, Auth), SheetJS dan jsPDF untuk unduhan, vite-plugin-pwa, GitHub Actions dan GitHub Pages.
+**Teknologi:** React, Vite, React Router, Motion (`LazyMotion`), Dexie, Supabase (PostgreSQL, Row Level Security, Auth), SheetJS untuk Excel, halaman cetak dan dialog cetak browser untuk PDF, vite-plugin-pwa, GitHub Actions dan GitHub Pages.
 
-**Ukuran:** layar pertama 144,8 KB gzip (target 150 KB). Fitur animasi 30,9 KB menyusul tanpa menahan tampilan. SheetJS, jsPDF, Supabase, dan semua lembar dimuat hanya saat dibutuhkan.
+**Ukuran:** layar pertama 146,3 KB gzip (target 150 KB). Fitur animasi 30,9 KB menyusul tanpa menahan tampilan. SheetJS, halaman cetak, Supabase, dan semua lembar dimuat hanya saat dibutuhkan.
 
 ## Keputusan desain
 

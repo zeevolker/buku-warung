@@ -1,0 +1,637 @@
+/* Halaman laporan ukuran A4. Tidak ada teks di bawah 12px, abu-abu tidak lebih terang dari #6e706a. */
+
+@page {
+  size: A4;
+  margin: 0;
+}
+
+.layar {
+  min-height: 100vh;
+  background: #e9e8e3;
+  padding: 8px 8px 24px;
+}
+
+.alat {
+  max-width: 794px;
+  margin: 0 auto 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.alat button {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid #c9c8c1;
+  border-radius: 14px;
+  background: #fff;
+  font-weight: 700;
+}
+
+.alat .tombolUtama {
+  border-color: #4f7d65;
+  background: #4f7d65;
+  color: #fff;
+}
+
+.alat .tombolUtama:disabled {
+  opacity: 0.6;
+}
+
+.alat p {
+  flex-basis: 100%;
+  font-size: 13px;
+  color: #5d5e58;
+}
+
+.salah {
+  padding: 32px 16px;
+  display: grid;
+  gap: 16px;
+  justify-items: start;
+}
+
+.salah button {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid #c9c8c1;
+  border-radius: 14px;
+  background: #fff;
+  font-weight: 700;
+}
+
+.lembaran {
+  zoom: var(--skala, 1);
+}
+
+.halaman {
+  position: relative;
+  width: 794px;
+  height: 1123px;
+  margin: 0 auto 12px;
+  padding: 48px 56px 40px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #fff;
+  color: #2b2d2a;
+  font-size: 13px;
+  line-height: 18px;
+  font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+}
+
+.halaman * {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.halaman h1,
+.halaman h2,
+.halaman p {
+  margin: 0;
+}
+
+/* ---------- Kop dan kaki ---------- */
+
+.kop {
+  flex: none;
+  height: 100px;
+  display: flex;
+  gap: 14px;
+  padding-bottom: 14px;
+  margin-bottom: 2px;
+  border-bottom: 2px solid #4f7d65;
+}
+
+.kop svg {
+  flex: none;
+}
+
+.kopTengah {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.labelKop {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #4f7d65;
+}
+
+.kop h1 {
+  font-size: 26px;
+  line-height: 34px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.kopKanan {
+  flex: none;
+  max-width: 220px;
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+  font-size: 12px;
+  color: #6e706a;
+}
+
+.kopLanjut {
+  flex: none;
+  height: 38px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #c9c8c1;
+}
+
+.kopLanjut span {
+  flex: none;
+  color: #6e706a;
+}
+
+.kaki {
+  position: absolute;
+  left: 56px;
+  right: 56px;
+  bottom: 40px;
+  height: 26px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-top: 1px solid #c9c8c1;
+  font-size: 12px;
+  line-height: 18px;
+  color: #6e706a;
+}
+
+.isi {
+  flex: 1;
+  min-height: 0;
+  padding-bottom: 30px;
+}
+
+.blok {
+  padding-top: 16px;
+}
+
+/* Tinggi blok di susunLaporan sudah memperhitungkan jarak ini */
+
+.bagian h2 {
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+/* ---------- Kartu ---------- */
+
+.kisiKartu {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.kartu {
+  min-width: 0;
+  height: 100px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #c9c8c1;
+  border-radius: 10px;
+}
+
+.kartuUntung {
+  background: #e4f0e8;
+  border-color: #7fb898;
+}
+
+.kartuBon {
+  background: #fbecc8;
+  border-color: #d8b866;
+}
+
+.labelKartu,
+.subKartu {
+  font-size: 12px;
+  line-height: 16px;
+  color: #5d5e58;
+}
+
+.nominal {
+  margin: 4px 0;
+  font-size: 18px;
+  line-height: 24px;
+  font-weight: 800;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.nominal small {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.nominalPanjang {
+  font-size: 15px;
+}
+
+/* ---------- Bilah untung ---------- */
+
+.bilah {
+  height: 20px;
+  display: flex;
+  overflow: hidden;
+  border: 1px solid #6e706a;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.bilahModal {
+  background: #c9c8c1;
+}
+
+.bilahBiaya {
+  background: #eab49e;
+}
+
+.bilahUntung {
+  background: #4f7d65;
+}
+
+.angkaBilah {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.angkaBilah span {
+  display: block;
+  font-size: 12px;
+  line-height: 16px;
+  color: #5d5e58;
+}
+
+.angkaBilah strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 15px;
+  line-height: 20px;
+  color: #2b2d2a;
+  font-variant-numeric: tabular-nums;
+}
+
+.angkaBilah i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 4px;
+  border: 1px solid #6e706a;
+}
+
+.titikModal {
+  background: #c9c8c1;
+}
+
+.titikBiaya {
+  background: #eab49e;
+}
+
+.titikUntung {
+  background: #4f7d65;
+}
+
+/* ---------- Tabel ---------- */
+
+.tabel {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+.tabel th {
+  height: 30px;
+  padding: 0 8px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  color: #5d5e58;
+  border-bottom: 1px solid #6e706a;
+}
+
+.tabel td {
+  height: 31px;
+  padding: 6px 8px;
+  border-bottom: 1px solid #dcdbd5;
+  overflow-wrap: anywhere;
+  vertical-align: top;
+}
+
+.tabel tfoot td {
+  height: 34px;
+  font-weight: 800;
+  border-top: 2px solid #2b2d2a;
+  border-bottom: 0;
+}
+
+.tabel .kanan {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.barisBon td {
+  background: #fbecc8;
+}
+
+.masuk {
+  color: #3c7a57;
+  font-weight: 700;
+}
+
+.keluar {
+  color: #a14d31;
+  font-weight: 700;
+}
+
+.legenda,
+.catatanTabel {
+  margin-top: 8px !important;
+  font-size: 12px;
+  line-height: 18px;
+  color: #6e706a;
+}
+
+.duaKolom {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.setengah {
+  width: calc(50% - 9px);
+}
+
+/* ---------- Kotak ---------- */
+
+.kotak {
+  padding: 12px 14px;
+  border: 1px solid #c9c8c1;
+  border-radius: 10px;
+}
+
+.kotak strong {
+  display: block;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.kotak p {
+  margin-top: 4px;
+}
+
+.daftarKotak {
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.daftarKotak li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  line-height: 24px;
+}
+
+.daftarKotak b {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.tigaAngka {
+  margin-top: 8px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.tigaAngka span {
+  font-size: 12px;
+  line-height: 16px;
+  color: #5d5e58;
+}
+
+.tigaAngka b {
+  display: block;
+  margin-top: 2px;
+  font-size: 15px;
+  line-height: 20px;
+  color: #2b2d2a;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Grafik ---------- */
+
+.judulBaris {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.judulBaris span {
+  font-size: 12px;
+  color: #5d5e58;
+}
+
+.grafik {
+  display: flex;
+  gap: 8px;
+}
+
+.kolomGrafik {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 12px;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.kolomGrafik > span {
+  color: #5d5e58;
+}
+
+.areaBatang {
+  width: 100%;
+  height: 140px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  border-bottom: 1px solid #6e706a;
+  margin-bottom: 4px;
+}
+
+.nilaiBatang {
+  margin-bottom: 2px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.batang {
+  display: block;
+  width: 62%;
+  max-width: 96px;
+  background: #7fb898;
+  border-radius: 3px 3px 0 0;
+}
+
+.batangTerbaik {
+  background: #3c6650;
+}
+
+.batangRugi {
+  background: #eab49e;
+  border: 1px solid #a14d31;
+}
+
+.batangKosong {
+  display: block;
+  width: 62%;
+  max-width: 96px;
+  height: 1px;
+  background: #6e706a;
+}
+
+/* ---------- Kalender ---------- */
+
+.kalender {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.kalender b {
+  height: 26px;
+  text-align: center;
+  font-size: 12px;
+  color: #5d5e58;
+}
+
+.kalender span {
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  border: 1px solid #c9c8c1;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.selKosong {
+  background: #fff;
+  color: #6e706a;
+  font-weight: 400 !important;
+}
+
+.tingkat0 {
+  background: #e4f0e8;
+}
+
+.tingkat1 {
+  background: #b9d8c5;
+}
+
+.tingkat2 {
+  background: #7fb898;
+}
+
+.tingkat3 {
+  background: #3c6650;
+  color: #fff;
+}
+
+.legendaKalender {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #5d5e58;
+}
+
+.legendaKalender i {
+  width: 18px;
+  height: 14px;
+  border: 1px solid #c9c8c1;
+  border-radius: 3px;
+}
+
+/* ---------- Cetak ---------- */
+
+@media print {
+  :global(html),
+  :global(body.sedang-cetak) {
+    margin: 0;
+    padding: 0;
+    background: #fff;
+  }
+
+  :global(body.sedang-cetak) * {
+    visibility: hidden;
+  }
+
+  :global(body.sedang-cetak) .lembaran,
+  :global(body.sedang-cetak) .lembaran * {
+    visibility: visible;
+  }
+
+  :global(body.sedang-cetak) main {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .alat {
+    display: none;
+  }
+
+  .layar {
+    min-height: 0;
+    padding: 0;
+    background: #fff;
+  }
+
+  .lembaran {
+    zoom: 1;
+  }
+
+  /* Sedikit lebih pendek dari A4 supaya pembulatan browser tidak membuat halaman kosong */
+  .halaman {
+    width: 210mm;
+    height: 296.8mm;
+    margin: 0;
+    break-after: page;
+    page-break-after: always;
+    break-inside: avoid;
+  }
+
+  .halaman:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+}
