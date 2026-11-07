@@ -51,8 +51,9 @@ export function HalamanCetak({ periode, tanggal, data, kini, dicetak }) {
   const jumlah = jumlahCatatanDalam(data.catatan, laporan.rentang);
 
   return (
-    <div className={gaya.lembaran}>
-      {halaman.map((isi, i) => (
+    <div className={gaya.lembaran} style={{ "--jumlah": halaman.length }}>
+      <div className={gaya.perkecil}>
+        {halaman.map((isi, i) => (
         <section key={i} className={gaya.halaman} aria-label={`Halaman ${i + 1}`}>
           {i === 0 ? (
             <Kop namaWarung={data.namaWarung} periode={periode} labelPeriode={laporan.labelPeriode} dicetak={dicetak} selesai={laporan.selesai} jumlah={jumlah} />
@@ -79,6 +80,7 @@ export function HalamanCetak({ periode, tanggal, data, kini, dicetak }) {
           </footer>
         </section>
       ))}
+      </div>
     </div>
   );
 }

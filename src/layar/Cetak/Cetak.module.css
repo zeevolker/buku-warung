@@ -61,15 +61,26 @@
   font-weight: 700;
 }
 
+/* Di layar HP halaman diperkecil. Memakai transform, karena zoom tidak andal di Safari iPhone.
+   transform tidak mengubah ukuran di tata letak, jadi kotak luarnya diberi ukuran hasil perkecilan. */
 .lembaran {
-  zoom: var(--skala, 1);
+  width: calc(794px * var(--skala, 1));
+  height: calc(var(--jumlah, 1) * 1135px * var(--skala, 1));
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+.perkecil {
+  width: 794px;
+  transform: scale(var(--skala, 1));
+  transform-origin: top left;
 }
 
 .halaman {
   position: relative;
   width: 794px;
   height: 1123px;
-  margin: 0 auto 12px;
+  margin: 0 0 12px;
   padding: 48px 56px 40px;
   display: flex;
   flex-direction: column;
@@ -617,7 +628,14 @@
   }
 
   .lembaran {
-    zoom: 1;
+    width: auto;
+    height: auto;
+    overflow: visible;
+  }
+
+  .perkecil {
+    width: auto;
+    transform: none;
   }
 
   /* Sedikit lebih pendek dari A4 supaya pembulatan browser tidak membuat halaman kosong */
