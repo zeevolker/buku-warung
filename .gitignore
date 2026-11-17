@@ -6,3 +6,7 @@ dist/
 dist-e2e/
 test-results/
 playwright-report/
+
+# Jangan pernah ter-commit
+.env
+Claude outputs/
